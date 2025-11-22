@@ -3,6 +3,8 @@
 import argparse
 from typing import Optional
 
+from src import __version__
+
 
 class CLIArguments:
     """Container for parsed CLI arguments."""
@@ -59,7 +61,7 @@ def parse_arguments() -> CLIArguments:
     parser.add_argument(
         "--version",
         action="version",
-        version="AudioDeck 1.0.0",
+        version=f"AudioDeck {__version__}",
     )
 
     args = parser.parse_args()

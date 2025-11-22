@@ -3,8 +3,8 @@
 **A professional audio device switcher for Windows
 with Stream Deck integration.**
 
-**Author:** Oliver Ernster  
-**Version:** 1.0.0
+**Author:** Oliver Ernster
+**Version:** 1.0.1
 
 ---
 

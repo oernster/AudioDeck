@@ -14,13 +14,12 @@ def build_executable() -> None:
     project_root = Path(__file__).parent
 
     # PyInstaller arguments
-    # Note: Using --console instead of --windowed to support CLI mode
-    # The GUI will still work fine, but CLI output will be visible
+    # Note: Using --windowed to hide console window for clean GUI/CLI experience
     args = [
         str(project_root / "src" / "main.py"),  # Entry point
         "--name=AudioDeck",  # Executable name
         "--onefile",  # Single file executable
-        "--console",  # Show console window (required for CLI mode)
+        "--windowed",  # Hide console window
         "--clean",  # Clean PyInstaller cache
         f"--distpath={project_root / 'dist'}",  # Output directory
         f"--workpath={project_root / 'build'}",  # Build directory

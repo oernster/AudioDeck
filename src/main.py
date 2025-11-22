@@ -1,7 +1,6 @@
 """Main application entry point.
 
 Author: Oliver Ernster
-Version: 1.0.0
 """
 
 import sys
@@ -9,6 +8,8 @@ from pathlib import Path
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src import __version__
 
 from PySide6.QtWidgets import QApplication, QSplashScreen, QLabel, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, QTimer
@@ -87,7 +88,7 @@ def create_splash_screen() -> QSplashScreen:
     content_layout.addWidget(name_label)
     
     # Add version
-    version_label = QLabel("Version 1.0.0")
+    version_label = QLabel(f"Version {__version__}")
     version_font = QFont()
     version_font.setPointSize(10)
     version_label.setFont(version_font)

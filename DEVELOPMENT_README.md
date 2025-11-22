@@ -1,7 +1,7 @@
 # Audio Deck - Developer Documentation
 
-**Author:** Oliver Ernster  
-**Version:** 1.0.0
+**Author:** Oliver Ernster
+**Version:** 1.0.1
 
 This document contains technical information for developers who want to contribute to or understand the AudioDeck codebase.
 

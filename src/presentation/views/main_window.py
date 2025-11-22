@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon, QPixmap
 
+from src import __version__
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
@@ -411,7 +412,7 @@ Technical architecture, design patterns, and development guidelines.</p>
         title_label.setTextFormat(Qt.RichText)
         left_layout.addWidget(title_label)
         
-        version_label = QLabel("<p><b>Version:</b> 1.0.0</p>")
+        version_label = QLabel(f"<p><b>Version:</b> {__version__}</p>")
         version_label.setTextFormat(Qt.RichText)
         left_layout.addWidget(version_label)
         
