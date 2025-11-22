@@ -62,21 +62,46 @@ That's it! No installation required.
 
 Want to switch audio profiles with a button press? Here's how:
 
-### Quick Setup
+### Recommended: Using Advanced Launcher Plugin
 
-1. **List your profiles** to see their exact names:
+**The easiest way** to integrate AudioDeck with Stream Deck is using BarRaider's **Advanced Launcher** plugin:
+
+1. **Install Advanced Launcher**:
+   - Open Stream Deck software
+   - Go to the Stream Deck Store (marketplace)
+   - Search for "Advanced Launcher" by BarRaider
+   - Click Install
+
+2. **List your profiles** to see their exact names:
    ```
    AudioDeck.exe --list
    ```
 
-2. **Create a batch file** for each profile (e.g., `gaming.bat`):
+3. **Configure a Stream Deck button**:
+   - Drag "Advanced Launcher" action to a button
+   - **Application**: Browse to `AudioDeck.exe`
+   - **Arguments**: `--profile "Gaming Setup"` (use your exact profile name)
+   - Add a custom icon
+   - Press the button to switch instantly!
+
+**Benefits of Advanced Launcher:**
+- ✅ No batch files needed
+- ✅ Cleaner setup
+- ✅ Better error handling
+- ✅ More configuration options
+
+### Alternative: Using Batch Files
+
+If you prefer batch files or don't want to install plugins:
+
+1. **Create a batch file** for each profile (e.g., `gaming.bat`):
    ```batch
    @echo off
    cd /d "C:\Path\To\AudioDeck"
    AudioDeck.exe --profile "Gaming Setup"
    ```
 
-3. **Configure Stream Deck**:
+2. **Configure Stream Deck**:
    - Add a "System > Open" action
    - Browse to your batch file
    - Add a custom icon
