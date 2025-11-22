@@ -128,6 +128,32 @@ AudioDeck.exe --help
 
 ## Troubleshooting
 
+### ⚠️ IMPORTANT: Application Audio Settings
+
+**For AudioDeck to work correctly, applications must use Windows default audio devices.**
+
+Most applications (Discord, Spotify, games, etc.) have audio settings that let you choose specific devices OR use "Default" devices. **You MUST set them to use "Default" devices** for AudioDeck to switch them properly.
+
+**How to configure applications:**
+
+**Quick Access:**
+- Press **Windows Key** + type **"mixer"** + press **Enter**
+- This opens Volume Mixer showing all running applications
+- **Set all inputs and outputs to "Default"** for each application
+- Restart applications if needed
+
+**Why this matters:**
+- AudioDeck changes Windows' default audio devices
+- Applications using specific devices won't switch automatically
+- Applications using "Default" will follow Windows' default device
+
+**Examples:**
+- **Discord**: Settings → Voice & Video → Set both Input/Output to "Default"
+- **Spotify**: Settings → Audio → Output Device → "Default"
+- **Games**: Audio settings → Set to "Default" or "System Default"
+
+---
+
 ### Audio devices not showing up
 - Make sure your devices are connected and enabled in Windows Sound settings
 - Click the 🔄 refresh button in AudioDeck
