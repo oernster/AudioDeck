@@ -51,8 +51,6 @@ class WindowsDeviceController:
             DeviceControlException: If setting default fails
         """
         try:
-            print(f"Setting default device: {device_id} (type: {device_type.value})")
-
             # Get IPolicyConfig interface
             from comtypes import CoCreateInstance
 
@@ -63,9 +61,7 @@ class WindowsDeviceController:
                 policy_config = CoCreateInstance(
                     CLSID_PolicyConfig, IPolicyConfig, CLSCTX_ALL
                 )
-                print("  Got IPolicyConfig interface")
             except Exception as e:
-                print(f"  Failed to get IPolicyConfig: {e}")
                 raise DeviceControlException(
                     f"Could not access audio policy interface: {e}"
                 )
@@ -78,18 +74,15 @@ class WindowsDeviceController:
             for role in roles:
                 try:
                     result = policy_config.SetDefaultEndpoint(device_id, role)
-                    print(f"  Set role {role}: HRESULT={result}")
                     success_count += 1
-                except Exception as e:
-                    print(f"  Failed to set role {role}: {e}")
+                except Exception:
                     # Continue with other roles
+                    pass
 
             if success_count == 0:
                 raise DeviceControlException(
                     "Failed to set device as default for any role"
                 )
-
-            print(f"  Successfully set device as default for {success_count}/3 roles")
 
         except DeviceControlException:
             raise

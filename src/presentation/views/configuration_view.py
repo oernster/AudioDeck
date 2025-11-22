@@ -51,7 +51,7 @@ class ConfigurationView(QWidget):
         profile_layout = QVBoxLayout(profile_group)
 
         self._profile_list = QListWidget()
-        self._profile_list.setMaximumHeight(150)
+        self._profile_list.setMinimumHeight(350)
         profile_layout.addWidget(self._profile_list)
 
         profile_buttons_layout = QHBoxLayout()
@@ -75,7 +75,10 @@ class ConfigurationView(QWidget):
 
         # Profile name
         name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Profile Name:"))
+        name_label = QLabel("Profile Name:")
+        name_label.setFixedWidth(140)
+        name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        name_layout.addWidget(name_label)
         self._name_input = QLineEdit()
         self._name_input.setPlaceholderText("Enter profile name...")
         name_layout.addWidget(self._name_input)
@@ -83,7 +86,10 @@ class ConfigurationView(QWidget):
 
         # Output device
         output_layout = QHBoxLayout()
-        output_layout.addWidget(QLabel("Output Device:"))
+        output_label = QLabel("Output Device:")
+        output_label.setFixedWidth(140)
+        output_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        output_layout.addWidget(output_label)
         self._output_combo = QComboBox()
         self._output_combo.addItem("(None)", None)
         output_layout.addWidget(self._output_combo)
@@ -95,7 +101,10 @@ class ConfigurationView(QWidget):
 
         # Input device
         input_layout = QHBoxLayout()
-        input_layout.addWidget(QLabel("Input Device:"))
+        input_label = QLabel("Input Device:")
+        input_label.setFixedWidth(140)
+        input_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        input_layout.addWidget(input_label)
         self._input_combo = QComboBox()
         self._input_combo.addItem("(None)", None)
         input_layout.addWidget(self._input_combo)

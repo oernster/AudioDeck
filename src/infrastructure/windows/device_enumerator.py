@@ -39,8 +39,7 @@ class WindowsDeviceEnumerator:
 
             device_id = default_device.GetId()
             return device_id
-        except Exception as e:
-            print(f"Error getting default device ID for flow {data_flow}: {e}")
+        except Exception:
             return None
 
     def enumerate_devices(
@@ -62,14 +61,8 @@ class WindowsDeviceEnumerator:
             default_device_id = (
                 self._default_output_id if data_flow == 0 else self._default_input_id
             )
-            if default_device_id:
-                print(
-                    f"Current default device ID for flow {data_flow}: {default_device_id}"
-                )
-
             device_enumerator = AudioUtilities.GetDeviceEnumerator()
             if device_enumerator is None:
-                print(f"Could not get device enumerator")
                 return devices
 
             # Get collection of active audio endpoints
@@ -77,11 +70,9 @@ class WindowsDeviceEnumerator:
                 data_flow, DEVICE_STATE.ACTIVE.value
             )
             if collection is None:
-                print(f"Could not get device collection for flow {data_flow}")
                 return devices
 
             count = collection.GetCount()
-            print(f"Found {count} devices for data_flow={data_flow}")
 
             for i in range(count):
                 try:
@@ -109,20 +100,13 @@ class WindowsDeviceEnumerator:
                                     and audio_device.id == device_id
                                 ):
                                     device_name = audio_device.FriendlyName
-                                    print(
-                                        f"    Matched device ID {device_id} to name: {device_name}"
-                                    )
                                     break
 
                         if not device_name:
-                            print(
-                                f"    WARNING: Could not match device ID {device_id} with cached devices"
-                            )
                             # Fallback: try to get from the endpoint's description
                             device_name = f"Audio Device {i+1}"
 
-                    except Exception as e:
-                        print(f"    Could not get name for device {i}: {e}")
+                    except Exception:
                         device_name = f"Audio Device {i+1}"
 
                     # Determine device type based on data flow
@@ -132,10 +116,6 @@ class WindowsDeviceEnumerator:
 
                     # Check if this is the default device
                     is_default = device_id == default_device_id
-                    if is_default:
-                        print(f"  - {device_name} [DEFAULT]")
-                    else:
-                        print(f"  - {device_name}")
 
                     # Create device entity
                     device = AudioDevice(
@@ -147,15 +127,11 @@ class WindowsDeviceEnumerator:
                     )
                     devices.append(device)
 
-                except Exception as e:
-                    print(f"Error processing device {i}: {e}")
+                except Exception:
                     continue
 
-        except Exception as e:
-            print(f"Error enumerating devices (flow={data_flow}): {e}")
-            import traceback
-
-            traceback.print_exc()
+        except Exception:
+            pass
 
         return devices
 
@@ -170,17 +146,9 @@ class WindowsDeviceEnumerator:
         self._default_input_id = self._get_default_device_id(1)
 
         # Get all devices ONCE to avoid calling it in the loop
-        print("Getting device names from AudioUtilities...")
         all_devices_cache = AudioUtilities.GetAllDevices()
 
-        print("Enumerating output devices...")
         output_devices = self.enumerate_devices(0, all_devices_cache)  # eRender = 0
-
-        print("Enumerating input devices...")
         input_devices = self.enumerate_devices(1, all_devices_cache)  # eCapture = 1
-
-        print(
-            f"\nTotal: {len(output_devices)} output devices, {len(input_devices)} input devices"
-        )
 
         return output_devices + input_devices

@@ -1,180 +1,150 @@
 # Audio Deck
 
-A professional audio device switcher for Windows with Stream Deck integration.
+**A professional audio device switcher for Windows
+with Stream Deck integration.**
+
+**Author:** Oliver Ernster  
+**Version:** 1.0.0
+
+---
+
+## What is Audio Deck?
+
+Audio Deck lets you instantly switch between different audio setups with a single click. Perfect for:
+- 🎮 **Gamers** - Switch between gaming headset and speakers
+- 💼 **Remote Workers** - Quick switch to meeting microphone and headphones
+- 🎵 **Content Creators** - Change audio setups for recording vs. streaming
+- 🎛️ **Stream Deck Users** - Control audio profiles from your Stream Deck buttons
 
 ## Features
 
-- **Two Modes**:
-  - **Quick Switch Mode**: Instantly switch between saved audio profiles
-  - **Configuration Mode**: Create and manage audio profiles with custom input/output device combinations
-
-- **Clean Architecture**: Built with SOLID principles and Clean Architecture
-- **Windows Integration**: Native Windows Core Audio API integration via pycaw
-- **Stream Deck Ready**: Can be launched as a macro from Elgato Stream Deck
-- **Persistent Profiles**: JSON-based profile storage
+✅ **Quick Profile Switching** - Change audio devices instantly  
+✅ **Stream Deck Integration** - Control from your Elgato Stream Deck  
+✅ **Command-Line Support** - Automate with scripts and macros  
+✅ **Easy Configuration** - Simple GUI for creating profiles  
+✅ **Persistent Profiles** - Your setups are saved and ready to use
 
 ## Requirements
 
-- Windows 10/11
-- Python 3.10 or higher (for development)
-- Elgato Stream Deck (optional, for macro integration)
+- Windows 10 or Windows 11
+- Elgato Stream Deck (optional, for button control)
 
 ## Installation
 
-### For Users (Standalone Executable)
+1. **Download** the latest `AudioDeck.exe` from the releases page
+2. **Extract** to a folder of your choice
+3. **Run** `AudioDeck.exe` to start
 
-1. Download the latest release from the releases page
-2. Extract `AudioDeck.exe` to a folder of your choice
-3. Run `AudioDeck.exe` or use `launch_audio_deck.bat` with Stream Deck
+That's it! No installation required.
 
-### For Developers
+## Quick Start
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd AudioDeck
-```
+### Step 1: Create Your First Profile
 
-2. Create a virtual environment:
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
+1. Launch `AudioDeck.exe`
+2. Go to the **Configuration** tab
+3. Click **New Profile**
+4. Enter a name (e.g., "Gaming Setup")
+5. Select your output device (speakers/headphones)
+6. Select your input device (microphone)
+7. Click **Save Profile**
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+### Step 2: Switch Profiles
 
-4. Install development dependencies (optional):
-```bash
-pip install -r requirements-dev.txt
-```
+1. Go to the **Quick Switch** tab
+2. Select a profile from the list
+3. Click **Switch to Selected Profile**
+4. Your audio devices change instantly!
 
-## Usage
+**Tip:** Double-click a profile for even faster switching!
 
-### Running from Source
+## Stream Deck Integration
 
-```bash
-python src/main.py
-```
+Want to switch audio profiles with a button press? Here's how:
 
-### Building Executable
+### Quick Setup
 
-```bash
-python build_exe.py
-```
+1. **List your profiles** to see their exact names:
+   ```
+   AudioDeck.exe --list
+   ```
 
-The executable will be created in the `dist` folder.
+2. **Create a batch file** for each profile (e.g., `gaming.bat`):
+   ```batch
+   @echo off
+   cd /d "C:\Path\To\AudioDeck"
+   AudioDeck.exe --profile "Gaming Setup"
+   ```
 
-### Stream Deck Integration
+3. **Configure Stream Deck**:
+   - Add a "System > Open" action
+   - Browse to your batch file
+   - Add a custom icon
+   - Press the button to switch!
 
-1. Build the executable using `python build_exe.py`
-2. In Stream Deck software, add a "System > Open" action
-3. Point it to `launch_audio_deck.bat` or directly to `dist/AudioDeck.exe`
-4. Optionally add a custom icon
+**Example batch files** are included in the `examples/streamdeck_profiles/` folder.
 
-## Architecture
+## Command-Line Usage
 
-The application follows Clean Architecture principles with clear separation of concerns:
-
-```
-src/
-├── domain/              # Business logic and entities
-│   ├── entities/        # Core business objects
-│   ├── value_objects/   # Immutable value types
-│   ├── interfaces/      # Abstract interfaces (Protocols)
-│   └── exceptions/      # Domain exceptions
-├── application/         # Use cases and DTOs
-│   ├── use_cases/       # Business use cases
-│   └── dtos/           # Data transfer objects
-├── infrastructure/      # External integrations
-│   ├── windows/        # Windows audio API integration
-│   └── persistence/    # Profile storage
-└── presentation/        # GUI layer
-    ├── views/          # PySide6 views
-    └── presenters/     # MVP presenters
-```
-
-### Key Design Patterns
-
-- **Clean Architecture**: Dependency inversion, separation of concerns
-- **MVP Pattern**: Model-View-Presenter for GUI
-- **Repository Pattern**: Abstract data access
-- **Use Case Pattern**: Single responsibility business logic
-- **Protocol-based Interfaces**: Duck typing for testability
-
-## Development
-
-### Running Tests
+AudioDeck can be controlled from the command line:
 
 ```bash
-pytest
+# List all profiles
+AudioDeck.exe --list
+
+# Switch to a specific profile
+AudioDeck.exe --profile "Gaming Setup"
+
+# Show help
+AudioDeck.exe --help
 ```
 
-### Code Quality
-
-```bash
-# Format code
-black src tests
-
-# Lint code
-ruff check src tests
-
-# Type checking
-mypy src
-```
-
-## Project Structure
-
-```
-AudioDeck/
-├── src/
-│   ├── domain/
-│   ├── application/
-│   ├── infrastructure/
-│   ├── presentation/
-│   └── main.py
-├── tests/
-├── requirements.txt
-├── requirements-dev.txt
-├── pyproject.toml
-├── build_exe.py
-├── launch_audio_deck.bat
-└── README.md
-```
-
-## Configuration
-
-Profiles are stored in: `%LOCALAPPDATA%\AudioDeck\profiles.json`
+**Note:** Profile names are case-sensitive. Use the exact name shown in the GUI or `--list` command.
 
 ## Troubleshooting
 
 ### Audio devices not showing up
-- Ensure you have audio devices connected
-- Try refreshing the device list using the 🔄 button
-- Check Windows Sound settings to verify devices are enabled
+- Make sure your devices are connected and enabled in Windows Sound settings
+- Click the 🔄 refresh button in AudioDeck
+- Try unplugging and replugging the device
 
-### Profile switching not working
-- Verify the devices in the profile still exist
-- Check that devices are enabled in Windows
+### Profile won't switch
+- Check that the devices in the profile still exist
+- Make sure devices are enabled in Windows
 - Try recreating the profile with current devices
 
-### Executable won't run
-- Ensure you have the Visual C++ Redistributable installed
-- Check Windows Defender/antivirus isn't blocking it
-- Run as administrator if needed
+### Stream Deck button doesn't work
+- Test the batch file by double-clicking it manually
+- Verify the path to `AudioDeck.exe` is correct
+- Make sure the profile name matches exactly (case-sensitive)
+- Run `AudioDeck.exe --list` to see exact profile names
 
-## License
+### Console window appears briefly
+- This is normal when using CLI mode
+- The window closes automatically after switching
+- For GUI mode, the console stays open (this is intentional to support CLI features)
 
-[Your License Here]
+## Getting Help
 
-## Contributing
+- **In-App Documentation**: Select **Help > View Documentation** from the menu
+- **Developer Documentation**: Select **Help > Development Documentation** for technical details
 
-Contributions are welcome! Please follow the existing code style and architecture patterns.
+## Configuration
+
+Your profiles are stored in:
+```
+%LOCALAPPDATA%\AudioDeck\profiles.json
+```
+
+You can back up this file to save your profiles.
 
 ## Credits
 
+- **Author:** Oliver Ernster
 - Built with PySide6 (Qt for Python)
-- Uses pycaw for Windows Core Audio API access
+- Uses pycaw for Windows Core Audio API
 - Packaged with PyInstaller
+
+---
+
+**Enjoy seamless audio switching! 🎧**

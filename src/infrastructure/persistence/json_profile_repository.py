@@ -56,16 +56,9 @@ class JsonProfileRepository:
         """
         try:
             data = [p.to_dict() for p in profiles]
-            print(f"Writing {len(profiles)} profiles to {self._file_path}")
-            print(f"Profile data: {data}")
             with open(self._file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-            print(f"Successfully wrote profiles to disk")
         except Exception as e:
-            print(f"ERROR writing profiles: {e}")
-            import traceback
-
-            traceback.print_exc()
             raise ProfileStorageException(f"Failed to write profiles: {e}")
 
     def save(self, profile: AudioProfile) -> None:

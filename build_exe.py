@@ -1,4 +1,7 @@
-"""Build script for creating standalone executable."""
+"""Build script for creating standalone executable.
+
+Author: Oliver Ernster
+"""
 
 import PyInstaller.__main__
 import sys
@@ -11,11 +14,13 @@ def build_executable() -> None:
     project_root = Path(__file__).parent
 
     # PyInstaller arguments
+    # Note: Using --console instead of --windowed to support CLI mode
+    # The GUI will still work fine, but CLI output will be visible
     args = [
         str(project_root / "src" / "main.py"),  # Entry point
         "--name=AudioDeck",  # Executable name
         "--onefile",  # Single file executable
-        "--windowed",  # No console window
+        "--console",  # Show console window (required for CLI mode)
         "--clean",  # Clean PyInstaller cache
         f"--distpath={project_root / 'dist'}",  # Output directory
         f"--workpath={project_root / 'build'}",  # Build directory
@@ -26,8 +31,17 @@ def build_executable() -> None:
         "--hidden-import=pycaw.pycaw",
         # Collect all comtypes data
         "--collect-all=comtypes",
-        # Add icon if available (optional)
-        # "--icon=icon.ico",
+        # Add application icon
+        "--icon=AudioDeck.ico",
+        # Bundle documentation and license files
+        f"--add-data={project_root / 'README.md'};.",
+        f"--add-data={project_root / 'LICENSE'};.",
+        f"--add-data={project_root / 'AudioDeck.ico'};.",
+        f"--add-data={project_root / 'AudioDeck.png'};.",
+        # Bundle development documentation files
+        f"--add-data={project_root / 'DEVELOPMENT_QUICKSTART.md'};.",
+        f"--add-data={project_root / 'CLI_USAGE.md'};.",
+        f"--add-data={project_root / 'DEVELOPMENT_README.md'};.",
     ]
 
     print("Building Audio Deck executable...")
@@ -38,6 +52,9 @@ def build_executable() -> None:
 
     print("\nBuild complete!")
     print(f"Executable location: {project_root / 'dist' / 'AudioDeck.exe'}")
+    print("\nNote: The executable now supports both GUI and CLI modes:")
+    print("  - GUI mode: Run without arguments (double-click or 'AudioDeck.exe')")
+    print("  - CLI mode: Run with arguments (e.g., 'AudioDeck.exe --list')")
 
 
 if __name__ == "__main__":

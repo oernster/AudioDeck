@@ -58,7 +58,7 @@ class ActuationView(QWidget):
         profile_layout = QVBoxLayout(profile_group)
 
         self._profile_list = QListWidget()
-        self._profile_list.setMinimumHeight(200)
+        self._profile_list.setMinimumHeight(350)
         profile_layout.addWidget(self._profile_list)
 
         # Action buttons
@@ -69,7 +69,7 @@ class ActuationView(QWidget):
         button_layout.addWidget(self._switch_button)
 
         self._refresh_button = QPushButton("🔄 Refresh")
-        self._refresh_button.setMaximumWidth(100)
+        self._refresh_button.setMinimumWidth(120)
         button_layout.addWidget(self._refresh_button)
 
         profile_layout.addLayout(button_layout)
@@ -124,13 +124,6 @@ class ActuationView(QWidget):
         """Load current default devices."""
         output_device = self._presenter.get_current_output_device()
         input_device = self._presenter.get_current_input_device()
-
-        print(
-            f"Current default output device: {output_device.name if output_device else 'None'} (ID: {output_device.id if output_device else 'N/A'})"
-        )
-        print(
-            f"Current default input device: {input_device.name if input_device else 'None'} (ID: {input_device.id if input_device else 'N/A'})"
-        )
 
         if output_device:
             self._current_output_label.setText(f"Output: {output_device.name}")
