@@ -5,6 +5,7 @@ Author: Oliver Ernster
 
 import sys
 from pathlib import Path
+import ctypes
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -149,10 +150,22 @@ def main() -> int:
         return cli_handler.handle(args)
 
     # Run in GUI mode
+    # Set Windows taskbar icon (must be done before creating QApplication)
+    if sys.platform == "win32":
+        # Set application user model ID to ensure proper taskbar icon display
+        myappid = 'OliverErnster.AudioDeck.1.0'  # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    
     # Create Qt application
     app = QApplication(sys.argv)
     app.setApplicationName("Audio Deck")
     app.setOrganizationName("AudioDeck")
+    
+    # Set application icon for Windows taskbar
+    icon_path = get_resource_path("AudioDeck.ico")
+    if icon_path.exists():
+        from PySide6.QtGui import QIcon
+        app.setWindowIcon(QIcon(str(icon_path)))
     
     # Create and show splash screen
     splash = create_splash_screen()
