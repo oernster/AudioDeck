@@ -31,7 +31,7 @@ def build_executable() -> None:
         # Collect all comtypes data
         "--collect-all=comtypes",
         # Add application icon
-        "--icon=AudioDeck.ico",
+        "--icon=AudioDeck.png",
         # Bundle documentation and license files
         f"--add-data={project_root / 'README.md'};.",
         f"--add-data={project_root / 'LICENSE'};.",
