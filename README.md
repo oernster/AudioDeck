@@ -5,6 +5,8 @@
 **Author:** Oliver Ernster  
 **Version:** 1.0.1
 
+### If you like it please buy me a coffee: [Donation link](https://www.paypal.com/ncp/payment/7XYN6DCYK24VY)
+
 ---
 
 ## Overview
