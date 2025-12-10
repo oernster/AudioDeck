@@ -1,201 +1,136 @@
 # Audio Deck
 
-**A professional audio device switcher for Windows
-with Stream Deck integration.**
+**A professional audio device switcher for Windows with Stream Deck integration.**
 
-**Author:** Oliver Ernster
+**Author:** Oliver Ernster  
 **Version:** 1.0.1
 
 ---
 
-## What is Audio Deck?
+## Overview
 
-Audio Deck lets you instantly switch between different audio setups with a single click. Perfect for:
-- 🎮 **Gamers** - Switch between gaming headset and speakers
-- 💼 **Remote Workers** - Quick switch to meeting microphone and headphones
-- 🎵 **Content Creators** - Change audio setups for recording vs. streaming
-- 🎛️ **Stream Deck Users** - Control audio profiles from your Stream Deck buttons
+Audio Deck allows you to switch between customized audio setups instantly. It’s ideal for gamers, remote workers, content creators, and Stream Deck users who want fast, reliable control over their audio environment.
 
 ## Features
 
-✅ **Quick Profile Switching** - Change audio devices instantly  
-✅ **Stream Deck Integration** - Control from your Elgato Stream Deck  
-✅ **Command-Line Support** - Automate with scripts and macros  
-✅ **Easy Configuration** - Simple GUI for creating profiles  
-✅ **Persistent Profiles** - Your setups are saved and ready to use
+- Quick profile switching  
+- Stream Deck integration  
+- Command-line support  
+- Simple configuration through a GUI  
+- Persistent profiles saved locally
 
 ## Requirements
 
-- Windows 10 or Windows 11
-- Elgato Stream Deck (optional, for button control)
+- Windows 10 or Windows 11  
+- Elgato Stream Deck (optional)
 
 ## Installation
 
-1. **Download** the latest `AudioDeck.exe` from the releases page
-2. **Extract** to a folder of your choice
-3. **Run** `AudioDeck.exe` to start
+1. Download the latest `AudioDeck.exe` from the releases page.  
+2. Extract it to any folder.  
+3. Run `AudioDeck.exe`.
 
-That's it! No installation required.
+No installation required.
 
 ## Quick Start
 
-### Step 1: Create Your First Profile
+### Create Your First Profile
 
-1. Launch `AudioDeck.exe`
-2. Go to the **Configuration** tab
-3. Click **New Profile**
-4. Enter a name (e.g., "Gaming Setup")
-5. Select your output device (speakers/headphones)
-6. Select your input device (microphone)
-7. Click **Save Profile**
+1. Open `AudioDeck.exe`.  
+2. Navigate to the **Configuration** tab.  
+3. Click **New Profile**.  
+4. Name your profile (e.g., "Gaming Setup").  
+5. Select your output device.  
+6. Select your input device.  
+7. Click **Save Profile**.
 
-### Step 2: Switch Profiles
+### Switch Profiles
 
-1. Go to the **Quick Switch** tab
-2. Select a profile from the list
-3. Click **Switch to Selected Profile**
-4. Your audio devices change instantly!
+1. Open the **Quick Switch** tab.  
+2. Choose a profile.  
+3. Click **Switch to Selected Profile**.  
 
-**Tip:** Double-click a profile for even faster switching!
+Double-click a profile for even faster switching.
 
 ## Stream Deck Integration
 
-Want to switch audio profiles with a button press? Here's how:
+### Using the Advanced Launcher Plugin (Recommended)
 
-### Recommended: Using Advanced Launcher Plugin
-
-**The easiest way** to integrate AudioDeck with Stream Deck is using BarRaider's **Advanced Launcher** plugin:
-
-1. **Install Advanced Launcher**:
-   - Open Stream Deck software
-   - Go to the Stream Deck Store (marketplace)
-   - Search for "Advanced Launcher" by BarRaider
-   - Click Install
-
-2. **List your profiles** to see their exact names:
+1. Install BarRaider’s **Advanced Launcher** plugin from the Stream Deck Store.  
+2. List available profiles:  
    ```
    AudioDeck.exe --list
    ```
+3. Configure a Stream Deck button:  
+   - **Application**: Select `AudioDeck.exe`  
+   - **Arguments**: `--profile "Profile Name"`  
 
-3. **Configure a Stream Deck button**:
-   - Drag "Advanced Launcher" action to a button
-   - **Application**: Browse to `AudioDeck.exe`
-   - **Arguments**: `--profile "Gaming Setup"` (use your exact profile name)
-   - Add a custom icon
-   - Press the button to switch instantly!
+### Using Batch Files (Alternative)
 
-**Benefits of Advanced Launcher:**
-- ✅ No batch files needed
-- ✅ Cleaner setup
-- ✅ Better error handling
-- ✅ More configuration options
-
-### Alternative: Using Batch Files
-
-If you prefer batch files or don't want to install plugins:
-
-1. **Create a batch file** for each profile (e.g., `gaming.bat`):
+1. Create a batch file like:  
    ```batch
    @echo off
    cd /d "C:\Path\To\AudioDeck"
    AudioDeck.exe --profile "Gaming Setup"
    ```
-
-2. **Configure Stream Deck**:
-   - Add a "System > Open" action
-   - Browse to your batch file
-   - Add a custom icon
-   - Press the button to switch!
-
-**Example batch files** are included in the `examples/streamdeck_profiles/` folder.
+2. In Stream Deck, use the **Open** action to launch the batch file.
 
 ## Command-Line Usage
 
-AudioDeck can be controlled from the command line:
-
 ```bash
-# List all profiles
-AudioDeck.exe --list
-
-# Switch to a specific profile
-AudioDeck.exe --profile "Gaming Setup"
-
-# Show help
-AudioDeck.exe --help
+AudioDeck.exe --list         # List profiles
+AudioDeck.exe --profile NAME # Switch to a profile
+AudioDeck.exe --help         # Show help
 ```
 
-**Note:** Profile names are case-sensitive. Use the exact name shown in the GUI or `--list` command.
+Profile names are case-sensitive.
 
 ## Troubleshooting
 
-### ⚠️ IMPORTANT: Application Audio Settings
+### Application Audio Settings
 
-**For AudioDeck to work correctly, applications must use Windows default audio devices.**
+Applications must use Windows’ default audio devices.  
+Configure each application to use “Default” for both input and output.
 
-Most applications (Discord, Spotify, games, etc.) have audio settings that let you choose specific devices OR use "Default" devices. **You MUST set them to use "Default" devices** for AudioDeck to switch them properly.
+Examples:  
+- Discord: Settings → Voice & Video → Set devices to “Default”  
+- Spotify: Settings → Audio → Output Device → “Default”
 
-**How to configure applications:**
+### Devices Not Showing
 
-**Quick Access:**
-- Press **Windows Key** + type **"mixer"** + press **Enter**
-- This opens Volume Mixer showing all running applications
-- **Set all inputs and outputs to "Default"** for each application
-- Restart applications if needed
+- Ensure devices are enabled in Windows Sound settings.  
+- Refresh device list in Audio Deck.  
+- Reconnect the device.
 
-**Why this matters:**
-- AudioDeck changes Windows' default audio devices
-- Applications using specific devices won't switch automatically
-- Applications using "Default" will follow Windows' default device
+### Profile Not Switching
 
-**Examples:**
-- **Discord**: Settings → Voice & Video → Set both Input/Output to "Default"
-- **Spotify**: Settings → Audio → Output Device → "Default"
-- **Games**: Audio settings → Set to "Default" or "System Default"
+- Confirm the devices in the profile still exist.  
+- Ensure devices are enabled.  
+- Recreate the profile if needed.
 
----
+### Stream Deck Button Issues
 
-### Audio devices not showing up
-- Make sure your devices are connected and enabled in Windows Sound settings
-- Click the 🔄 refresh button in AudioDeck
-- Try unplugging and replugging the device
+- Test batch files manually.  
+- Confirm the application path.  
+- Ensure the profile name matches exactly.  
+- Use `--list` to verify names.
 
-### Profile won't switch
-- Check that the devices in the profile still exist
-- Make sure devices are enabled in Windows
-- Try recreating the profile with current devices
+## Configuration File
 
-### Stream Deck button doesn't work
-- Test the batch file by double-clicking it manually
-- Verify the path to `AudioDeck.exe` is correct
-- Make sure the profile name matches exactly (case-sensitive)
-- Run `AudioDeck.exe --list` to see exact profile names
-
-### Console window appears briefly
-- This is normal when using CLI mode
-- The window closes automatically after switching
-- For GUI mode, the console stays open (this is intentional to support CLI features)
-
-## Getting Help
-
-- **In-App Documentation**: Select **Help > View Documentation** from the menu
-- **Developer Documentation**: Select **Help > Development Documentation** for technical details
-
-## Configuration
-
-Your profiles are stored in:
+Profiles are stored at:  
 ```
 %LOCALAPPDATA%\AudioDeck\profiles.json
 ```
 
-You can back up this file to save your profiles.
+Backup this file to save your configuration.
 
 ## Credits
 
-- **Author:** Oliver Ernster
-- Built with PySide6 (Qt for Python)
-- Uses pycaw for Windows Core Audio API
+- **Author:** Oliver Ernster  
+- Built with PySide6  
+- Uses pycaw for Windows Core Audio API  
 - Packaged with PyInstaller
 
 ---
 
-**Enjoy seamless audio switching! 🎧**
+Enjoy seamless audio switching!
