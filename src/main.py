@@ -54,71 +54,76 @@ def get_resource_path(relative_path: str) -> Path:
 
 def create_splash_screen() -> QSplashScreen:
     """Create and configure the splash screen.
-    
+
     Returns:
         Configured splash screen widget
     """
-    # Create a custom splash screen with icon and text
-    splash_pixmap = QPixmap(300, 200)
+    from PySide6.QtGui import QPainter, QColor
+
+    W, H = 300, 300
+    ICON_SIZE = 100
+    GAP = 8
+
+    splash_pixmap = QPixmap(W, H)
     splash_pixmap.fill(Qt.white)
-    
-    splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
-    
-    # Create a widget to hold the content
-    content_widget = QWidget()
-    content_layout = QVBoxLayout(content_widget)
-    content_layout.setAlignment(Qt.AlignCenter)
-    
-    # Try to load and display the app icon
+
+    painter = QPainter(splash_pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+
+    # Measure text heights to compute total block height
+    font_name = QFont()
+    font_name.setPointSize(18)
+    font_name.setBold(True)
+
+    font_small = QFont()
+    font_small.setPointSize(10)
+
+    font_tiny = QFont()
+    font_tiny.setPointSize(9)
+
+    from PySide6.QtGui import QFontMetrics
+    fm_name = QFontMetrics(font_name)
+    fm_small = QFontMetrics(font_small)
+    fm_tiny = QFontMetrics(font_tiny)
+
+    lh_name = fm_name.height()
+    lh_small = fm_small.height()
+    lh_tiny = fm_tiny.height()
+
     icon_path = get_resource_path("AudioDeck.png")
-    if icon_path.exists():
-        icon_label = QLabel()
-        pixmap = QPixmap(str(icon_path))
-        scaled_pixmap = pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        icon_label.setPixmap(scaled_pixmap)
-        icon_label.setAlignment(Qt.AlignCenter)
-        content_layout.addWidget(icon_label)
-    
-    # Add app name
-    name_label = QLabel("Audio Deck")
-    name_font = QFont()
-    name_font.setPointSize(18)
-    name_font.setBold(True)
-    name_label.setFont(name_font)
-    name_label.setAlignment(Qt.AlignCenter)
-    content_layout.addWidget(name_label)
-    
-    # Add version
-    version_label = QLabel(f"Version {__version__}")
-    version_font = QFont()
-    version_font.setPointSize(10)
-    version_label.setFont(version_font)
-    version_label.setAlignment(Qt.AlignCenter)
-    content_layout.addWidget(version_label)
-    
-    # Add author
-    author_label = QLabel("by Oliver Ernster")
-    author_font = QFont()
-    author_font.setPointSize(9)
-    author_label.setFont(author_font)
-    author_label.setAlignment(Qt.AlignCenter)
-    content_layout.addWidget(author_label)
-    
-    # Add loading message
-    loading_label = QLabel("Loading...")
-    loading_font = QFont()
-    loading_font.setPointSize(9)
-    loading_font.setItalic(True)
-    loading_label.setFont(loading_font)
-    loading_label.setAlignment(Qt.AlignCenter)
-    loading_label.setStyleSheet("color: #666;")
-    content_layout.addWidget(loading_label)
-    
-    # Render the widget onto the splash screen pixmap
-    content_widget.setGeometry(0, 0, 300, 200)
-    content_widget.render(splash_pixmap)
+    has_icon = icon_path.exists()
+    icon_block = ICON_SIZE + GAP if has_icon else 0
+
+    total_h = icon_block + lh_name + GAP + lh_small + GAP + lh_tiny + GAP + lh_tiny
+    y = (H - total_h) // 2
+
+    # Draw icon
+    if has_icon:
+        icon_pixmap = QPixmap(str(icon_path)).scaled(
+            ICON_SIZE, ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        x = (W - icon_pixmap.width()) // 2
+        painter.drawPixmap(x, y, icon_pixmap)
+        y += icon_pixmap.height() + GAP
+
+    def draw_centered(text, font, color=QColor(0, 0, 0)):
+        nonlocal y
+        painter.setFont(font)
+        painter.setPen(color)
+        fm = QFontMetrics(font)
+        tw = fm.horizontalAdvance(text)
+        painter.drawText((W - tw) // 2, y + fm.ascent(), text)
+        y += fm.height() + GAP
+
+    draw_centered("Audio Deck", font_name)
+    draw_centered(f"Version {__version__}", font_small)
+    draw_centered("by Oliver Ernster", font_tiny)
+    draw_centered("Loading...", font_tiny, QColor(102, 102, 102))
+
+    painter.end()
+
+    splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
     splash.setPixmap(splash_pixmap)
-    
     return splash
 
 
