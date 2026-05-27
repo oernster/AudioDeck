@@ -139,6 +139,32 @@ def get_profiles_path() -> Path:
     return app_data / "profiles.json"
 
 
+def _set_windows_taskbar_icon(window: "QMainWindow", ico_path: Path) -> None:
+    """Set Windows taskbar icon via WM_SETICON for reliable display.
+
+    Qt's setWindowIcon does not always propagate to the Windows taskbar
+    when a custom AppUserModelID is active. Sending WM_SETICON directly
+    to the native window handle bypasses that limitation.
+    """
+    WM_SETICON = 0x0080
+    ICON_SMALL = 0
+    ICON_BIG = 1
+    IMAGE_ICON = 1
+    LR_LOADFROMFILE = 0x0010
+
+    user32 = ctypes.windll.user32
+    ico_str = str(ico_path)
+    hwnd = int(window.winId())
+
+    hicon_big = user32.LoadImageW(None, ico_str, IMAGE_ICON, 256, 256, LR_LOADFROMFILE)
+    hicon_small = user32.LoadImageW(None, ico_str, IMAGE_ICON, 16, 16, LR_LOADFROMFILE)
+
+    if hicon_big:
+        user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_big)
+    if hicon_small:
+        user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_small)
+
+
 def main() -> int:
     """Main application entry point.
 
@@ -258,9 +284,15 @@ def main() -> int:
     # Create and show main window
     main_window = MainWindow(configuration_presenter, actuation_presenter)
     main_window.show_and_raise()
-    
+
     # Close splash screen after main window is shown
     splash.finish(main_window)
+
+    # Explicitly set Windows taskbar icon via WM_SETICON after window is visible.
+    # Qt + AUMID does not reliably propagate setWindowIcon to the taskbar button,
+    # so we call the Windows API directly.
+    if sys.platform == "win32" and icon_path.exists():
+        _set_windows_taskbar_icon(main_window, icon_path)
 
     # Run application
     return app.exec()
