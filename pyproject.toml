@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio-deck"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Professional audio device switcher for Windows with Stream Deck integration"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,6 +25,9 @@ dev = [
     "mypy>=1.4.1",
     "ruff>=0.0.280",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "src.version.__version__"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

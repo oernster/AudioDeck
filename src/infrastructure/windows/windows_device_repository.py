@@ -53,11 +53,18 @@ class WindowsDeviceRepository:
             Default device or None if not found
         """
         devices = self.get_devices_by_type(device_type)
+        
+        # Fallback to the first available device if no default is found
+        if not devices:
+            return None
+
+        # Check for a default device
         for device in devices:
             if device.is_default:
                 return device
-        # Return first device if no default found
-        return devices[0] if devices else None
+
+        # If no default, return the first device in the list
+        return devices
 
     def get_device_by_id(self, device_id: str) -> Optional[AudioDevice]:
         """Get a specific device by ID.

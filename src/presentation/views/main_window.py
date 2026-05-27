@@ -420,14 +420,9 @@ Technical architecture, design patterns, and development guidelines.</p>
         author_label.setTextFormat(Qt.RichText)
         left_layout.addWidget(author_label)
         
-        subtitle_label = QLabel("<p>A professional audio device switcher for Windows<br>with Stream Deck integration.</p>")
-        subtitle_label.setTextFormat(Qt.RichText)
-        subtitle_label.setWordWrap(True)
-        left_layout.addWidget(subtitle_label)
-        
         header_layout.addLayout(left_layout)
         header_layout.addStretch()
-        
+
         # Right side: App icon
         icon_path = self._get_resource_path("AudioDeck.png")
         if icon_path.exists():
@@ -437,8 +432,13 @@ Technical architecture, design patterns, and development guidelines.</p>
             icon_label.setPixmap(scaled_pixmap)
             icon_label.setAlignment(Qt.AlignTop)
             header_layout.addWidget(icon_label)
-        
+
         layout.addLayout(header_layout)
+
+        subtitle_label = QLabel("<p>A professional audio device switcher for Windows with Stream Deck integration.</p>")
+        subtitle_label.setTextFormat(Qt.RichText)
+        subtitle_label.setWordWrap(True)
+        layout.addWidget(subtitle_label)
         
         # Add about text (features and license)
         about_text = """
@@ -450,7 +450,7 @@ Technical architecture, design patterns, and development guidelines.</p>
 <li>Profile management</li>
 </ul>
 <p><b>License:</b> GNU Lesser General Public License v3.0 (LGPL-3.0)</p>
-<p>Copyright (C) 2024 Oliver Ernster</p>
+<p>Copyright (C) 2024-2026 Oliver Ernster</p>
 <p>For more information, select <b>Help > View License</b> or <b>Help > View Documentation</b>.</p>"""
         
         text_label = QLabel(about_text)

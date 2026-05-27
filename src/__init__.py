@@ -1,3 +1,5 @@
 """Audio Deck - Professional audio device switcher."""
 
-__version__ = "1.0.1"
+from src.version import __version__
+
+__all__ = ["__version__"]

@@ -141,14 +141,16 @@ class WindowsDeviceEnumerator:
         Returns:
             List of all AudioDevice entities
         """
-        # Get default device IDs ONCE before enumeration to avoid recursion
-        self._default_output_id = self._get_default_device_id(0)
-        self._default_input_id = self._get_default_device_id(1)
+        # Get default device IDs for both render and capture
+        self._default_output_id = self._get_default_device_id(EDataFlow.eRender.value)
+        self._default_input_id = self._get_default_device_id(EDataFlow.eCapture.value)
 
-        # Get all devices ONCE to avoid calling it in the loop
-        all_devices_cache = AudioUtilities.GetAllDevices()
-
-        output_devices = self.enumerate_devices(0, all_devices_cache)  # eRender = 0
-        input_devices = self.enumerate_devices(1, all_devices_cache)  # eCapture = 1
+        # Explicitly enumerate render and capture devices
+        output_devices = self.enumerate_devices(
+            EDataFlow.eRender.value, AudioUtilities.GetAllDevices()
+        )
+        input_devices = self.enumerate_devices(
+            EDataFlow.eCapture.value, AudioUtilities.GetAllDevices()
+        )
 
         return output_devices + input_devices
