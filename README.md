@@ -1,5 +1,4 @@
-# <img width="128" height="128" alt="AudioDeck" src="https://github.com/user-attachments/assets/c0120f1d-1798-4690-b112-a8c4293e845e" />
-# Audio Deck
+# <img width="128" height="128" alt="AudioDeck" src="https://github.com/user-attachments/assets/c0120f1d-1798-4690-b112-a8c4293e845e" /> Audio Deck
 
 **A professional audio device switcher for Windows with Stream Deck integration.**
 
