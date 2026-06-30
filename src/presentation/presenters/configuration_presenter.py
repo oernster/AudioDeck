@@ -63,6 +63,10 @@ class ConfigurationPresenter(QObject):
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
             return []
+        except Exception:
+            # A transient COM error while enumerating; show an empty list
+            # rather than crash. The next refresh will recover.
+            return []
 
     def get_input_devices(self, refresh: bool = False) -> List[DeviceDTO]:
         """Get input devices.
@@ -79,6 +83,10 @@ class ConfigurationPresenter(QObject):
             )
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
+            return []
+        except Exception:
+            # A transient COM error while enumerating; show an empty list
+            # rather than crash. The next refresh will recover.
             return []
 
     def get_profiles(self) -> List[ProfileDTO]:

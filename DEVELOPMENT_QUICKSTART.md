@@ -1,71 +1,80 @@
 # Audio Deck - Quick Start Guide
 
-## Installation & Setup
+A short path from a clean checkout to a working build and a Stream Deck button.
+For the design see [ARCHITECTURE.md](ARCHITECTURE.md); for deeper developer notes
+see [DEVELOPMENT_README.md](DEVELOPMENT_README.md).
 
-### 1. Install Dependencies
+## Installation and setup
+
+### 1. Install dependencies
 
 ```bash
-# Activate virtual environment (if not already activated)
+# Activate the virtual environment if it is not already active
 venv\Scripts\activate
 
-# Install required packages
+# Install the required packages
 pip install -r requirements.txt
 ```
 
-### 2. Run from Source
+### 2. Run from source
 
 ```bash
-# Make sure you're in the AudioDeck directory
+# From the AudioDeck directory
 python src/main.py
 ```
 
-**Note**: The application will launch a GUI window. Close it normally or press Ctrl+C in the terminal.
+The application opens a GUI window. Close it normally or press Ctrl+C in the
+terminal.
 
-### 3. Build Executable
+### 3. Build the executable
 
 ```bash
-python build_exe.py
+python buildexe.py
 ```
 
-The executable will be created in `dist/AudioDeck.exe`
+The executable is created at `dist/AudioDeck.exe`.
 
 ## Usage
 
-### Configuration Mode
+### Configuration mode
 
-1. Launch Audio Deck
-2. Go to the **Configuration** tab
-3. Click **New Profile**
-4. Enter a profile name
-5. Select output device (speakers/headphones)
-6. Select input device (microphone)
-7. Click **Save Profile**
+1. Launch Audio Deck.
+2. Go to the **Configuration** tab.
+3. Click **New Profile**.
+4. Enter a profile name.
+5. Select an output device (speakers or headphones).
+6. Select an input device (microphone).
+7. Click **Save Profile**.
 
-### Quick Switch Mode
+### Quick switch mode
 
-1. Go to the **Quick Switch** tab
-2. Select a profile from the list
-3. Click **Switch to Selected Profile** (or double-click the profile)
-4. Your audio devices will instantly switch!
+1. Go to the **Quick Switch** tab.
+2. Select a profile from the list.
+3. Click **Switch to Selected Profile**, or double-click the profile.
 
-## Stream Deck Integration
+The audio devices switch immediately.
 
-AudioDeck now supports **direct profile switching** from Stream Deck! You can create buttons that instantly switch to specific profiles without opening the GUI.
+## Stream Deck integration
 
-### Quick Setup (Recommended Method)
+Audio Deck switches profiles directly from Stream Deck, so a button can change
+your audio setup without opening the GUI.
 
-#### Step 1: Build the Executable
+### Recommended setup
+
+#### Step 1: Build the executable
+
 ```bash
-python build_exe.py
+python buildexe.py
 ```
 
-#### Step 2: Get Your Profile Names
-Run the executable with the `--list` flag to see all your profiles:
+#### Step 2: List your profile names
+
 ```bash
 dist\AudioDeck.exe --list
 ```
 
 Example output:
+
 ```
 Available Audio Profiles:
 ==================================================
@@ -74,148 +83,110 @@ Available Audio Profiles:
   • Music Production (Output)
 ```
 
-**Important:** Note the exact profile names (case-sensitive!)
+Note the exact profile names, which are case sensitive.
 
-#### Step 3: Create Batch Files
+#### Step 3: Create batch files
 
-Create a `.bat` file for each profile (e.g., `gaming.bat`):
+Create a `.bat` file for each profile (for example `gaming.bat`):
+
 ```batch
 @echo off
 cd /d "C:\Users\YourName\Development\AudioDeck\dist"
 AudioDeck.exe --profile "Gaming Setup"
 ```
 
-Replace:
-- `C:\Users\YourName\Development\AudioDeck\dist` with your actual path
-- `"Gaming Setup"` with your exact profile name
-
-**Example batch files** are in `examples/streamdeck_profiles/`
+Replace the path with your own and the profile name with your exact name. Example
+batch files are in `examples/streamdeck_profiles/`.
 
 #### Step 4: Configure Stream Deck
 
-For each profile you want to control:
+1. Open the Stream Deck software.
+2. Drag a **System > Open** action onto a button.
+3. Browse to your batch file (for example `gaming.bat`).
+4. Optionally set a custom icon and a title.
 
-1. Open **Stream Deck** software
-2. Drag a **System > Open** action to a button
-3. Click the button to configure it
-4. Browse to your batch file (e.g., `gaming.bat`)
-5. (Optional) Add a custom icon:
-   - Click the icon area
-   - Choose an image or icon
-   - Adjust as needed
-6. (Optional) Add a title (e.g., "Gaming Audio")
+#### Step 5: Test
 
-#### Step 5: Test It!
+Press the Stream Deck button and the audio devices switch.
 
-Press the Stream Deck button - your audio devices should switch instantly!
+### Alternative: GUI launcher
 
-### Alternative: GUI Launcher
-
-To open the AudioDeck GUI from Stream Deck:
-
-1. In Stream Deck software, add a **System > Open** action
-2. Browse to `dist/AudioDeck.exe` (without any arguments)
-3. This will open the full GUI for manual profile management
+To open the GUI from Stream Deck, add a **System > Open** action pointing at
+`dist/AudioDeck.exe` with no arguments.
 
 ## Troubleshooting
 
-### "No devices found"
-- Ensure audio devices are connected and enabled in Windows
-- Click the 🔄 refresh button
-- Check Windows Sound settings
+### No devices found
 
-### "Profile not switching"
-- Verify devices still exist in Windows
-- Try recreating the profile
-- Check Windows permissions
+- Ensure devices are connected and enabled in Windows.
+- Use the refresh control in Audio Deck.
+- Check the Windows Sound settings.
 
-### Stream Deck button doesn't work
+### Profile not switching
 
-**Test the batch file manually first:**
-1. Navigate to your batch file location
-2. Double-click the `.bat` file
-3. Watch for any error messages in the console window
+- Confirm the devices still exist in Windows.
+- Recreate the profile if a device has been removed.
+- Check Windows permissions.
 
-**Common issues:**
+### Stream Deck button does nothing
 
-1. **"Profile not found" error**
-   - Run `AudioDeck.exe --list` to see exact profile names
-   - Profile names are **case-sensitive**
-   - Check for extra spaces or typos
+Run the batch file manually first to read any error in the console, then check:
 
-2. **"AudioDeck.exe not found" error**
-   - Verify the path in your batch file is correct
-   - Make sure you built the executable: `python build_exe.py`
-   - Use full paths in batch files (e.g., `C:\Path\To\AudioDeck\dist`)
-
-3. **Console window flashes but nothing happens**
-   - The profile might not exist anymore
-   - Devices in the profile might be disconnected
-   - Run the batch file manually to see the error message
-
-4. **Wrong profile switches**
-   - Check the profile name in the batch file matches exactly
-   - Profile names are case-sensitive: "Gaming" ≠ "gaming"
+- **Profile not found**: run `AudioDeck.exe --list` for the exact names; names
+  are case sensitive.
+- **AudioDeck.exe not found**: verify the path in the batch file and that you
+  built the executable with `python buildexe.py`.
+- **Console flashes then nothing happens**: the profile may no longer exist or a
+  device may be disconnected; run the batch file manually to see the message.
+- **Wrong profile switches**: check the name in the batch file matches exactly
+  ("Gaming" is not "gaming").
 
 ### Build errors
-- Ensure all dependencies are installed: `pip install -r requirements.txt`
-- Try cleaning build cache: delete `build/` and `dist/` folders
-- Reinstall PyInstaller: `pip install --upgrade pyinstaller`
 
-## Project Structure
+- Ensure dependencies are installed with `pip install -r requirements.txt`.
+- Delete the `build/` and `dist/` folders to clear the cache.
+- Reinstall PyInstaller with `pip install --upgrade pyinstaller`.
+
+## Project structure
 
 ```
 AudioDeck/
-├── src/
-│   ├── domain/              # Business logic
-│   ├── application/         # Use cases
-│   ├── infrastructure/      # Windows integration
-│   ├── presentation/        # GUI
-│   └── main.py             # Entry point
-├── requirements.txt
-├── build_exe.py
-├── launch_audio_deck.bat
-└── README.md
+  src/
+    domain/          Business logic
+    application/     Use cases
+    infrastructure/  Windows integration and storage
+    presentation/    GUI
+    cli/             Command-line interface
+    main.py          Entry point
+  examples/
+  requirements.txt
+  buildexe.py
+  README.md
 ```
 
-## Configuration File Location
+## Configuration file location
 
-Profiles are stored in:
 ```
 %LOCALAPPDATA%\AudioDeck\profiles.json
 ```
 
 ## Tips
 
-### GUI Tips
-- **Double-click** profiles in Quick Switch mode for faster switching
-- Use **descriptive names** for profiles (e.g., "Gaming Setup", "Work Calls")
-- Create profiles for different scenarios (gaming, meetings, music production)
-- The 🔄 button refreshes device lists if you plug in new devices
+### GUI
 
-### Stream Deck Tips
-- Create a **dedicated folder** in Stream Deck for all your audio profiles
-- Use **clear icons** for each profile (microphone for input, speaker for output)
-- Add **profile names** as button titles for easy identification
-- Test each button after setup to ensure it works correctly
-- Keep batch files in a **dedicated folder** for easy management
+- Double-click a profile in Quick Switch for faster switching.
+- Use descriptive names such as "Gaming Setup" or "Work Calls".
+- The refresh control rescans device lists when you connect a new device.
 
-### Profile Naming Tips
-- Use **simple, clear names** without special characters
-- Avoid names that are too long (they may be truncated in CLI output)
-- Be consistent with capitalization (e.g., always use "Gaming" not "gaming")
-- Consider using emojis in GUI but stick to plain text for CLI compatibility
+### Stream Deck
 
-## Next Steps
+- Keep all audio-profile batch files in one folder.
+- Use clear icons (a microphone for input, a speaker for output).
+- Add profile names as button titles.
+- Test each button after setup.
 
-1. Create your first profile
-2. Test switching between profiles
-3. Set up Stream Deck integration
-4. Enjoy seamless audio switching!
+### Profile naming
 
-## Support
-
-For issues or questions, check:
-- README.md for detailed documentation
-- Windows Event Viewer for system errors
-- Audio device settings in Windows
+- Use simple, clear names without special characters.
+- Keep names reasonably short so CLI output stays readable.
+- Be consistent with capitalisation.

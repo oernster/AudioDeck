@@ -1,8 +1,9 @@
 # AudioDeck CLI Usage Guide
 
-This guide explains how to use AudioDeck's command-line interface for Stream Deck integration.
+How to use the AudioDeck command-line interface for automation and Stream Deck
+integration.
 
-## Quick Reference
+## Quick reference
 
 ```bash
 # List all profiles
@@ -11,40 +12,45 @@ AudioDeck.exe --list
 # Switch to a profile
 AudioDeck.exe --profile "Profile Name"
 
+# Print the version
+AudioDeck.exe --version
+
 # Show help
 AudioDeck.exe --help
 
-# Show version
-AudioDeck.exe --version
-
-# Open GUI (no arguments)
+# Open the GUI (no arguments)
 AudioDeck.exe
 ```
 
-## Getting Started
+When run with no arguments the GUI opens. When run with `--list` or `--profile`
+it runs headless and returns a process exit code (0 on success, non-zero on
+error).
 
-### 1. Build the Executable
+## Getting started
+
+### 1. Build the executable
 
 ```bash
-python build_exe.py
+python buildexe.py
 ```
 
-The executable will be in `dist/AudioDeck.exe`
+The executable is created at `dist/AudioDeck.exe`.
 
-### 2. Create Profiles in GUI
+### 2. Create profiles in the GUI
 
-1. Run `AudioDeck.exe` (without arguments)
-2. Go to the **Configuration** tab
-3. Create your audio profiles (e.g., "Gaming Setup", "Work Calls")
-4. Save each profile
+1. Run `AudioDeck.exe` with no arguments.
+2. Go to the **Configuration** tab.
+3. Create your audio profiles (for example "Gaming Setup" or "Work Calls").
+4. Save each profile.
 
-### 3. List Your Profiles
+### 3. List your profiles
 
 ```bash
 dist\AudioDeck.exe --list
 ```
 
 Example output:
+
 ```
 Available Audio Profiles:
 ==================================================
@@ -59,103 +65,83 @@ Example:
   AudioDeck.exe --profile "Gaming Setup"
 ```
 
-### 4. Test Profile Switching
+### 4. Test profile switching
 
 ```bash
 dist\AudioDeck.exe --profile "Gaming Setup"
 ```
 
 Expected output:
+
 ```
 Switching to profile "Gaming Setup"...
 ✓ Profile switched successfully!
   Changed: Output and Input devices
 ```
 
-## Stream Deck Integration
+## Stream Deck integration
 
-### Creating Batch Files
+### Create batch files
 
 Create a `.bat` file for each profile:
 
-**Example: gaming.bat**
 ```batch
 @echo off
 cd /d "C:\Path\To\AudioDeck\dist"
 AudioDeck.exe --profile "Gaming Setup"
 ```
 
-**Important:**
-- Replace the path with your actual AudioDeck location
-- Use the exact profile name (case-sensitive)
-- Keep quotes around profile names with spaces
+Notes:
 
-### Method 3: Use Example Templates
+- Replace the path with your actual AudioDeck location.
+- Use the exact profile name (case sensitive).
+- Keep quotes around profile names that contain spaces.
+
+### Use the example templates
 
 Copy and modify the examples in `examples/streamdeck_profiles/`:
+
 - `gaming_profile.bat`
 - `work_profile.bat`
 - `music_profile.bat`
 
-## Stream Deck Setup
+### Set up the Stream Deck button
 
-1. Open **Stream Deck** software
-2. Add a **System > Open** action to a button
-3. Browse to your batch file
-4. (Optional) Add a custom icon
-5. (Optional) Add a title
-6. Press the button to test!
+1. Open the Stream Deck software.
+2. Add a **System > Open** action to a button.
+3. Browse to your batch file.
+4. Optionally add a custom icon and a title.
+5. Press the button to test.
 
-## Common Issues
+## Common issues
 
-### Profile Not Found
+### Profile not found
 
-**Error:** `Error: Profile "Gaming" not found.`
+Error: `Error: Profile "Gaming" not found.`
 
-**Solution:**
-1. Run `AudioDeck.exe --list` to see exact names
-2. Profile names are case-sensitive
-3. Check for typos or extra spaces
+- Run `AudioDeck.exe --list` to see the exact names.
+- Profile names are case sensitive.
+- Check for typos or extra spaces.
 
-### Path Issues
+### Path issues
 
-**Error:** `'AudioDeck.exe' is not recognized...`
+Error: `'AudioDeck.exe' is not recognized...`
 
-**Solution:**
-1. Use full path in batch file: `C:\Path\To\AudioDeck\dist\AudioDeck.exe`
-2. Or use `cd /d` to change to the correct directory first
+- Use the full path in the batch file, for example
+  `C:\Path\To\AudioDeck\dist\AudioDeck.exe`.
+- Or use `cd /d` to change to the correct directory first.
 
-### Device Not Found
+### Device not found
 
-**Error:** `Error: Device not found`
+Error: `Error: Device not found`
 
-**Solution:**
-1. The profile references a device that's disconnected
-2. Open AudioDeck GUI and update the profile
-3. Ensure all devices are connected and enabled in Windows
+- The profile references a device that is disconnected.
+- Open the GUI and update the profile.
+- Ensure all devices are connected and enabled in Windows.
 
-## Tips
+## Advanced usage
 
-### Profile Naming
-- Use simple, clear names
-- Avoid special characters
-- Be consistent with capitalization
-- Keep names reasonably short
-
-### Batch File Organization
-- Create a dedicated folder for all batch files
-- Name batch files clearly (e.g., `gaming_audio.bat`)
-- Keep batch files with your AudioDeck installation
-
-### Stream Deck Organization
-- Create a folder in Stream Deck for audio profiles
-- Use clear icons (microphone, speaker, headphones)
-- Add descriptive titles to buttons
-- Test each button after setup
-
-## Advanced Usage
-
-### Multiple Profiles in One Batch File
+### Multiple profiles in one batch file
 
 ```batch
 @echo off
@@ -170,49 +156,47 @@ if %hour% LSS 12 (
 )
 ```
 
-### Error Handling in Batch Files
+### Error handling in batch files
 
 ```batch
 @echo off
 cd /d "C:\Path\To\AudioDeck\dist"
 AudioDeck.exe --profile "Gaming Setup"
 if errorlevel 1 (
-    echo Failed to switch profile!
+    echo Failed to switch profile
     pause
 )
 ```
 
-### Silent Mode (No Console Window)
+### Silent mode (no console window)
 
-For a cleaner experience, you can use VBScript to run the batch file without showing a console:
+To run a batch file without a visible console, use a small VBScript wrapper:
 
-**run_silent.vbs**
 ```vbscript
 Set WshShell = CreateObject("WScript.Shell")
 WshShell.Run "C:\Path\To\gaming.bat", 0, False
 ```
 
-Then point Stream Deck to the `.vbs` file instead.
+Then point Stream Deck at the `.vbs` file.
 
 ## Troubleshooting
 
-### Console Window Appears Briefly
+### A console window appears briefly
 
-This is normal behavior. The console appears, switches the profile, and closes automatically.
+This is expected. The console opens, switches the profile and closes.
 
-### GUI Opens Instead of Switching
+### The GUI opens instead of switching
 
-Make sure you're using the `--profile` argument in your batch file.
+Make sure the batch file passes the `--profile` argument.
 
-### Changes Don't Take Effect
+### Changes do not take effect
 
-1. Check Windows Sound settings to verify the change
-2. Some applications may need to be restarted
-3. Try unplugging and replugging the device
+- Check the Windows Sound settings to verify the change.
+- Some applications need to be restarted to pick up the new default.
+- Try reconnecting the device.
 
 ## Support
 
-For more help:
-- Check `README.md` for detailed documentation
-- Check `QUICKSTART.md` for setup instructions
-- Review `examples/streamdeck_profiles/` for working examples
+- See `README.md` for the user documentation.
+- See `DEVELOPMENT_QUICKSTART.md` for setup instructions.
+- See `examples/streamdeck_profiles/` for working examples.

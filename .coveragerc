@@ -1,0 +1,17 @@
+[run]
+source = src
+omit =
+    */__init__.py
+    src/main.py
+    src/version.py
+    src/presentation/views/*
+    src/infrastructure/windows/device_enumerator.py
+    src/infrastructure/windows/windows_device_controller.py
+    src/domain/interfaces/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    raise NotImplementedError
+    \.\.\.

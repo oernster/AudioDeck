@@ -10,10 +10,14 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QGroupBox,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+
+# How often to rescan audio devices so newly connected hardware (for example a
+# Bluetooth headset switched on) is picked up without a manual refresh.
+DEVICE_REFRESH_INTERVAL_MS = 10000
 
 
 class ActuationView(QWidget):
@@ -31,6 +35,7 @@ class ActuationView(QWidget):
         self._setup_ui()
         self._connect_signals()
         self.refresh()
+        self._start_auto_refresh()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -68,8 +73,11 @@ class ActuationView(QWidget):
         self._switch_button.setMinimumHeight(40)
         button_layout.addWidget(self._switch_button)
 
-        self._refresh_button = QPushButton("🔄 Refresh")
-        self._refresh_button.setMinimumWidth(120)
+        self._refresh_button = QPushButton("🔄 Refresh Devices")
+        self._refresh_button.setMinimumWidth(160)
+        self._refresh_button.setToolTip(
+            "Rescan audio devices and update the current defaults"
+        )
         button_layout.addWidget(self._refresh_button)
 
         profile_layout.addLayout(button_layout)
@@ -100,6 +108,22 @@ class ActuationView(QWidget):
     def refresh(self) -> None:
         """Refresh the view with current data."""
         self._load_profiles()
+        self._load_current_devices()
+
+    def _start_auto_refresh(self) -> None:
+        """Start the periodic device rescan timer."""
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setInterval(DEVICE_REFRESH_INTERVAL_MS)
+        self._refresh_timer.timeout.connect(self._auto_refresh_devices)
+        self._refresh_timer.start()
+
+    def _auto_refresh_devices(self) -> None:
+        """Periodically rescan devices and update the current-default labels.
+
+        Only the current-device labels are refreshed, not the profile list or
+        its selection, and device reads are swallowed by the presenter, so this
+        never disturbs the user or raises a dialog.
+        """
         self._load_current_devices()
 
     def _load_profiles(self) -> None:

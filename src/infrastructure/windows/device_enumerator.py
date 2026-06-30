@@ -141,16 +141,31 @@ class WindowsDeviceEnumerator:
         Returns:
             List of all AudioDevice entities
         """
-        # Get default device IDs for both render and capture
-        self._default_output_id = self._get_default_device_id(EDataFlow.eRender.value)
-        self._default_input_id = self._get_default_device_id(EDataFlow.eCapture.value)
+        try:
+            # Get default device IDs for both render and capture
+            self._default_output_id = self._get_default_device_id(
+                EDataFlow.eRender.value
+            )
+            self._default_input_id = self._get_default_device_id(
+                EDataFlow.eCapture.value
+            )
 
-        # Explicitly enumerate render and capture devices
-        output_devices = self.enumerate_devices(
-            EDataFlow.eRender.value, AudioUtilities.GetAllDevices()
-        )
-        input_devices = self.enumerate_devices(
-            EDataFlow.eCapture.value, AudioUtilities.GetAllDevices()
-        )
+            # Fetch the friendly-name cache once; guard against COM races that
+            # can occur while audio sources are changing.
+            try:
+                all_devices_cache = AudioUtilities.GetAllDevices()
+            except Exception:
+                all_devices_cache = []
 
-        return output_devices + input_devices
+            # Explicitly enumerate render and capture devices
+            output_devices = self.enumerate_devices(
+                EDataFlow.eRender.value, all_devices_cache
+            )
+            input_devices = self.enumerate_devices(
+                EDataFlow.eCapture.value, all_devices_cache
+            )
+
+            return output_devices + input_devices
+        except Exception:
+            # Never let a device-change race crash the caller.
+            return []

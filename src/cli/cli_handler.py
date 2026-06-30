@@ -21,22 +21,44 @@ from src.cli.argument_parser import CLIArguments
 class CLIHandler:
     """Handler for CLI operations."""
 
-    def __init__(self, profiles_path: Path) -> None:
-        """Initialize CLI handler.
+    def __init__(
+        self,
+        get_profiles_use_case: GetProfilesUseCase,
+        switch_profile_use_case: SwitchProfileUseCase,
+    ) -> None:
+        """Initialize CLI handler with its use cases.
+
+        Args:
+            get_profiles_use_case: Use case for retrieving profiles
+            switch_profile_use_case: Use case for switching profiles
+        """
+        self._get_profiles_use_case = get_profiles_use_case
+        self._switch_profile_use_case = switch_profile_use_case
+
+    @classmethod
+    def from_profiles_path(
+        cls, profiles_path: Path
+    ) -> "CLIHandler":  # pragma: no cover
+        """Build a CLI handler wired to the real Windows infrastructure.
+
+        This is the CLI composition root; it is excluded from coverage because
+        it constructs platform COM objects.
 
         Args:
             profiles_path: Path to profiles JSON file
+
+        Returns:
+            A CLIHandler wired to real infrastructure.
         """
-        # Infrastructure layer
         device_enumerator = WindowsDeviceEnumerator()
         device_controller = WindowsDeviceController()
         device_repository = WindowsDeviceRepository(device_enumerator)
         profile_repository = JsonProfileRepository(profiles_path)
-
-        # Application layer
-        self._get_profiles_use_case = GetProfilesUseCase(profile_repository)
-        self._switch_profile_use_case = SwitchProfileUseCase(
-            profile_repository, device_repository, device_controller
+        return cls(
+            GetProfilesUseCase(profile_repository),
+            SwitchProfileUseCase(
+                profile_repository, device_repository, device_controller
+            ),
         )
 
     def handle(self, args: CLIArguments) -> int:
@@ -72,7 +94,9 @@ class CLIHandler:
 
         if not profiles:
             print("No profiles configured.")
-            print("\nTo create profiles, run AudioDeck without arguments to open the GUI.")
+            print(
+                "\nTo create profiles, run AudioDeck without arguments to open the GUI."
+            )
             return 0
 
         print("Available Audio Profiles:")
@@ -142,7 +166,10 @@ class CLIHandler:
             return 1
         except DeviceNotFoundException as e:
             print(f"Error: Device not found - {e}", file=sys.stderr)
-            print("\nThe profile may reference devices that are no longer available.", file=sys.stderr)
+            print(
+                "\nThe profile may reference devices that are no longer available.",
+                file=sys.stderr,
+            )
             print("Please update the profile in the GUI.", file=sys.stderr)
             return 1
         except DeviceControlException as e:

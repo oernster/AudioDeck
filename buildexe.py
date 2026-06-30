@@ -30,14 +30,17 @@ def build_executable() -> None:
         "--hidden-import=pycaw.pycaw",
         # Collect all comtypes data
         "--collect-all=comtypes",
-        # Add application icon
-        "--icon=AudioDeck.ico",
+        # Add application icon (from the generated asset set)
+        "--icon=assets/audiodeck.ico",
+        # Bundle the VERSION file so the frozen app reads the real version
+        f"--add-data={project_root / 'VERSION'};.",
+        # Bundle the generated icon set (window, taskbar, splash, about, dialogs)
+        f"--add-data={project_root / 'assets'};assets",
         # Bundle documentation and license files
         f"--add-data={project_root / 'README.md'};.",
         f"--add-data={project_root / 'LICENSE'};.",
-        f"--add-data={project_root / 'AudioDeck.ico'};.",
-        f"--add-data={project_root / 'AudioDeck.png'};.",
         # Bundle development documentation files
+        f"--add-data={project_root / 'ARCHITECTURE.md'};.",
         f"--add-data={project_root / 'DEVELOPMENT_QUICKSTART.md'};.",
         f"--add-data={project_root / 'CLI_USAGE.md'};.",
         f"--add-data={project_root / 'DEVELOPMENT_README.md'};.",

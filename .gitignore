@@ -23,6 +23,7 @@ MANIFEST
 
 # Virtual Environment
 venv/
+.venv/
 ENV/
 env/
 
@@ -53,6 +54,17 @@ dmypy.json
 build/
 dist/
 
+# Installer build outputs
+dist-installer/
+dist-installer.build/
+installer/payload/
+*.exe
+*.msi
+
+# macOS
+.DS_Store
+
 # Project specific
 profiles.json
 *.log
+NOTES.md

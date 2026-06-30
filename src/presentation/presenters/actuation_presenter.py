@@ -11,7 +11,10 @@ from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCa
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.profile_dto import ProfileDTO
 from src.domain.value_objects.device_type import DeviceType
-from src.domain.exceptions.domain_exceptions import AudioDeckException
+from src.domain.exceptions.domain_exceptions import (
+    AudioDeckException,
+    DeviceNotFoundException,
+)
 
 
 class ActuationPresenter(QObject):
@@ -19,6 +22,7 @@ class ActuationPresenter(QObject):
 
     # Signals
     error_occurred = Signal(str)
+    device_unavailable = Signal(str)  # friendly notice, not an error
     profile_switched = Signal(str)  # profile name
 
     def __init__(
@@ -57,10 +61,11 @@ class ActuationPresenter(QObject):
         Returns:
             Current output device DTO or None
         """
+        # Status read used by periodic polling: never raise a dialog, just
+        # show "None" if the device cannot be read this moment.
         try:
             return self._get_devices_use_case.get_default_device(DeviceType.OUTPUT)
-        except AudioDeckException as e:
-            self.error_occurred.emit(str(e))
+        except Exception:
             return None
 
     def get_current_input_device(self) -> Optional[DeviceDTO]:
@@ -69,10 +74,10 @@ class ActuationPresenter(QObject):
         Returns:
             Current input device DTO or None
         """
+        # Status read used by periodic polling: never raise a dialog.
         try:
             return self._get_devices_use_case.get_default_device(DeviceType.INPUT)
-        except AudioDeckException as e:
-            self.error_occurred.emit(str(e))
+        except Exception:
             return None
 
     def switch_profile(self, profile_id: UUID) -> None:
@@ -91,5 +96,16 @@ class ActuationPresenter(QObject):
             # Switch profile
             self._switch_profile_use_case.execute(profile_id)
             self.profile_switched.emit(profile.name)
+        except DeviceNotFoundException:
+            # A configured device is not currently available (for example a
+            # Bluetooth headset that is off). This is a normal condition, not
+            # a crash, so surface a friendly notice.
+            self.device_unavailable.emit(
+                f"A device in '{profile.name}' is not currently available. "
+                "Connect the device, or edit the profile in the Configuration "
+                "tab."
+            )
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
+        except Exception as e:
+            self.error_occurred.emit(f"Unexpected error switching profile: {e}")

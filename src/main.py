@@ -35,10 +35,10 @@ from src.cli.cli_handler import CLIHandler
 
 def get_resource_path(relative_path: str) -> Path:
     """Get absolute path to resource, works for dev and for PyInstaller.
-    
+
     Args:
         relative_path: Relative path to resource file
-        
+
     Returns:
         Absolute path to resource
     """
@@ -48,82 +48,140 @@ def get_resource_path(relative_path: str) -> Path:
     except AttributeError:
         # Running in development mode
         base_path = Path(__file__).parent.parent
-    
+
     return base_path / relative_path
 
 
 def create_splash_screen() -> QSplashScreen:
-    """Create and configure the splash screen.
+    """Create and configure a themed splash screen.
+
+    A rounded card with the app's purple gradient, the icon, the version and the
+    author. The version is read from the single source of truth (the VERSION
+    file, via __version__).
 
     Returns:
         Configured splash screen widget
     """
-    from PySide6.QtGui import QPainter, QColor
+    from PySide6.QtGui import (
+        QPainter,
+        QColor,
+        QFontMetrics,
+        QLinearGradient,
+        QPainterPath,
+        QPen,
+    )
 
-    W, H = 300, 300
-    ICON_SIZE = 100
-    GAP = 8
+    # Geometry and spacing (named, no magic numbers).
+    WIDTH = 440
+    HEIGHT = 300
+    CORNER_RADIUS = 18
+    BORDER_WIDTH = 2
+    ICON_SIZE = 112
+    ICON_TITLE_GAP = 16
+    TITLE_VERSION_GAP = 8
+    VERSION_AUTHOR_GAP = 4
+    BOTTOM_MARGIN = 22
 
-    splash_pixmap = QPixmap(W, H)
-    splash_pixmap.fill(Qt.white)
+    # Palette: Audio Deck signature purple, fading to dark.
+    color_top = QColor("#4a2c6a")
+    color_bottom = QColor("#262430")
+    color_border = QColor("#7b5caa")
+    color_title = QColor("#ffffff")
+    color_version = QColor("#d8ccea")
+    color_author = QColor("#b0a4c4")
+    color_loading = QColor("#8a7ea3")
+
+    splash_pixmap = QPixmap(WIDTH, HEIGHT)
+    splash_pixmap.fill(Qt.transparent)
 
     painter = QPainter(splash_pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
 
-    # Measure text heights to compute total block height
-    font_name = QFont()
-    font_name.setPointSize(18)
-    font_name.setBold(True)
+    # Rounded gradient card.
+    inset = BORDER_WIDTH
+    card = QPainterPath()
+    card.addRoundedRect(
+        inset,
+        inset,
+        WIDTH - 2 * inset,
+        HEIGHT - 2 * inset,
+        CORNER_RADIUS,
+        CORNER_RADIUS,
+    )
+    gradient = QLinearGradient(0, 0, 0, HEIGHT)
+    gradient.setColorAt(0, color_top)
+    gradient.setColorAt(1, color_bottom)
+    painter.fillPath(card, gradient)
+    painter.setPen(QPen(color_border, BORDER_WIDTH))
+    painter.drawPath(card)
 
-    font_small = QFont()
-    font_small.setPointSize(10)
+    # Fonts.
+    font_title = QFont()
+    font_title.setPointSize(22)
+    font_title.setBold(True)
+    font_version = QFont()
+    font_version.setPointSize(11)
+    font_author = QFont()
+    font_author.setPointSize(10)
+    font_loading = QFont()
+    font_loading.setPointSize(9)
 
-    font_tiny = QFont()
-    font_tiny.setPointSize(9)
+    fm_title = QFontMetrics(font_title)
+    fm_version = QFontMetrics(font_version)
+    fm_author = QFontMetrics(font_author)
 
-    from PySide6.QtGui import QFontMetrics
-    fm_name = QFontMetrics(font_name)
-    fm_small = QFontMetrics(font_small)
-    fm_tiny = QFontMetrics(font_tiny)
-
-    lh_name = fm_name.height()
-    lh_small = fm_small.height()
-    lh_tiny = fm_tiny.height()
-
-    icon_path = get_resource_path("AudioDeck.png")
+    icon_path = get_resource_path("assets/audiodeck_icon_256.png")
     has_icon = icon_path.exists()
-    icon_block = ICON_SIZE + GAP if has_icon else 0
+    icon_block = ICON_SIZE + ICON_TITLE_GAP if has_icon else 0
 
-    total_h = icon_block + lh_name + GAP + lh_small + GAP + lh_tiny + GAP + lh_tiny
-    y = (H - total_h) // 2
+    block_height = (
+        icon_block
+        + fm_title.height()
+        + TITLE_VERSION_GAP
+        + fm_version.height()
+        + VERSION_AUTHOR_GAP
+        + fm_author.height()
+    )
+    y = (HEIGHT - block_height) // 2
 
-    # Draw icon
     if has_icon:
         icon_pixmap = QPixmap(str(icon_path)).scaled(
             ICON_SIZE, ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
-        x = (W - icon_pixmap.width()) // 2
-        painter.drawPixmap(x, y, icon_pixmap)
-        y += icon_pixmap.height() + GAP
+        painter.drawPixmap((WIDTH - icon_pixmap.width()) // 2, y, icon_pixmap)
+        y += icon_pixmap.height() + ICON_TITLE_GAP
 
-    def draw_centered(text, font, color=QColor(0, 0, 0)):
+    def draw_centered(text: str, font: QFont, color: QColor, gap: int) -> None:
         nonlocal y
         painter.setFont(font)
         painter.setPen(color)
-        fm = QFontMetrics(font)
-        tw = fm.horizontalAdvance(text)
-        painter.drawText((W - tw) // 2, y + fm.ascent(), text)
-        y += fm.height() + GAP
+        metrics = QFontMetrics(font)
+        text_width = metrics.horizontalAdvance(text)
+        painter.drawText((WIDTH - text_width) // 2, y + metrics.ascent(), text)
+        y += metrics.height() + gap
 
-    draw_centered("Audio Deck", font_name)
-    draw_centered(f"Version {__version__}", font_small)
-    draw_centered("by Oliver Ernster", font_tiny)
-    draw_centered("Loading...", font_tiny, QColor(102, 102, 102))
+    draw_centered("Audio Deck", font_title, color_title, TITLE_VERSION_GAP)
+    draw_centered(
+        f"Version {__version__}", font_version, color_version, VERSION_AUTHOR_GAP
+    )
+    draw_centered("by Oliver Ernster", font_author, color_author, 0)
+
+    # Loading line pinned near the bottom edge.
+    painter.setFont(font_loading)
+    painter.setPen(color_loading)
+    fm_loading = QFontMetrics(font_loading)
+    loading_text = "Loading..."
+    loading_width = fm_loading.horizontalAdvance(loading_text)
+    painter.drawText(
+        (WIDTH - loading_width) // 2,
+        HEIGHT - BOTTOM_MARGIN,
+        loading_text,
+    )
 
     painter.end()
 
     splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
-    splash.setPixmap(splash_pixmap)
+    splash.setMask(splash_pixmap.mask())
     return splash
 
 
@@ -177,32 +235,33 @@ def main() -> int:
     # Check if CLI mode is requested
     if args.is_cli_mode:
         # Run in CLI mode (headless)
-        cli_handler = CLIHandler(get_profiles_path())
+        cli_handler = CLIHandler.from_profiles_path(get_profiles_path())
         return cli_handler.handle(args)
 
     # Run in GUI mode
     # Set Windows taskbar icon (must be done before creating QApplication)
     if sys.platform == "win32":
         # Set application user model ID to ensure proper taskbar icon display
-        myappid = 'OliverErnster.AudioDeck.1.0'  # arbitrary string
+        myappid = "OliverErnster.AudioDeck.1.0"  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    
+
     # Create Qt application
     app = QApplication(sys.argv)
     app.setApplicationName("Audio Deck")
     app.setOrganizationName("AudioDeck")
-    
+
     # Set application icon for Windows taskbar
-    icon_path = get_resource_path("AudioDeck.ico")
+    icon_path = get_resource_path("assets/audiodeck.ico")
     if icon_path.exists():
         from PySide6.QtGui import QIcon
+
         app.setWindowIcon(QIcon(str(icon_path)))
-    
+
     # Create and show splash screen
     splash = create_splash_screen()
     splash.show()
     app.processEvents()  # Process events to show splash immediately
-    
+
     # Set global font size to 1.5x larger (base font size is typically 9pt, so 13.5pt)
     # Add graduated purple background to tab buttons only
     app.setStyleSheet("""
