@@ -22,7 +22,8 @@ class ActuationPresenter(QObject):
     error_occurred = Signal(str)
     device_unavailable = Signal(str)  # friendly notice, not an error
     profile_switched = Signal(str)  # profile name
-    current_devices_changed = Signal()  # current defaults may have changed
+    # Computed off the GUI thread: (output DTO|None, input DTO|None, available ids)
+    status_ready = Signal(object, object, object)
     auto_applied = Signal(str)  # a pending device was applied on reconnect
 
     def __init__(
@@ -122,19 +123,32 @@ class ActuationPresenter(QObject):
                 self.device_unavailable.emit(self._skip_message(profile, outcome))
 
             self._remember_pending(profile_id, outcome)
+            self.refresh_status()
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
         except Exception as e:
             self.error_occurred.emit(f"Unexpected error switching profile: {e}")
 
+    def refresh_status(self) -> None:
+        """Read the current defaults and availability, and publish them.
+
+        Runs on a background thread; emits status_ready with plain data so the
+        GUI thread only renders (it never touches the audio API itself).
+        """
+        output = self.get_current_output_device()
+        input_device = self.get_current_input_device()
+        available = self.get_available_device_ids()
+        self.status_ready.emit(output, input_device, available)
+
     def on_devices_changed(self) -> None:
         """React to a device add, remove or state change.
 
-        Called by the periodic timer and by the native device-change notifier.
-        Refreshes the current-default display and, if a device a profile was
-        waiting for has reconnected, applies it automatically.
+        Called (on a background thread) by the periodic timer and the native
+        device-change notifier. Refreshes the current-default display and, if a
+        device a profile was waiting for has reconnected, applies it
+        automatically.
         """
-        self.current_devices_changed.emit()
+        self.refresh_status()
         self._reapply_pending_if_ready()
 
     def _remember_pending(self, profile_id: UUID, outcome: SwitchOutcome) -> None:

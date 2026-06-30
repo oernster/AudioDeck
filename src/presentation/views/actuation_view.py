@@ -9,19 +9,29 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QGroupBox,
+    QApplication,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QColor
 
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+from src.presentation.workers.background_runner import BackgroundRunner
 
 # Colour for a profile whose configured device is currently offline.
 _OFFLINE_COLOR = QColor("#c0392b")
 _OFFLINE_SUFFIX = "  (device offline)"
 
+# Item data roles.
+_PROFILE_ID_ROLE = Qt.UserRole
+_OUTPUT_ID_ROLE = Qt.UserRole + 1
+_INPUT_ID_ROLE = Qt.UserRole + 2
+_BASE_TEXT_ROLE = Qt.UserRole + 3
+
 # How often to rescan audio devices so newly connected hardware (for example a
 # Bluetooth headset switched on) is picked up without a manual refresh.
 DEVICE_REFRESH_INTERVAL_MS = 10000
+# Coalesce bursts of device-change events into a single rescan.
+DEVICE_CHANGE_DEBOUNCE_MS = 350
 
 
 class ActuationView(QWidget):
@@ -35,11 +45,17 @@ class ActuationView(QWidget):
         """
         super().__init__()
         self._presenter = presenter
+        self._runner = BackgroundRunner(self)
+        self._available_ids = set()
+
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._runner.stop)
 
         self._setup_ui()
         self._connect_signals()
+        self._setup_timers()
         self.refresh()
-        self._start_auto_refresh()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -108,31 +124,38 @@ class ActuationView(QWidget):
         self._profile_list.itemDoubleClicked.connect(lambda: self._on_switch_profile())
         self._switch_button.clicked.connect(self._on_switch_profile)
         self._refresh_button.clicked.connect(self.refresh)
-        self._presenter.current_devices_changed.connect(self._load_current_devices)
+        # Status computed on the worker thread arrives here (queued to the GUI).
+        self._presenter.status_ready.connect(self._on_status_ready)
 
-    def refresh(self) -> None:
-        """Refresh the view with current data."""
-        self._load_profiles()
-        self._load_current_devices()
-
-    def _start_auto_refresh(self) -> None:
-        """Start the periodic device rescan timer."""
+    def _setup_timers(self) -> None:
+        """Set up the periodic rescan and the device-change debounce timers."""
         self._refresh_timer = QTimer(self)
         self._refresh_timer.setInterval(DEVICE_REFRESH_INTERVAL_MS)
-        self._refresh_timer.timeout.connect(self._auto_refresh_devices)
+        self._refresh_timer.timeout.connect(self.handle_device_change)
         self._refresh_timer.start()
 
-    def _auto_refresh_devices(self) -> None:
-        """Periodically poll for device changes (fallback to the native notifier).
+        self._debounce = QTimer(self)
+        self._debounce.setSingleShot(True)
+        self._debounce.setInterval(DEVICE_CHANGE_DEBOUNCE_MS)
+        self._debounce.timeout.connect(
+            lambda: self._runner.submit(self._presenter.on_devices_changed)
+        )
 
-        Delegates to the presenter, which refreshes the current-default labels
-        and re-applies any profile device that has reconnected. Selection and
-        the profile list are left untouched.
+    def handle_device_change(self) -> None:
+        """Debounce a device change, then rescan on the worker thread.
+
+        Safe to call from the periodic timer and the native device-change
+        notifier; bursts are coalesced into a single rescan.
         """
-        self._presenter.on_devices_changed()
+        self._debounce.start()
+
+    def refresh(self) -> None:
+        """Reload the profile list (fast) and rescan devices in the background."""
+        self._load_profiles()
+        self._runner.submit(self._presenter.refresh_status)
 
     def _load_profiles(self) -> None:
-        """Load profiles into the list."""
+        """Load profiles into the list (reads local JSON only)."""
         self._profile_list.clear()
         profiles = self._presenter.get_profiles()
 
@@ -144,61 +167,71 @@ class ActuationView(QWidget):
             self._profile_list.addItem(item)
             return
 
-        available_ids = self._presenter.get_available_device_ids()
         for profile in profiles:
-            offline = self._profile_is_offline(profile, available_ids)
-            text = profile.display_name + (_OFFLINE_SUFFIX if offline else "")
-            item = QListWidgetItem(text)
-            item.setData(Qt.UserRole, profile.id)
-            if offline:
-                item.setForeground(_OFFLINE_COLOR)
-                item.setToolTip(
-                    "A device in this profile is not currently available. "
-                    "Switching will apply the available device(s)."
-                )
+            item = QListWidgetItem(profile.display_name)
+            item.setData(_PROFILE_ID_ROLE, profile.id)
+            item.setData(_OUTPUT_ID_ROLE, profile.output_device_id)
+            item.setData(_INPUT_ID_ROLE, profile.input_device_id)
+            item.setData(_BASE_TEXT_ROLE, profile.display_name)
             self._profile_list.addItem(item)
+            self._apply_offline_badge(item)
 
-    @staticmethod
-    def _profile_is_offline(profile, available_ids) -> bool:
-        """Return True if any device the profile needs is not available."""
-        configured = [profile.output_device_id, profile.input_device_id]
+    def _apply_offline_badge(self, item: QListWidgetItem) -> None:
+        """Mark or clear a profile item based on cached device availability."""
+        if item.data(_PROFILE_ID_ROLE) is None:
+            return
+        base_text = item.data(_BASE_TEXT_ROLE)
+        offline = self._item_is_offline(item)
+        item.setText(base_text + (_OFFLINE_SUFFIX if offline else ""))
+        if offline:
+            item.setForeground(_OFFLINE_COLOR)
+            item.setToolTip(
+                "A device in this profile is not currently available. "
+                "Switching will apply the available device(s)."
+            )
+        else:
+            item.setData(Qt.ForegroundRole, None)
+            item.setToolTip("")
+
+    def _item_is_offline(self, item: QListWidgetItem) -> bool:
+        """Return True if a profile item references an unavailable device."""
+        configured = [item.data(_OUTPUT_ID_ROLE), item.data(_INPUT_ID_ROLE)]
         return any(
-            device_id is not None and device_id not in available_ids
+            device_id is not None and device_id not in self._available_ids
             for device_id in configured
         )
 
-    def _load_current_devices(self) -> None:
-        """Load current default devices."""
-        output_device = self._presenter.get_current_output_device()
-        input_device = self._presenter.get_current_input_device()
+    def _on_status_ready(self, output_device, input_device, available_ids) -> None:
+        """Render device status produced on the worker thread."""
+        self._available_ids = available_ids or set()
 
-        if output_device:
-            self._current_output_label.setText(f"Output: {output_device.name}")
-        else:
-            self._current_output_label.setText("Output: None")
+        self._current_output_label.setText(
+            f"Output: {output_device.name}" if output_device else "Output: None"
+        )
+        self._current_input_label.setText(
+            f"Input: {input_device.name}" if input_device else "Input: None"
+        )
 
-        if input_device:
-            self._current_input_label.setText(f"Input: {input_device.name}")
-        else:
-            self._current_input_label.setText("Input: None")
+        for row in range(self._profile_list.count()):
+            self._apply_offline_badge(self._profile_list.item(row))
 
     def _on_profile_selection_changed(self) -> None:
         """Handle profile selection change."""
         selected_items = self._profile_list.selectedItems()
         has_valid_selection = (
-            len(selected_items) > 0 and selected_items[0].data(Qt.UserRole) is not None
+            len(selected_items) > 0
+            and selected_items[0].data(_PROFILE_ID_ROLE) is not None
         )
         self._switch_button.setEnabled(has_valid_selection)
 
     def _on_switch_profile(self) -> None:
-        """Handle switch profile button click."""
+        """Handle switch profile request (runs on the worker thread)."""
         selected_items = self._profile_list.selectedItems()
         if not selected_items:
             return
 
-        profile_id = selected_items[0].data(Qt.UserRole)
+        profile_id = selected_items[0].data(_PROFILE_ID_ROLE)
         if profile_id is None:
             return
 
-        self._presenter.switch_profile(profile_id)
-        self._load_current_devices()
+        self._runner.submit(self._presenter.switch_profile, profile_id)

@@ -29,9 +29,9 @@ def collect(signal):
     return received
 
 
-def collect_void(signal):
+def collect_args(signal):
     received = []
-    signal.connect(lambda: received.append(True))
+    signal.connect(lambda *args: received.append(args))
     return received
 
 
@@ -196,13 +196,26 @@ def _arm_pending(switch_uc, devices_uc, profiles_uc):
     return presenter, dto
 
 
+def test_refresh_status_emits(qtbot):
+    out = device_dto("dev-out", DeviceState.AVAILABLE)
+    presenter = presenter_with(
+        devices_uc=FakeGetDevicesUseCase(default=out, devices=[out])
+    )
+    status = collect_args(presenter.status_ready)
+    presenter.refresh_status()
+    assert status
+    output_dto, input_dto, available = status[0]
+    assert output_dto.id == "dev-out"
+    assert available == {"dev-out"}
+
+
 def test_on_devices_changed_no_pending(qtbot):
     switch = FakeSwitchUseCase()
     presenter = presenter_with(switch_uc=switch)
-    changed = collect_void(presenter.current_devices_changed)
+    status = collect_args(presenter.status_ready)
     applied = collect(presenter.auto_applied)
     presenter.on_devices_changed()
-    assert changed and not applied
+    assert status and not applied
     assert switch.executed == []
 
 

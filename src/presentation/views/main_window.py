@@ -19,18 +19,22 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QMenu,
     QToolButton,
+    QApplication,
 )
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QAction, QIcon, QPixmap, QDesktopServices
 
 from src import __version__
+from src.presentation.views.configuration_view import ConfigurationView
+from src.presentation.views.actuation_view import ActuationView
+from src.presentation.notifiers.device_change_notifier import (
+    WindowsDeviceChangeNotifier,
+)
+from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
+from src.presentation.presenters.actuation_presenter import ActuationPresenter
 
 # GitHub releases page for the Check for Updates action.
 RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
-from src.presentation.views.configuration_view import ConfigurationView
-from src.presentation.views.actuation_view import ActuationView
-from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
-from src.presentation.presenters.actuation_presenter import ActuationPresenter
 
 
 class MainWindow(QMainWindow):
@@ -85,6 +89,19 @@ class MainWindow(QMainWindow):
         # Add tabs
         self._tab_widget.addTab(self._actuation_view, "Quick Switch")
         self._tab_widget.addTab(self._configuration_view, "Configuration")
+
+        # React to device changes via the native notifier (debounced in the view)
+        self._install_device_notifier()
+
+    def _install_device_notifier(self) -> None:
+        """Install the native device-change notifier on the application."""
+        app = QApplication.instance()
+        if app is None:
+            return
+        self._device_notifier = WindowsDeviceChangeNotifier(
+            self._actuation_view.handle_device_change
+        )
+        self._device_notifier.install(app)
 
     def _create_help_button(self) -> None:
         """Create Help button in the tab widget corner."""

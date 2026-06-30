@@ -6,6 +6,7 @@ omit =
     src/version.py
     src/presentation/views/*
     src/presentation/notifiers/*
+    src/presentation/workers/*
     src/infrastructure/windows/device_enumerator.py
     src/infrastructure/windows/windows_device_controller.py
     src/domain/interfaces/*

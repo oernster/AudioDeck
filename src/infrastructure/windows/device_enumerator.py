@@ -1,11 +1,22 @@
 """Windows device enumerator using pycaw."""
 
+import warnings
 from typing import List, Optional
 from pycaw.pycaw import AudioUtilities, DEVICE_STATE, EDataFlow, ERole
 
 from src.domain.entities.audio_device import AudioDevice
 from src.domain.value_objects.device_type import DeviceType
 from src.domain.value_objects.device_state import DeviceState
+
+# pycaw raises a UserWarning while building its device list whenever it cannot
+# read a friendly name from an inactive device (disconnected or disabled). That
+# is expected now that those devices are enumerated, so silence that one noise.
+warnings.filterwarnings(
+    "ignore",
+    message="COMError attempting to get property",
+    category=UserWarning,
+    module=r"pycaw\.utils",
+)
 
 # Enumerate devices that are usable now or that the user could reasonably pick
 # and connect later (for example a Bluetooth headset that is currently off).
