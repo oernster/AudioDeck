@@ -1,4 +1,4 @@
-# <img width="64" height="64" alt="audiodeck" src="https://github.com/user-attachments/assets/57e8cdc3-e6cc-47bf-8b21-6c7ffdc53642" /> Audio Deck
+# Audio Deck
 
 A local-first audio device switcher for Windows, with a GUI, a command-line
 interface and Stream Deck integration.
