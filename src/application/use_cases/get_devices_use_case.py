@@ -45,7 +45,7 @@ class GetDevicesUseCase:
                 name=device.name,
                 device_type=device.device_type,
                 is_default=device.is_default,
-                is_enabled=device.is_enabled,
+                state=device.state,
             )
             for device in devices
         ]
@@ -74,5 +74,5 @@ class GetDevicesUseCase:
             name=device.name,
             device_type=device.device_type,
             is_default=device.is_default,
-            is_enabled=device.is_enabled,
+            state=device.state,
         )

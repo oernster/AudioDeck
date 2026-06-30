@@ -6,26 +6,36 @@ from uuid import uuid4
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.profile_dto import ProfileDTO
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
 
 
-def device(is_default=False, is_enabled=True):
-    return DeviceDTO("id", "Speakers", DeviceType.OUTPUT, is_default, is_enabled)
+def device(is_default=False, state=DeviceState.AVAILABLE):
+    return DeviceDTO("id", "Speakers", DeviceType.OUTPUT, is_default, state)
 
 
 def test_device_display_name_default():
     assert device(is_default=True).display_name == "Speakers (Default)"
 
 
-def test_device_display_name_disabled():
-    assert device(is_enabled=False).display_name == "Speakers (Disabled)"
+def test_device_display_name_disconnected():
+    assert device(state=DeviceState.DISCONNECTED).display_name == (
+        "Speakers (Disconnected)"
+    )
 
 
-def test_device_display_name_default_and_disabled():
-    assert device(True, False).display_name == "Speakers (Default, Disabled)"
+def test_device_display_name_default_and_disconnected():
+    assert device(True, DeviceState.DISCONNECTED).display_name == (
+        "Speakers (Default, Disconnected)"
+    )
 
 
 def test_device_display_name_plain():
     assert device().display_name == "Speakers"
+
+
+def test_device_is_available():
+    assert device().is_available is True
+    assert device(state=DeviceState.DISABLED).is_available is False
 
 
 def test_device_type_display():

@@ -3,17 +3,23 @@
 from src.cli.cli_handler import CLIHandler
 from src.cli.argument_parser import CLIArguments
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
-from src.domain.exceptions.domain_exceptions import (
-    DeviceControlException,
-    DeviceNotFoundException,
-    ProfileNotFoundException,
+from src.application.dtos.switch_outcome import (
+    SkipReason,
+    SkippedDevice,
+    SwitchOutcome,
 )
+from src.domain.value_objects.device_type import DeviceType
+from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
 
 from tests.conftest import FakeGetProfilesUseCase, FakeSwitchUseCase, save_profile
 
 
 def handler(profile_repo, switch=None):
     return CLIHandler(GetProfilesUseCase(profile_repo), switch or FakeSwitchUseCase())
+
+
+def applied_outcome(*types):
+    return SwitchOutcome(applied=tuple(types), skipped=())
 
 
 def test_list_profiles_with_all_combos(profile_repo, capsys):
@@ -53,7 +59,10 @@ def test_handle_unexpected_exception(profile_repo, capsys):
 
 def test_switch_success_both(profile_repo, capsys):
     save_profile(profile_repo, "Both", "o", "i")
-    code = handler(profile_repo).handle(CLIArguments(profile_name="Both"))
+    switch = FakeSwitchUseCase(
+        outcome=applied_outcome(DeviceType.OUTPUT, DeviceType.INPUT)
+    )
+    code = handler(profile_repo, switch).handle(CLIArguments(profile_name="Both"))
     out = capsys.readouterr().out
     assert code == 0
     assert "switched successfully" in out
@@ -62,13 +71,15 @@ def test_switch_success_both(profile_repo, capsys):
 
 def test_switch_success_output_only(profile_repo, capsys):
     save_profile(profile_repo, "Out", "o", None)
-    handler(profile_repo).handle(CLIArguments(profile_name="Out"))
+    switch = FakeSwitchUseCase(outcome=applied_outcome(DeviceType.OUTPUT))
+    handler(profile_repo, switch).handle(CLIArguments(profile_name="Out"))
     assert "Changed: Output device" in capsys.readouterr().out
 
 
 def test_switch_success_input_only(profile_repo, capsys):
     save_profile(profile_repo, "In", None, "i")
-    handler(profile_repo).handle(CLIArguments(profile_name="In"))
+    switch = FakeSwitchUseCase(outcome=applied_outcome(DeviceType.INPUT))
+    handler(profile_repo, switch).handle(CLIArguments(profile_name="In"))
     assert "Changed: Input device" in capsys.readouterr().out
 
 
@@ -96,19 +107,30 @@ def test_switch_profile_not_found_exception(profile_repo, capsys):
     assert "Error:" in capsys.readouterr().err
 
 
-def test_switch_device_not_found_exception(profile_repo, capsys):
+def test_switch_nothing_available(profile_repo, capsys):
     save_profile(profile_repo, "P", "o", "i")
-    switch = FakeSwitchUseCase(error=DeviceNotFoundException("dev"))
-    code = handler(profile_repo, switch).handle(CLIArguments(profile_name="P"))
+    outcome = SwitchOutcome(
+        applied=(),
+        skipped=(SkippedDevice(DeviceType.OUTPUT, "o", SkipReason.UNAVAILABLE),),
+    )
+    code = handler(profile_repo, FakeSwitchUseCase(outcome=outcome)).handle(
+        CLIArguments(profile_name="P")
+    )
     err = capsys.readouterr().err
     assert code == 1
-    assert "Device not found" in err
+    assert "were not available" in err
 
 
-def test_switch_device_control_exception(profile_repo, capsys):
+def test_switch_partial(profile_repo, capsys):
     save_profile(profile_repo, "P", "o", "i")
-    switch = FakeSwitchUseCase(error=DeviceControlException("nope"))
-    code = handler(profile_repo, switch).handle(CLIArguments(profile_name="P"))
-    err = capsys.readouterr().err
-    assert code == 1
-    assert "Failed to switch devices" in err
+    outcome = SwitchOutcome(
+        applied=(DeviceType.OUTPUT,),
+        skipped=(SkippedDevice(DeviceType.INPUT, "i", SkipReason.UNAVAILABLE),),
+    )
+    code = handler(profile_repo, FakeSwitchUseCase(outcome=outcome)).handle(
+        CLIArguments(profile_name="P")
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "switched successfully" in captured.out
+    assert "were not available" in captured.err

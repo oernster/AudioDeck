@@ -64,15 +64,20 @@ The codebase is a clean, layered architecture
 The full description, the dependency direction, the execution flow and the
 enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
 
-- **Domain**: `AudioDevice` and `AudioProfile` entities, `DeviceType`, the
-  repository and controller Protocols, and the exception hierarchy.
+- **Domain**: `AudioDevice` and `AudioProfile` entities, `DeviceType` and
+  `DeviceState` value objects, the repository and controller Protocols, and the
+  exception hierarchy.
 - **Application**: the use cases (`GetDevices`, `GetProfiles`, `CreateProfile`,
-  `UpdateProfile`, `DeleteProfile`, `SwitchProfile`) and the DTOs.
+  `UpdateProfile`, `DeleteProfile`, `SwitchProfile`) and the DTOs (`DeviceDTO`,
+  `ProfileDTO`, `SwitchOutcome`). `SwitchProfile` returns a `SwitchOutcome` so a
+  profile applies its available devices and reports any that are skipped.
 - **Infrastructure**: `WindowsDeviceEnumerator`, `WindowsDeviceController` and
   `WindowsDeviceRepository` (Core Audio via pycaw and comtypes), and
-  `JsonProfileRepository`.
+  `JsonProfileRepository`. The enumerator lists disconnected and disabled devices
+  too, so they can be selected.
 - **Presentation**: `MainWindow`, `ConfigurationView`, `ActuationView` and their
-  presenters (MVP).
+  presenters (MVP), plus `WindowsDeviceChangeNotifier` (a `WM_DEVICECHANGE`
+  filter) that drives live updates and auto-apply on reconnect.
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
 
 ## Development workflow

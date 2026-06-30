@@ -5,6 +5,7 @@ from src.presentation.presenters.configuration_presenter import (
 )
 from src.application.dtos.device_dto import DeviceDTO
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
 from src.domain.exceptions.domain_exceptions import (
     ProfileNotFoundException,
     ProfileStorageException,
@@ -20,7 +21,7 @@ from tests.conftest import (
 
 
 def device_dto():
-    return DeviceDTO("d", "Dev", DeviceType.OUTPUT, False, True)
+    return DeviceDTO("d", "Dev", DeviceType.OUTPUT, False, DeviceState.AVAILABLE)
 
 
 def collect(signal):

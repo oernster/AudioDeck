@@ -42,7 +42,7 @@ def test_get_default_device_none_when_empty():
 
 
 def test_get_default_device_with_refresh():
-    device = make_device("only", "Only", DeviceType.INPUT, False, True)
+    device = make_device("only", "Only", DeviceType.INPUT, False)
     repo = WindowsDeviceRepository(FakeEnumerator([device]), auto_refresh=False)
     use_case = GetDevicesUseCase(repo)
     # No default flagged, so the first device is returned after refresh.

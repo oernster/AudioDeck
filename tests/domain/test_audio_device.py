@@ -4,47 +4,55 @@ import pytest
 
 from src.domain.entities.audio_device import AudioDevice
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
+
+
+def make(is_default=False, state=DeviceState.AVAILABLE):
+    return AudioDevice("id", "Speakers", DeviceType.OUTPUT, is_default, state)
 
 
 def test_valid_device():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, False, True)
+    device = make()
     assert device.id == "id"
-    assert device.name == "Speakers"
+    assert device.is_available is True
 
 
 def test_empty_id_raises():
     with pytest.raises(ValueError, match="Device ID cannot be empty"):
-        AudioDevice("", "Speakers", DeviceType.OUTPUT, False, True)
+        AudioDevice("", "Speakers", DeviceType.OUTPUT, False, DeviceState.AVAILABLE)
 
 
 def test_empty_name_raises():
     with pytest.raises(ValueError, match="Device name cannot be empty"):
-        AudioDevice("id", "", DeviceType.OUTPUT, False, True)
+        AudioDevice("id", "", DeviceType.OUTPUT, False, DeviceState.AVAILABLE)
 
 
-def test_with_default_returns_new_instance():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, False, True)
+def test_is_available_false_when_disconnected():
+    assert make(state=DeviceState.DISCONNECTED).is_available is False
+
+
+def test_with_default_preserves_state():
+    device = make(is_default=False, state=DeviceState.DISCONNECTED)
     updated = device.with_default(True)
     assert updated.is_default is True
+    assert updated.state is DeviceState.DISCONNECTED
     assert device.is_default is False
-    assert updated.id == device.id
 
 
 def test_display_name_default():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, True, True)
-    assert device.display_name == "Speakers (Default)"
+    assert make(is_default=True).display_name == "Speakers (Default)"
 
 
-def test_display_name_disabled():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, False, False)
-    assert device.display_name == "Speakers (Disabled)"
+def test_display_name_disconnected():
+    assert make(state=DeviceState.DISCONNECTED).display_name == (
+        "Speakers (Disconnected)"
+    )
 
 
-def test_display_name_default_and_disabled():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, True, False)
-    assert device.display_name == "Speakers (Default, Disabled)"
+def test_display_name_default_and_disconnected():
+    device = make(is_default=True, state=DeviceState.DISCONNECTED)
+    assert device.display_name == "Speakers (Default, Disconnected)"
 
 
 def test_display_name_plain():
-    device = AudioDevice("id", "Speakers", DeviceType.OUTPUT, False, True)
-    assert device.display_name == "Speakers"
+    assert make().display_name == "Speakers"

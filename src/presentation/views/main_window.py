@@ -20,10 +20,13 @@ from PySide6.QtWidgets import (
     QMenu,
     QToolButton,
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QIcon, QPixmap
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QAction, QIcon, QPixmap, QDesktopServices
 
 from src import __version__
+
+# GitHub releases page for the Check for Updates action.
+RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
@@ -128,6 +131,13 @@ class MainWindow(QMainWindow):
         license_action = QAction("View License (LGPL-3.0)", self)
         license_action.triggered.connect(self._show_license)
         help_menu.addAction(license_action)
+
+        help_menu.addSeparator()
+
+        # Check for Updates action
+        updates_action = QAction("Check for Updates", self)
+        updates_action.triggered.connect(self._check_for_updates)
+        help_menu.addAction(updates_action)
 
         help_menu.addSeparator()
 
@@ -402,6 +412,10 @@ Technical architecture, design patterns, and development guidelines.</p>
 
         dialog.exec()
 
+    def _check_for_updates(self) -> None:
+        """Open the GitHub releases page in the default browser."""
+        QDesktopServices.openUrl(QUrl(RELEASES_URL))
+
     def _show_about(self) -> None:
         """Show the About dialog."""
         # Create custom dialog instead of QMessageBox for better layout control
@@ -490,6 +504,9 @@ Technical architecture, design patterns, and development guidelines.</p>
         # Friendly notice when a profile's device is not currently available
         self._actuation_presenter.device_unavailable.connect(self._show_notice)
 
+        # Brief status when a reconnected device is applied automatically
+        self._actuation_presenter.auto_applied.connect(self._on_auto_applied)
+
         # Connect success signals
         self._configuration_presenter.profile_saved.connect(self._on_profile_saved)
         self._actuation_presenter.profile_switched.connect(self._on_profile_switched)
@@ -534,6 +551,14 @@ Technical architecture, design patterns, and development guidelines.</p>
         )
         # Refresh actuation view to show new profile
         self._actuation_view.refresh()
+
+    def _on_auto_applied(self, message: str) -> None:
+        """Show a brief status message when a reconnected device is applied.
+
+        Args:
+            message: Description of the auto-applied profile.
+        """
+        self.statusBar().showMessage(message, 5000)
 
     def _on_profile_switched(self, profile_name: str) -> None:
         """Handle profile switched event.

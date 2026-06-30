@@ -32,8 +32,8 @@ def test_get_devices_by_type(devices):
 
 def test_get_default_returns_flagged_default():
     items = [
-        make_device("a", "A", DeviceType.OUTPUT, False, True),
-        make_device("b", "B", DeviceType.OUTPUT, True, True),
+        make_device("a", "A", DeviceType.OUTPUT, False),
+        make_device("b", "B", DeviceType.OUTPUT, True),
     ]
     repo = WindowsDeviceRepository(FakeEnumerator(items))
     assert repo.get_default_device(DeviceType.OUTPUT).id == "b"
@@ -41,8 +41,8 @@ def test_get_default_returns_flagged_default():
 
 def test_get_default_falls_back_to_first():
     items = [
-        make_device("a", "A", DeviceType.OUTPUT, False, True),
-        make_device("b", "B", DeviceType.OUTPUT, False, True),
+        make_device("a", "A", DeviceType.OUTPUT, False),
+        make_device("b", "B", DeviceType.OUTPUT, False),
     ]
     repo = WindowsDeviceRepository(FakeEnumerator(items))
     assert repo.get_default_device(DeviceType.OUTPUT).id == "a"

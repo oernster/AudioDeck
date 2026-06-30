@@ -29,6 +29,9 @@ from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCa
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views.main_window import MainWindow
+from src.presentation.notifiers.device_change_notifier import (
+    WindowsDeviceChangeNotifier,
+)
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
 
@@ -339,6 +342,13 @@ def main() -> int:
     actuation_presenter = ActuationPresenter(
         get_devices_use_case, get_profiles_use_case, switch_profile_use_case
     )
+
+    # React to device add/remove/change events instantly (the periodic timer
+    # in the actuation view remains as a fallback).
+    device_change_notifier = WindowsDeviceChangeNotifier(
+        actuation_presenter.on_devices_changed
+    )
+    device_change_notifier.install(app)
 
     # Create and show main window
     main_window = MainWindow(configuration_presenter, actuation_presenter)

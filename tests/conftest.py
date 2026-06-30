@@ -16,7 +16,9 @@ import pytest
 from src.domain.entities.audio_device import AudioDevice
 from src.domain.entities.audio_profile import AudioProfile
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
 from src.application.dtos.profile_dto import ProfileDTO
+from src.application.dtos.switch_outcome import SwitchOutcome
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
 )
@@ -96,16 +98,24 @@ class FakeGetProfilesUseCase:
 
 
 class FakeSwitchUseCase:
-    """Stub for SwitchProfileUseCase used by presenter and CLI tests."""
+    """Stub for SwitchProfileUseCase returning a SwitchOutcome or raising.
 
-    def __init__(self, error=None):
+    Defaults to a fully-applied output-and-input outcome so simple success
+    tests need no configuration.
+    """
+
+    def __init__(self, outcome=None, error=None):
         self.error = error
+        self.outcome = outcome
         self.executed = []
 
     def execute(self, profile_id):
         if self.error is not None:
             raise self.error
         self.executed.append(profile_id)
+        if self.outcome is not None:
+            return self.outcome
+        return SwitchOutcome(applied=(DeviceType.OUTPUT, DeviceType.INPUT), skipped=())
 
 
 class FakeMutateProfileUseCase:
@@ -144,10 +154,10 @@ def make_device(
     name="Speakers",
     device_type=DeviceType.OUTPUT,
     is_default=False,
-    is_enabled=True,
+    state=DeviceState.AVAILABLE,
 ) -> AudioDevice:
     """Build an AudioDevice for tests."""
-    return AudioDevice(device_id, name, device_type, is_default, is_enabled)
+    return AudioDevice(device_id, name, device_type, is_default, state)
 
 
 def make_profile_dto(
@@ -191,12 +201,12 @@ def save_profile(
 
 @pytest.fixture
 def output_device() -> AudioDevice:
-    return make_device("dev-out", "Speakers", DeviceType.OUTPUT, True, True)
+    return make_device("dev-out", "Speakers", DeviceType.OUTPUT, True)
 
 
 @pytest.fixture
 def input_device() -> AudioDevice:
-    return make_device("dev-in", "Microphone", DeviceType.INPUT, True, True)
+    return make_device("dev-in", "Microphone", DeviceType.INPUT, True)
 
 
 @pytest.fixture

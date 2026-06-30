@@ -10,11 +10,7 @@ from src.infrastructure.windows.windows_device_repository import WindowsDeviceRe
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
-from src.domain.exceptions.domain_exceptions import (
-    ProfileNotFoundException,
-    DeviceNotFoundException,
-    DeviceControlException,
-)
+from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
 from src.cli.argument_parser import CLIArguments
 
 
@@ -148,30 +144,28 @@ class CLIHandler:
         # Switch to profile
         try:
             print(f'Switching to profile "{profile_name}"...')
-            self._switch_profile_use_case.execute(profile_dto.id)
-            print("✓ Profile switched successfully!")
-
-            # Show what was changed
-            if profile_dto.has_output and profile_dto.has_input:
-                print("  Changed: Output and Input devices")
-            elif profile_dto.has_output:
-                print("  Changed: Output device")
-            elif profile_dto.has_input:
-                print("  Changed: Input device")
-
-            return 0
-
+            outcome = self._switch_profile_use_case.execute(profile_dto.id)
         except ProfileNotFoundException as e:
             print(f"Error: {e}", file=sys.stderr)
             return 1
-        except DeviceNotFoundException as e:
-            print(f"Error: Device not found - {e}", file=sys.stderr)
+
+        if outcome.anything_applied:
+            print("✓ Profile switched successfully!")
+            changed = " and ".join(
+                device_type.display_name for device_type in outcome.applied
+            )
+            print(f"  Changed: {changed} device(s)")
+
+        if outcome.skipped:
             print(
-                "\nThe profile may reference devices that are no longer available.",
+                "\nSome devices were not available and were skipped:",
                 file=sys.stderr,
             )
-            print("Please update the profile in the GUI.", file=sys.stderr)
-            return 1
-        except DeviceControlException as e:
-            print(f"Error: Failed to switch devices - {e}", file=sys.stderr)
-            return 1
+            for skipped in outcome.skipped:
+                print(
+                    f"  - {skipped.device_type.display_name} "
+                    f"({skipped.reason.label})",
+                    file=sys.stderr,
+                )
+
+        return 0 if outcome.anything_applied else 1

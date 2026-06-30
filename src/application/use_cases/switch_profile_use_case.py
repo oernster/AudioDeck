@@ -1,6 +1,7 @@
 """Use case for switching audio profiles."""
 
 import time
+from typing import List
 from uuid import UUID
 
 from src.domain.interfaces.profile_repository import IProfileRepository
@@ -9,9 +10,17 @@ from src.domain.interfaces.device_controller import IDeviceController
 from src.domain.value_objects.device_type import DeviceType
 from src.domain.exceptions.domain_exceptions import (
     ProfileNotFoundException,
-    DeviceNotFoundException,
     DeviceControlException,
 )
+from src.application.dtos.switch_outcome import (
+    SkipReason,
+    SkippedDevice,
+    SwitchOutcome,
+)
+
+# Settle time after each default-device change, so Windows applies it.
+_SETTLE_SECONDS = 0.1
+_FINAL_SETTLE_SECONDS = 0.2
 
 
 class SwitchProfileUseCase:
@@ -34,74 +43,69 @@ class SwitchProfileUseCase:
         self._device_repository = device_repository
         self._device_controller = device_controller
 
-    def execute(self, profile_id: UUID) -> None:
+    def execute(self, profile_id: UUID) -> SwitchOutcome:
         """Switch to the specified audio profile.
 
-        This will set the default input and/or output devices
-        according to the profile configuration.
+        Each configured device is applied independently. A device that is
+        missing, unavailable, the wrong type or that fails to set is skipped
+        and reported, rather than aborting the whole switch.
 
         Args:
             profile_id: ID of profile to switch to
 
+        Returns:
+            A SwitchOutcome listing applied and skipped devices.
+
         Raises:
-            ProfileNotFoundException: If profile doesn't exist
-            DeviceNotFoundException: If configured device doesn't exist
-            DeviceControlException: If device switching fails
+            ProfileNotFoundException: If the profile does not exist.
         """
-        # Get profile
         profile = self._profile_repository.get_by_id(profile_id)
         if profile is None:
             raise ProfileNotFoundException(f"Profile with ID {profile_id} not found")
 
-        # Refresh device list to ensure we have current state
+        # Refresh device list to ensure we have current state.
         self._device_repository.refresh()
 
-        # Switch output device if configured
-        if profile.output_device_id is not None:
-            output_device = self._device_repository.get_device_by_id(
-                profile.output_device_id
-            )
-            if output_device is None:
-                raise DeviceNotFoundException(
-                    f"Output device {profile.output_device_id} not found"
-                )
+        applied: List[DeviceType] = []
+        skipped: List[SkippedDevice] = []
 
-            if output_device.device_type != DeviceType.OUTPUT:
-                raise DeviceControlException(
-                    f"Device {profile.output_device_id} is not an output device"
-                )
+        slots = (
+            (DeviceType.OUTPUT, profile.output_device_id),
+            (DeviceType.INPUT, profile.input_device_id),
+        )
+        for device_type, device_id in slots:
+            if device_id is None:
+                continue
+            self._apply_slot(device_type, device_id, applied, skipped)
 
-            self._device_controller.set_default_device(
-                profile.output_device_id, DeviceType.OUTPUT
-            )
-
-            # Give Windows a moment to process the change
-            time.sleep(0.1)
-
-        # Switch input device if configured
-        if profile.input_device_id is not None:
-            input_device = self._device_repository.get_device_by_id(
-                profile.input_device_id
-            )
-            if input_device is None:
-                raise DeviceNotFoundException(
-                    f"Input device {profile.input_device_id} not found"
-                )
-
-            if input_device.device_type != DeviceType.INPUT:
-                raise DeviceControlException(
-                    f"Device {profile.input_device_id} is not an input device"
-                )
-
-            self._device_controller.set_default_device(
-                profile.input_device_id, DeviceType.INPUT
-            )
-
-            # Give Windows a moment to process the change
-            time.sleep(0.1)
-
-        # Refresh device list after changes
+        # Refresh device list after changes.
         self._device_controller.refresh_devices()
+        time.sleep(_FINAL_SETTLE_SECONDS)
 
-        # Additional delay to ensure Windows has fully processed both changes
-        time.sleep(0.2)
+        return SwitchOutcome(tuple(applied), tuple(skipped))
+
+    def _apply_slot(
+        self,
+        device_type: DeviceType,
+        device_id: str,
+        applied: List[DeviceType],
+        skipped: List[SkippedDevice],
+    ) -> None:
+        """Apply a single device slot, recording the outcome."""
+        device = self._device_repository.get_device_by_id(device_id)
+        if device is None or not device.is_available:
+            skipped.append(
+                SkippedDevice(device_type, device_id, SkipReason.UNAVAILABLE)
+            )
+            return
+        if device.device_type != device_type:
+            skipped.append(SkippedDevice(device_type, device_id, SkipReason.WRONG_TYPE))
+            return
+        try:
+            self._device_controller.set_default_device(device_id, device_type)
+            applied.append(device_type)
+            time.sleep(_SETTLE_SECONDS)
+        except DeviceControlException:
+            skipped.append(
+                SkippedDevice(device_type, device_id, SkipReason.CONTROL_FAILED)
+            )

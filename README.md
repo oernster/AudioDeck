@@ -37,7 +37,12 @@ account, no cloud and no background service.
 - Quick switching between saved audio profiles.
 - A GUI for creating, editing and deleting profiles.
 - A command-line interface for automation and Stream Deck.
-- Automatic and on-demand rescanning of available devices.
+- Selecting devices that are not connected yet (for example a Bluetooth headset
+  that is currently off), which are applied automatically when they reconnect.
+- Partial switching: the available devices in a profile are applied even if one
+  is currently missing, and the missing one is reported.
+- Automatic and on-demand rescanning of devices, with offline devices marked.
+- Check for updates from the Help menu.
 - Profiles persisted locally with no external dependencies.
 
 ## Stack
@@ -81,8 +86,11 @@ No installation step is required and the app runs per user without admin rights.
 2. Select a profile.
 3. Click **Switch to Selected Profile**, or double-click the profile.
 
-Use the refresh control if you have just connected a device such as a Bluetooth
-headset; the device list also rescans periodically on its own.
+A profile whose device is currently offline is marked in the list. Switching to
+it applies whatever devices are available now; a device that is off is applied
+automatically the moment it reconnects (for example when you turn on a Bluetooth
+headset). The device list rescans on device changes and periodically, and the
+**Refresh Devices** button forces an immediate rescan.
 
 ## Stream Deck integration
 
@@ -160,13 +168,15 @@ Settings > Voice & Video to "Default", and in Spotify set the output device to
 
 ### A device is missing
 
-Connect and enable the device in Windows Sound settings, then use the refresh
-control in Audio Deck. Reconnecting the device also helps.
+Disconnected devices still appear in the Configuration tab marked as offline, so
+you can build profiles around them. To use one now, connect and enable it; Audio
+Deck picks it up automatically, or you can press **Refresh Devices**.
 
-### A profile does not switch
+### A profile only switched some devices
 
-Confirm the devices the profile references still exist and are enabled. If a
-device has been removed, edit the profile to point at a current device.
+This is expected when one of the profile's devices is currently offline. The
+available device is applied and the offline one is reported. It is applied
+automatically when it reconnects, or you can switch again once it is connected.
 
 ### A Stream Deck button does nothing
 

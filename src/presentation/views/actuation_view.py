@@ -11,9 +11,13 @@ from PySide6.QtWidgets import (
     QGroupBox,
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QColor
 
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+
+# Colour for a profile whose configured device is currently offline.
+_OFFLINE_COLOR = QColor("#c0392b")
+_OFFLINE_SUFFIX = "  (device offline)"
 
 # How often to rescan audio devices so newly connected hardware (for example a
 # Bluetooth headset switched on) is picked up without a manual refresh.
@@ -104,6 +108,7 @@ class ActuationView(QWidget):
         self._profile_list.itemDoubleClicked.connect(lambda: self._on_switch_profile())
         self._switch_button.clicked.connect(self._on_switch_profile)
         self._refresh_button.clicked.connect(self.refresh)
+        self._presenter.current_devices_changed.connect(self._load_current_devices)
 
     def refresh(self) -> None:
         """Refresh the view with current data."""
@@ -118,13 +123,13 @@ class ActuationView(QWidget):
         self._refresh_timer.start()
 
     def _auto_refresh_devices(self) -> None:
-        """Periodically rescan devices and update the current-default labels.
+        """Periodically poll for device changes (fallback to the native notifier).
 
-        Only the current-device labels are refreshed, not the profile list or
-        its selection, and device reads are swallowed by the presenter, so this
-        never disturbs the user or raises a dialog.
+        Delegates to the presenter, which refreshes the current-default labels
+        and re-applies any profile device that has reconnected. Selection and
+        the profile list are left untouched.
         """
-        self._load_current_devices()
+        self._presenter.on_devices_changed()
 
     def _load_profiles(self) -> None:
         """Load profiles into the list."""
@@ -139,10 +144,28 @@ class ActuationView(QWidget):
             self._profile_list.addItem(item)
             return
 
+        available_ids = self._presenter.get_available_device_ids()
         for profile in profiles:
-            item = QListWidgetItem(profile.display_name)
+            offline = self._profile_is_offline(profile, available_ids)
+            text = profile.display_name + (_OFFLINE_SUFFIX if offline else "")
+            item = QListWidgetItem(text)
             item.setData(Qt.UserRole, profile.id)
+            if offline:
+                item.setForeground(_OFFLINE_COLOR)
+                item.setToolTip(
+                    "A device in this profile is not currently available. "
+                    "Switching will apply the available device(s)."
+                )
             self._profile_list.addItem(item)
+
+    @staticmethod
+    def _profile_is_offline(profile, available_ids) -> bool:
+        """Return True if any device the profile needs is not available."""
+        configured = [profile.output_device_id, profile.input_device_id]
+        return any(
+            device_id is not None and device_id not in available_ids
+            for device_id in configured
+        )
 
     def _load_current_devices(self) -> None:
         """Load current default devices."""

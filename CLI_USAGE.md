@@ -76,8 +76,22 @@ Expected output:
 ```
 Switching to profile "Gaming Setup"...
 ✓ Profile switched successfully!
-  Changed: Output and Input devices
+  Changed: Output and Input device(s)
 ```
+
+If a device in the profile is currently offline, its available device(s) are
+still applied and the offline one is reported on standard error, for example:
+
+```
+Switching to profile "Gaming Setup"...
+✓ Profile switched successfully!
+  Changed: Output device(s)
+Some devices were not available and were skipped:
+  - Input (not available)
+```
+
+The exit code is 0 when at least one device is applied, and non-zero when none
+are. In the GUI, an offline device is applied automatically when it reconnects.
 
 ## Stream Deck integration
 
@@ -131,13 +145,14 @@ Error: `'AudioDeck.exe' is not recognized...`
   `C:\Path\To\AudioDeck\dist\AudioDeck.exe`.
 - Or use `cd /d` to change to the correct directory first.
 
-### Device not found
+### A device was skipped
 
-Error: `Error: Device not found`
+Message: `Some devices were not available and were skipped`
 
-- The profile references a device that is disconnected.
-- Open the GUI and update the profile.
-- Ensure all devices are connected and enabled in Windows.
+- The profile references a device that is currently disconnected.
+- The available devices are still applied; the skipped one applies automatically
+  when it reconnects (in the GUI), or run the command again once it is connected.
+- To change the profile, open the GUI and edit it.
 
 ## Advanced usage
 

@@ -35,18 +35,19 @@ are maintained by review.
 src/
   domain/              Pure business model
     entities/          AudioDevice, AudioProfile
-    value_objects/     DeviceType
+    value_objects/     DeviceType, DeviceState
     interfaces/        IDeviceRepository, IDeviceController, IProfileRepository (Protocols)
     exceptions/        AudioDeckException hierarchy
   application/          Use cases and data transfer objects
     use_cases/         Get/Create/Update/Delete/GetProfiles, GetDevices, SwitchProfile
-    dtos/              DeviceDTO, ProfileDTO
+    dtos/              DeviceDTO, ProfileDTO, SwitchOutcome
   infrastructure/       External integrations
     windows/           Core Audio enumeration and control (pycaw, comtypes)
     persistence/       JSON profile storage
   presentation/         GUI layer (PySide6)
     views/             MainWindow, ConfigurationView, ActuationView
     presenters/        ConfigurationPresenter, ActuationPresenter (MVP)
+    notifiers/         WindowsDeviceChangeNotifier (WM_DEVICECHANGE)
   cli/                  Headless command-line interface
   main.py              Composition root and entry point
 ```
@@ -79,7 +80,12 @@ at by it.
 3. Views call presenter methods; presenters call use cases; use cases act through
    domain interfaces implemented by infrastructure.
 4. Presenters report outcomes back to views with Qt signals
-   (`error_occurred`, `profile_saved`, `profile_switched`).
+   (`error_occurred`, `profile_saved`, `profile_switched`, `device_unavailable`,
+   `current_devices_changed`, `auto_applied`).
+5. Device changes are delivered two ways: a `WindowsDeviceChangeNotifier`
+   (native `WM_DEVICECHANGE`) and a periodic timer fallback both call the
+   actuation presenter's `on_devices_changed`, which refreshes the current
+   defaults and re-applies any profile device that has just reconnected.
 
 ### CLI
 
@@ -97,6 +103,11 @@ A profile is an `AudioProfile` that holds an id, a name, an optional output
 device id, an optional input device id and timestamps. Switching a profile sets
 the Windows default endpoint for each configured device across the Console,
 Multimedia and Communications roles.
+
+Devices carry a `DeviceState` (available, disconnected, disabled or not present)
+so disconnected hardware can be listed and selected. A switch returns a
+`SwitchOutcome` recording which devices were applied and which were skipped (and
+why), which drives partial application and the auto-apply-on-reconnect flow.
 
 Profiles are persisted as a JSON array under
 `%LOCALAPPDATA%\AudioDeck\profiles.json`:
@@ -124,6 +135,8 @@ Profiles are persisted as a JSON array under
 | Shared application core for GUI and CLI | One set of use cases, two front ends; no duplicated switching logic |
 | Single `VERSION` file as source of truth | Runtime and packaging read the same value; nothing else hardcodes a version |
 | Windows-only Core Audio via pycaw | Direct, dependency-light access to the platform default-endpoint policy |
+| Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |
+| Event-driven device changes (WM_DEVICECHANGE) plus a timer fallback | Reconnected devices apply promptly without polling, while the timer guarantees recovery if no event arrives |
 
 ## Quality enforcement
 

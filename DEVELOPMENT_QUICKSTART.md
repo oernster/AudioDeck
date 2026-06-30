@@ -122,11 +122,13 @@ To open the GUI from Stream Deck, add a **System > Open** action pointing at
 - Use the refresh control in Audio Deck.
 - Check the Windows Sound settings.
 
-### Profile not switching
+### A profile only switched some devices
 
-- Confirm the devices still exist in Windows.
-- Recreate the profile if a device has been removed.
-- Check Windows permissions.
+- This is expected when one device is offline. The available device is applied
+  and the offline one is reported.
+- It applies automatically when the device reconnects, or press **Refresh
+  Devices** after connecting it.
+- A profile with an offline device is marked in the Quick Switch list.
 
 ### Stream Deck button does nothing
 
@@ -176,7 +178,10 @@ AudioDeck/
 
 - Double-click a profile in Quick Switch for faster switching.
 - Use descriptive names such as "Gaming Setup" or "Work Calls".
-- The refresh control rescans device lists when you connect a new device.
+- You can select a device that is currently off (such as a Bluetooth headset); it
+  is marked offline and is applied automatically when it reconnects.
+- **Refresh Devices** forces an immediate rescan; the list also updates on device
+  changes on its own.
 
 ### Stream Deck
 

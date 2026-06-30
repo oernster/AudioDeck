@@ -5,6 +5,24 @@ from pycaw.pycaw import AudioUtilities, DEVICE_STATE, EDataFlow, ERole
 
 from src.domain.entities.audio_device import AudioDevice
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
+
+# Enumerate devices that are usable now or that the user could reasonably pick
+# and connect later (for example a Bluetooth headset that is currently off).
+# NOTPRESENT is excluded to avoid listing every device Windows has ever seen.
+_STATE_MASK = (
+    DEVICE_STATE.ACTIVE.value
+    | DEVICE_STATE.DISABLED.value
+    | DEVICE_STATE.UNPLUGGED.value
+)
+
+# Map the Windows endpoint state to the domain availability state.
+_WINDOWS_STATE_TO_DEVICE_STATE = {
+    DEVICE_STATE.ACTIVE.value: DeviceState.AVAILABLE,
+    DEVICE_STATE.UNPLUGGED.value: DeviceState.DISCONNECTED,
+    DEVICE_STATE.DISABLED.value: DeviceState.DISABLED,
+    DEVICE_STATE.NOTPRESENT.value: DeviceState.NOT_PRESENT,
+}
 
 
 class WindowsDeviceEnumerator:
@@ -65,10 +83,8 @@ class WindowsDeviceEnumerator:
             if device_enumerator is None:
                 return devices
 
-            # Get collection of active audio endpoints
-            collection = device_enumerator.EnumAudioEndpoints(
-                data_flow, DEVICE_STATE.ACTIVE.value
-            )
+            # Get collection of endpoints across usable and selectable states
+            collection = device_enumerator.EnumAudioEndpoints(data_flow, _STATE_MASK)
             if collection is None:
                 return devices
 
@@ -83,16 +99,16 @@ class WindowsDeviceEnumerator:
                     # Get device ID
                     device_id = endpoint.GetId()
 
-                    # Try to get device name using QueryInterface to get IMMDevice
+                    # Resolve the endpoint state and friendly name.
                     try:
-                        # Use the endpoint's GetState to verify it's active
-                        state = endpoint.GetState()
+                        state_value = endpoint.GetState()
+                        device_state = _WINDOWS_STATE_TO_DEVICE_STATE.get(
+                            state_value, DeviceState.AVAILABLE
+                        )
 
-                        # Get the device's friendly name by querying the device directly
-                        # This is a workaround - we'll use the device ID as a lookup key
+                        # Get the device's friendly name from the cached list
+                        # (which includes inactive devices), keyed by ID.
                         device_name = None
-
-                        # Try to match with cached all_devices
                         if all_devices_cache:
                             for audio_device in all_devices_cache:
                                 if (
@@ -103,11 +119,11 @@ class WindowsDeviceEnumerator:
                                     break
 
                         if not device_name:
-                            # Fallback: try to get from the endpoint's description
                             device_name = f"Audio Device {i+1}"
 
                     except Exception:
                         device_name = f"Audio Device {i+1}"
+                        device_state = DeviceState.AVAILABLE
 
                     # Determine device type based on data flow
                     device_type = (
@@ -123,7 +139,7 @@ class WindowsDeviceEnumerator:
                         name=device_name,
                         device_type=device_type,
                         is_default=is_default,
-                        is_enabled=True,  # Only active devices are enumerated
+                        state=device_state,
                     )
                     devices.append(device)
 

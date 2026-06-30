@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from src.domain.value_objects.device_type import DeviceType
+from src.domain.value_objects.device_state import DeviceState
 
 
 @dataclass(frozen=True)
@@ -13,7 +14,7 @@ class AudioDevice:
     name: str
     device_type: DeviceType
     is_default: bool
-    is_enabled: bool
+    state: DeviceState
 
     def __post_init__(self) -> None:
         """Validate entity after initialization."""
@@ -21,6 +22,11 @@ class AudioDevice:
             raise ValueError("Device ID cannot be empty")
         if not self.name:
             raise ValueError("Device name cannot be empty")
+
+    @property
+    def is_available(self) -> bool:
+        """Return True if the device can be used right now."""
+        return self.state.is_available
 
     def with_default(self, is_default: bool) -> "AudioDevice":
         """Create a new instance with updated default status.
@@ -36,7 +42,7 @@ class AudioDevice:
             name=self.name,
             device_type=self.device_type,
             is_default=is_default,
-            is_enabled=self.is_enabled,
+            state=self.state,
         )
 
     @property
@@ -49,8 +55,8 @@ class AudioDevice:
         status_parts = []
         if self.is_default:
             status_parts.append("Default")
-        if not self.is_enabled:
-            status_parts.append("Disabled")
+        if not self.state.is_available:
+            status_parts.append(self.state.label)
 
         if status_parts:
             return f"{self.name} ({', '.join(status_parts)})"
