@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Deck: one-click Windows audio device switching</title>
+  <meta name="description" content="A local-first audio device switcher for Windows. Save named profiles that pin a default output and input device, then switch in one click, one command, or one Stream Deck button. GUI and CLI, no account, no cloud.">
+  <link rel="canonical" href="https://oernster.github.io/AudioDeck/">
+  <meta name="theme-color" content="#1e1e2e">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Catppuccin Mocha palette */
+    :root {
+      --base:     #1e1e2e;
+      --mantle:   #181825;
+      --crust:    #11111b;
+      --surface0: #313244;
+      --surface1: #45475a;
+      --surface2: #585b70;
+      --overlay0: #6c7086;
+      --overlay1: #7f849c;
+      --subtext0: #a6adc8;
+      --subtext1: #bac2de;
+      --text:     #cdd6f4;
+      --lavender: #b4befe;
+      --blue:     #89b4fa;
+      --sapphire: #74c7ec;
+      --teal:     #94e2d5;
+      --green:    #a6e3a1;
+      --yellow:   #f9e2af;
+      --peach:    #fab387;
+      --maroon:   #eba0ac;
+      --red:      #f38ba8;
+      --mauve:    #cba6f7;
+      --pink:     #f5c2e7;
+      /* Audio Deck primary accent = green (output), with red as the input counterpart */
+      --accent:        var(--green);
+      --accent-rgb:    166, 227, 161;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--base);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navigation */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(24, 24, 37, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--surface0);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+    .nav-brand img { width: 30px; height: 30px; }
+    .nav-brand span { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; color: var(--accent); }
+
+    .nav-right { display: flex; align-items: center; gap: 1.75rem; }
+    .nav-right a.nav-link {
+      color: var(--subtext1);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.18s;
+    }
+    .nav-right a.nav-link:hover { color: var(--text); }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--accent);
+      color: var(--crust);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      transition: opacity 0.18s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--surface0);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--surface1);
+      transition: background 0.18s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { background: var(--surface1); transform: translateY(-1px); }
+
+    /* Hero */
+    .hero { max-width: 1100px; margin: 0 auto; padding: 5.5rem 2rem 3rem; text-align: center; }
+
+    .hero-icon {
+      display: block;
+      width: 168px;
+      height: 168px;
+      margin: 0 auto 2rem;
+      filter: drop-shadow(0 22px 50px rgba(0, 0, 0, 0.5));
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(var(--accent-rgb), 0.12);
+      border: 1px solid rgba(var(--accent-rgb), 0.3);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.3rem 0.9rem;
+      border-radius: 99px;
+      margin-bottom: 2rem;
+      letter-spacing: 0.04em;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.1rem);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+      margin-bottom: 1.4rem;
+    }
+    h1 .accent { color: var(--accent); }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--subtext1);
+      max-width: 600px;
+      margin: 0 auto 2.75rem;
+      line-height: 1.75;
+    }
+    .hero-desc strong { color: var(--text); font-weight: 600; }
+
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 4.5rem; }
+    .hero-cta .btn-primary, .hero-cta .btn-secondary { font-size: 0.975rem; padding: 0.7rem 1.75rem; }
+
+    .shot {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--surface1);
+      background: var(--crust);
+      box-shadow:
+        0 0 0 1px rgba(var(--accent-rgb), 0.06),
+        0 36px 90px rgba(0, 0, 0, 0.7),
+        0 0 120px rgba(var(--accent-rgb), 0.05);
+    }
+    .shot img { width: 100%; height: auto; display: block; }
+
+    .hero-shot { max-width: 620px; margin: 0 auto; }
+
+    /* Stats bar */
+    .stats-bar { background: var(--mantle); border-top: 1px solid var(--surface0); border-bottom: 1px solid var(--surface0); }
+    .stats-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .stat { text-align: center; padding: 0 1rem; }
+    .stat + .stat { border-left: 1px solid var(--surface1); }
+    .stat-value { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; color: var(--accent); line-height: 1; margin-bottom: 0.4rem; }
+    .stat-label { font-size: 0.8rem; color: var(--subtext0); font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+
+    /* Section wrapper */
+    .section { max-width: 1100px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .section-label {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .section-title { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 1rem; }
+    .section-sub { font-size: 1.025rem; color: var(--subtext1); max-width: 560px; line-height: 1.75; margin-bottom: 3.5rem; }
+
+    /* Features grid */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(305px, 1fr)); gap: 1.25rem; }
+    .feat {
+      background: var(--mantle);
+      border: 1px solid var(--surface0);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feat:hover { border-color: var(--surface2); transform: translateY(-3px); }
+    .feat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.1rem;
+      flex-shrink: 0;
+    }
+    .ic-green  { background: rgba(166,227,161,0.15); color: var(--green); }
+    .ic-red    { background: rgba(243,139,168,0.15); color: var(--red); }
+    .ic-blue   { background: rgba(137,180,250,0.15); color: var(--blue); }
+    .ic-teal   { background: rgba(148,226,213,0.15); color: var(--teal); }
+    .ic-peach  { background: rgba(250,179,135,0.15); color: var(--peach); }
+    .ic-sapp   { background: rgba(116,199,236,0.15); color: var(--sapphire); }
+    .ic-lav    { background: rgba(180,190,254,0.15); color: var(--lavender); }
+    .ic-yellow { background: rgba(249,226,175,0.15); color: var(--yellow); }
+    .ic-mauve  { background: rgba(203,166,247,0.15); color: var(--mauve); }
+    .feat h3 { font-size: 0.975rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .feat p { font-size: 0.875rem; color: var(--subtext0); line-height: 1.65; }
+
+    .divider { max-width: 1100px; margin: 0 auto; height: 1px; background: var(--surface0); }
+
+    /* Split section (text + screenshot) */
+    .split-band { background: var(--mantle); border-top: 1px solid var(--surface0); border-bottom: 1px solid var(--surface0); }
+    .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .split-grid .split-text p { color: var(--subtext1); font-size: 1rem; line-height: 1.75; margin-bottom: 1.25rem; }
+    .split-grid .split-text ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .split-grid .split-text li { font-size: 0.925rem; color: var(--subtext1); line-height: 1.55; padding-left: 1.5rem; position: relative; }
+    .split-grid .split-text li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    /* Code block */
+    .code-block { background: var(--crust); border: 1px solid var(--surface0); border-radius: 14px; overflow: hidden; }
+    .code-block-head {
+      background: var(--surface0);
+      padding: 0.55rem 1rem;
+      font-size: 0.775rem;
+      color: var(--subtext0);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--surface1);
+    }
+    .code-block pre {
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.81rem;
+      line-height: 1.8;
+      color: var(--text);
+      overflow-x: auto;
+    }
+    .tc { color: var(--overlay1); }
+    .tk { color: var(--blue); }
+    .ta { color: var(--green); }
+    .tf { color: var(--peach); }
+    .ts { color: var(--teal); }
+
+    .cli-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+
+    /* Architecture */
+    .arch-figure {
+      display: block;
+      width: 100%;
+      max-width: 880px;
+      margin: 1.75rem auto 0;
+      background: var(--mantle);
+      border: 1px solid var(--surface0);
+      border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .arch-figure svg { width: 100%; height: auto; display: block; }
+
+    /* Install */
+    .install-band { background: var(--mantle); border-top: 1px solid var(--surface0); border-bottom: 1px solid var(--surface0); }
+    .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .install-grid .install-text p { color: var(--subtext1); font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.75rem; }
+    .install-grid .install-text .note { margin-top: 1.25rem; font-size: 0.8rem; color: var(--overlay1); }
+    code.inline { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--peach); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--surface0); padding: 3rem 2rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem; }
+    .footer-brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .footer-brand img { width: 26px; height: 26px; }
+    .footer-brand span { font-size: 1rem; font-weight: 700; color: var(--subtext1); }
+    .footer-links { display: flex; gap: 1.75rem; flex-wrap: wrap; }
+    .footer-links a { color: var(--subtext0); text-decoration: none; font-size: 0.875rem; transition: color 0.18s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-bottom { border-top: 1px solid var(--surface0); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .footer-bottom p { font-size: 0.8rem; color: var(--overlay1); }
+    .footer-bottom .chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .chip { background: var(--surface0); color: var(--subtext0); font-size: 0.72rem; font-weight: 500; padding: 0.2rem 0.6rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+
+    /* Screenshot caption */
+    .shot-caption { text-align: center; font-size: 0.82rem; color: var(--overlay1); margin-top: 0.85rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .split-grid, .install-grid, .cli-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-right .nav-link { display: none; }
+      .hero { padding: 3rem 1.25rem 2rem; }
+      .section { padding: 3.5rem 1.25rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stat + .stat { border-left: none; border-top: 1px solid var(--surface1); }
+      .stats-inner { flex-direction: column; gap: 1.25rem; }
+    }
+
+    /* Entrance animation */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .fade { animation: fadeUp 0.52s ease both; }
+    .d1 { animation-delay: 0.08s; }
+    .d2 { animation-delay: 0.18s; }
+    .d3 { animation-delay: 0.28s; }
+    .d4 { animation-delay: 0.38s; }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="#">
+    <img src="audiodeck-512.png" alt="Audio Deck icon">
+    <span>Audio Deck</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="#cli">CLI &amp; Stream Deck</a>
+    <a class="nav-link" href="#architecture">Architecture</a>
+    <a class="nav-link" href="#install">Install</a>
+    <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <img class="hero-icon fade" src="audiodeck-512.png" width="168" height="168" alt="Audio Deck app icon" fetchpriority="high" decoding="async">
+
+  <div class="badge fade">
+    <span class="badge-dot"></span>
+    Windows 10 &middot; 11
+  </div>
+
+  <h1 class="fade d1">Your audio setup,<br><span class="accent">one click</span> away.</h1>
+
+  <p class="hero-desc fade d2">
+    Audio Deck saves named profiles that each pin a default <strong>output</strong> and <strong>input</strong> device,
+    then switches Windows to a profile in <strong>one click</strong>, one command, or one Stream Deck button.
+    Profiles live in a local JSON file. No account, no cloud, no background service.
+  </p>
+
+  <div class="hero-cta fade d3">
+    <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download AudioDeckSetup.exe
+    </a>
+    <a class="btn-secondary" href="https://github.com/oernster/AudioDeck">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </div>
+
+  <div class="hero-shot fade d4">
+    <div class="shot">
+      <img src="screenshots/audiodeck1.png" width="772" height="766" alt="Audio Deck Quick Switch tab: a list of saved profiles with offline devices marked, and the current default output and input devices shown below.">
+    </div>
+    <p class="shot-caption">Quick Switch &mdash; pick a profile and switch. Offline devices are marked and applied automatically when they reconnect.</p>
+  </div>
+</section>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat"><div class="stat-value">1 click</div><div class="stat-label">To switch</div></div>
+    <div class="stat"><div class="stat-value">GUI + CLI</div><div class="stat-label">Two interfaces</div></div>
+    <div class="stat"><div class="stat-value">Stream Deck</div><div class="stat-label">One button per setup</div></div>
+    <div class="stat"><div class="stat-value">0</div><div class="stat-label">Accounts or cloud</div></div>
+    <div class="stat"><div class="stat-value">LGPL-3.0</div><div class="stat-label">Open source</div></div>
+  </div>
+</div>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Built for people who<br>keep changing their setup.</h2>
+  <p class="section-sub">Speakers for music, a headset for calls, an interface for recording. Save each as a profile and move between them without touching Windows sound settings.</p>
+
+  <div class="features-grid">
+
+    <div class="feat">
+      <div class="feat-icon ic-green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </div>
+      <h3>Named profiles</h3>
+      <p>Each profile pins one default output device and one default input device. Switch to a profile and Windows changes both at once.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </div>
+      <h3>One-click switching</h3>
+      <p>The Quick Switch tab lists every profile. Click <em>Switch to Selected Profile</em>, or just double-click a profile to apply it.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      </div>
+      <h3>Command line</h3>
+      <p><code class="inline">--list</code> and <code class="inline">--profile&nbsp;NAME</code> run headless with a process exit code, so any script or launcher can drive it.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-mauve">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>Stream Deck ready</h3>
+      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin, or a one-line batch file. One press, one setup.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-peach">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11v11h-11z" opacity="0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      </div>
+      <h3>Offline devices</h3>
+      <p>Pin a device that is currently off, like a Bluetooth headset. The moment it reconnects, the pending switch is applied automatically.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-yellow">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      </div>
+      <h3>Partial switching</h3>
+      <p>If one device in a profile is missing, the rest are still applied and the missing one is reported, so a switch never silently half-fails.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-sapp">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
+      <h3>Live device rescan</h3>
+      <p>The device list refreshes on Windows device changes and periodically. <em>Refresh Devices</em> forces an immediate rescan on demand.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-red">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <h3>Local-first</h3>
+      <p>Profiles are stored as JSON under <code class="inline">%LOCALAPPDATA%</code>. Runs per user, no admin rights, nothing leaves your machine.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-lav">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      </div>
+      <h3>Update check</h3>
+      <p>Check for a newer release straight from the Help menu, so you always know when an update is available.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Configuration screenshot split -->
+<div class="split-band">
+  <section class="section">
+    <div class="split-grid">
+      <div class="split-text">
+        <div class="section-label">Configuration</div>
+        <h2 class="section-title" style="margin-bottom:1.25rem;">Two tabs, that's<br>the whole app.</h2>
+        <p>Create and edit profiles on the Configuration tab. Name the profile, pick an output device and an input device from the live dropdowns, and save.</p>
+        <ul>
+          <li>New, edit and delete from the saved-profiles list.</li>
+          <li>Output and input chosen independently per profile.</li>
+          <li>Deletions are confirmed before anything is removed.</li>
+          <li>Switch over to Quick Switch and you are one click from any setup.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="shot">
+          <img src="screenshots/audiodeck2.png" width="771" height="766" alt="Audio Deck Configuration tab: the saved-profiles list with New, Edit and Delete buttons above a profile editor showing profile name, output device and input device dropdowns.">
+        </div>
+        <p class="shot-caption">Configuration &mdash; the profile editor with live output and input device dropdowns.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- CLI / Stream Deck -->
+<section class="section" id="cli">
+  <div class="section-label">Automation</div>
+  <h2 class="section-title">Drive it from a key,<br>a script, or the shell.</h2>
+  <p class="section-sub">With no arguments Audio Deck opens the GUI. With <code class="inline">--list</code> or <code class="inline">--profile</code> it runs headless and returns an exit code, which is exactly what a Stream Deck button or a batch file needs.</p>
+
+  <div class="cli-grid">
+    <div class="code-block">
+      <div class="code-block-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Command line
+      </div>
+<pre><span class="tc"># List all profiles</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--list</span>
+
+<span class="tc"># Switch to a profile by name</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--profile</span> <span class="ts">"Gaming Setup"</span>
+
+<span class="tc"># Version, help, or launch the GUI</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--version</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--help</span>
+<span class="tk">AudioDeck.exe</span>           <span class="tc"># no args = GUI</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Stream Deck button (Advanced Launcher)
+      </div>
+<pre><span class="tc"># Application</span>
+AudioDeck.exe
+
+<span class="tc"># Arguments</span>
+<span class="tf">--profile</span> <span class="ts">"Gaming Setup"</span>
+
+<span class="tc"># One key per setup. Press it,</span>
+<span class="tc"># the default output and input</span>
+<span class="tc"># devices switch instantly.</span></pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Architecture -->
+<section class="section" id="architecture">
+  <div class="section-label">Architecture</div>
+  <h2 class="section-title">Clean by construction</h2>
+  <p class="section-sub">Audio Deck follows a four-layer clean architecture: UI and CLI are clients of the application layer, which orchestrates a pure domain, while infrastructure implements the domain's interfaces against Windows Core Audio and the filesystem. Dependencies point inward and are wired in one explicit composition root.</p>
+
+  <figure class="arch-figure">
+    <svg viewBox="0 0 860 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Audio Deck clean architecture: UI and CLI depend on Application, Application depends on Domain, Infrastructure implements Domain interfaces. All dependencies point inward to a pure Domain.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7f849c"/>
+        </marker>
+      </defs>
+      <style>
+        .box { rx: 12; stroke-width: 1.5; }
+        .lbl { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 16px; fill: #cdd6f4; }
+        .sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #a6adc8; }
+        .dep { stroke: #7f849c; stroke-width: 1.6; fill: none; }
+        .deplbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #7f849c; }
+      </style>
+
+      <!-- UI -->
+      <rect class="box" x="20" y="30" width="170" height="78" fill="rgba(166,227,161,0.10)" stroke="#a6e3a1"/>
+      <text class="lbl" x="105" y="62" text-anchor="middle">UI &middot; CLI</text>
+      <text class="sub" x="105" y="84" text-anchor="middle">PySide6 + argv</text>
+
+      <!-- Application -->
+      <rect class="box" x="250" y="30" width="170" height="78" fill="rgba(137,180,250,0.10)" stroke="#89b4fa"/>
+      <text class="lbl" x="335" y="62" text-anchor="middle">Application</text>
+      <text class="sub" x="335" y="84" text-anchor="middle">use cases</text>
+
+      <!-- Domain -->
+      <rect class="box" x="480" y="30" width="170" height="78" fill="rgba(203,166,247,0.12)" stroke="#cba6f7"/>
+      <text class="lbl" x="565" y="62" text-anchor="middle">Domain</text>
+      <text class="sub" x="565" y="84" text-anchor="middle">pure, no I/O</text>
+
+      <!-- Infrastructure -->
+      <rect class="box" x="480" y="150" width="350" height="72" fill="rgba(250,179,135,0.10)" stroke="#fab387"/>
+      <text class="lbl" x="655" y="182" text-anchor="middle">Infrastructure</text>
+      <text class="sub" x="655" y="204" text-anchor="middle">pycaw / comtypes (Core Audio) &middot; JSON store</text>
+
+      <!-- deps -->
+      <line class="dep" x1="250" y1="69" x2="190" y2="69" marker-end="url(#arr)"/>
+      <line class="dep" x1="480" y1="69" x2="420" y2="69" marker-end="url(#arr)"/>
+      <line class="dep" x1="565" y1="150" x2="565" y2="108" marker-end="url(#arr)"/>
+      <text class="deplbl" x="565" y="138" text-anchor="middle">implements</text>
+      <text class="deplbl" x="430" y="250" text-anchor="start">dependencies point inward &rarr; a pure Domain</text>
+    </svg>
+  </figure>
+</section>
+
+<!-- Install -->
+<div class="install-band">
+  <section class="section" id="install">
+    <div class="section-label">Get started</div>
+    <h2 class="section-title">Install Audio Deck</h2>
+    <p class="section-sub">A per-user installer from the Releases page, no Python needed. Or run from source in a few commands.</p>
+
+    <div class="install-grid">
+      <div class="install-text">
+        <p>Download the latest <code class="inline">AudioDeckSetup.exe</code> from GitHub Releases and run it. The themed installer is per user and needs no admin rights: it installs Audio Deck, registers it in Windows Settings &gt; Apps and creates Start Menu and desktop shortcuts. Your profiles live in <code class="inline">%LOCALAPPDATA%\AudioDeck\profiles.json</code>.</p>
+        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases" style="font-size:0.975rem; padding:0.7rem 1.75rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Latest release
+        </a>
+        <p class="note">Windows 10 / 11. Licensed LGPL-3.0. Built with Python, PySide6, pycaw and comtypes over the Windows Core Audio API.</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Run from source
+        </div>
+<pre><span class="tc"># Clone and set up</span>
+<span class="tk">git</span> clone https://github.com/oernster/AudioDeck
+<span class="tk">cd</span> AudioDeck
+<span class="tk">python</span> <span class="tf">-m</span> venv venv
+<span class="tk">venv\Scripts\activate</span>
+
+<span class="tc"># Install and run the GUI</span>
+<span class="tk">pip</span> <span class="ta">install</span> <span class="tf">-r</span> requirements.txt
+<span class="tk">python</span> src\main.py
+
+<span class="tc"># Build the app, then the installer</span>
+<span class="tk">python</span> buildexe.py         <span class="tc"># dist\AudioDeck.exe</span>
+<span class="tk">python</span> buildinstaller.py  <span class="tc"># AudioDeckSetup.exe</span></pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a class="footer-brand" href="#">
+        <img src="audiodeck-512.png" alt="Audio Deck">
+        <span>Audio Deck</span>
+      </a>
+      <nav class="footer-links">
+        <a href="https://github.com/oernster/AudioDeck">GitHub</a>
+        <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/CLI_USAGE.md">CLI Usage</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/ARCHITECTURE.md">Architecture</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/LICENSE">Licence</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p>A local-first audio device switcher for Windows. Open source, no cloud.</p>
+      <div class="chips">
+        <span class="chip">Python</span>
+        <span class="chip">PySide6</span>
+        <span class="chip">pycaw</span>
+        <span class="chip">comtypes</span>
+        <span class="chip">Core Audio</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
