@@ -313,6 +313,62 @@
     .install-grid .install-text .note { margin-top: 1.25rem; font-size: 0.8rem; color: var(--overlay1); }
     code.inline { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--peach); }
 
+    /* Download */
+    #download .section-sub { margin-bottom: 1.25rem; }
+    .dl-version {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--accent);
+      border: 1px solid var(--surface1);
+      border-radius: 999px;
+      padding: 4px 14px;
+    }
+    .downloads {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+      max-width: 380px;
+    }
+    .dl-card {
+      background: var(--crust);
+      border: 1px solid var(--surface0);
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .dl-card .ico { font-size: 30px; }
+    .dl-card h3 { margin: 4px 0 0; font-size: 18px; font-weight: 600; }
+    .dl-card .req { color: var(--subtext0); font-size: 13px; margin: 0; }
+    .dl-card .btn-primary { margin: 14px auto 4px; }
+    .dl-card .meta {
+      color: var(--subtext0);
+      font-size: 12.5px;
+      min-height: 1.2em;
+      margin: 0;
+    }
+    .dl-card .how { color: var(--subtext0); font-size: 13px; margin: 8px 0 0; }
+    .dl-card code {
+      background: var(--surface0);
+      border: 1px solid var(--surface1);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--peach);
+    }
+    .dl-links {
+      color: var(--subtext0);
+      font-size: 14px;
+      margin: 18px 0 0;
+    }
+    .dl-links a { color: var(--accent); text-decoration: none; }
+    .dl-links a:hover { text-decoration: underline; }
+
     /* Footer */
     footer { border-top: 1px solid var(--surface0); padding: 3rem 2rem; }
     .footer-inner { max-width: 1100px; margin: 0 auto; }
@@ -366,8 +422,8 @@
     <a class="nav-link" href="#features">Features</a>
     <a class="nav-link" href="#cli">CLI &amp; Stream Deck</a>
     <a class="nav-link" href="#architecture">Architecture</a>
-    <a class="nav-link" href="#install">Install</a>
-    <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases">
+    <a class="nav-link" href="#download">Download</a>
+    <a class="btn-primary" href="#download">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download
     </a>
@@ -392,7 +448,7 @@
   </p>
 
   <div class="hero-cta fade d3">
-    <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases">
+    <a class="btn-primary" href="#download">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download AudioDeckSetup.exe
     </a>
@@ -406,7 +462,7 @@
     <div class="shot">
       <img src="screenshots/audiodeck1.png" width="772" height="766" alt="Audio Deck Quick Switch tab: a list of saved profiles with offline devices marked, and the current default output and input devices shown below.">
     </div>
-    <p class="shot-caption">Quick Switch &mdash; pick a profile and switch. Offline devices are marked and applied automatically when they reconnect.</p>
+    <p class="shot-caption">Quick Switch: pick a profile and switch. Offline devices are marked and applied automatically when they reconnect.</p>
   </div>
 </section>
 
@@ -523,7 +579,7 @@
         <div class="shot">
           <img src="screenshots/audiodeck2.png" width="771" height="766" alt="Audio Deck Configuration tab: the saved-profiles list with New, Edit and Delete buttons above a profile editor showing profile name, output device and input device dropdowns.">
         </div>
-        <p class="shot-caption">Configuration &mdash; the profile editor with live output and input device dropdowns.</p>
+        <p class="shot-caption">Configuration: the profile editor with live output and input device dropdowns.</p>
       </div>
     </div>
   </section>
@@ -624,43 +680,33 @@ AudioDeck.exe
   </figure>
 </section>
 
-<!-- Install -->
+<!-- Download -->
 <div class="install-band">
-  <section class="section" id="install">
-    <div class="section-label">Get started</div>
-    <h2 class="section-title">Install Audio Deck</h2>
-    <p class="section-sub">A per-user installer from the Releases page, no Python needed. Or run from source in a few commands.</p>
-
-    <div class="install-grid">
-      <div class="install-text">
-        <p>Download the latest <code class="inline">AudioDeckSetup.exe</code> from GitHub Releases and run it. The themed installer is per user and needs no admin rights: it installs Audio Deck, registers it in Windows Settings &gt; Apps and creates Start Menu and desktop shortcuts. Your profiles live in <code class="inline">%LOCALAPPDATA%\AudioDeck\profiles.json</code>.</p>
-        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases" style="font-size:0.975rem; padding:0.7rem 1.75rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Latest release
-        </a>
-        <p class="note">Windows 10 / 11. Licensed LGPL-3.0. Built with Python, PySide6, pycaw and comtypes over the Windows Core Audio API.</p>
-      </div>
-
-      <div class="code-block">
-        <div class="code-block-head">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-          Run from source
-        </div>
-<pre><span class="tc"># Clone and set up</span>
-<span class="tk">git</span> clone https://github.com/oernster/AudioDeck
-<span class="tk">cd</span> AudioDeck
-<span class="tk">python</span> <span class="tf">-m</span> venv venv
-<span class="tk">venv\Scripts\activate</span>
-
-<span class="tc"># Install and run the GUI</span>
-<span class="tk">pip</span> <span class="ta">install</span> <span class="tf">-r</span> requirements.txt
-<span class="tk">python</span> src\main.py
-
-<span class="tc"># Build the app, then the installer</span>
-<span class="tk">python</span> buildexe.py         <span class="tc"># dist\AudioDeck.exe</span>
-<span class="tk">python</span> buildinstaller.py  <span class="tc"># AudioDeckSetup.exe</span></pre>
+  <section class="section" id="download">
+    <div class="section-label">Get AudioDeck</div>
+    <h2 class="section-title">Download AudioDeck</h2>
+    <p class="section-sub">Download the newest release with one click. Free and LGPL-3.0 with no account and no cloud; your profiles live in a local JSON file on your machine.</p>
+    <span class="dl-version" id="dl-version">Latest release</span>
+    <div class="downloads">
+      <div class="dl-card">
+        <div class="ico">🪟</div>
+        <h3>Windows</h3>
+        <p class="req">Windows 10 or 11, 64-bit</p>
+        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases/latest/download/AudioDeckSetup.exe">
+          Download for Windows</a>
+        <p class="meta" data-asset="AudioDeckSetup.exe">Setup program (.exe)</p>
+        <p class="how">Run the setup: it installs per-user, so no administrator rights are needed.</p>
       </div>
     </div>
+    <p class="dl-links">
+      <a id="dl-whats-new" href="https://github.com/oernster/AudioDeck/releases/latest">What's new in this release</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck/releases">All releases</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck">Source on GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck/blob/main/DEVELOPMENT_README.md">Build from source</a>
+    </p>
   </section>
 </div>
 
@@ -693,5 +739,39 @@ AudioDeck.exe
   </div>
 </footer>
 
+<script>
+    // The download buttons never go stale: each points at GitHub's releases/latest/download
+    // redirect, which always serves the newest release's asset (the asset names are version-free
+    // by design). This script only decorates the page with live details: the version chip, the
+    // release date and each installer's size, fetched from the GitHub API. If the call fails
+    // (offline, rate-limited), the static text above stands on its own.
+    (function () {
+        var api = 'https://api.github.com/repos/oernster/AudioDeck/releases/latest';
+        fetch(api).then(function (r) {
+            if (!r.ok) { throw new Error('release lookup failed'); }
+            return r.json();
+        }).then(function (rel) {
+            var version = (rel.tag_name || '').replace(/^v/, '');
+            if (version) {
+                var when = '';
+                if (rel.published_at) {
+                    when = ' · ' + new Date(rel.published_at).toLocaleDateString(undefined,
+                        {day: 'numeric', month: 'long', year: 'numeric'});
+                }
+                document.getElementById('dl-version').textContent = 'Version ' + version + when;
+            }
+            if (rel.html_url) {
+                document.getElementById('dl-whats-new').href = rel.html_url;
+            }
+            (rel.assets || []).forEach(function (asset) {
+                var meta = document.querySelector('[data-asset="' + asset.name + '"]');
+                if (meta && asset.size) {
+                    var mb = (asset.size / (1024 * 1024)).toFixed(1);
+                    meta.textContent = meta.textContent + ' · ' + mb + ' MB';
+                }
+            });
+        }).catch(function () { /* The static page already says everything essential. */ });
+    })();
+</script>
 </body>
 </html>
