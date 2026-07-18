@@ -21,6 +21,15 @@ from PySide6.QtCore import Qt
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.profile_dto import ProfileDTO
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
+from src.presentation.views.icons import (
+    ICON_CANCEL,
+    ICON_DELETE,
+    ICON_EDIT,
+    ICON_NEW,
+    ICON_REFRESH,
+    ICON_SAVE,
+    labelled,
+)
 
 
 class ConfigurationView(QWidget):
@@ -55,9 +64,12 @@ class ConfigurationView(QWidget):
         profile_layout.addWidget(self._profile_list)
 
         profile_buttons_layout = QHBoxLayout()
-        self._new_button = QPushButton("New Profile")
-        self._edit_button = QPushButton("Edit Selected")
-        self._delete_button = QPushButton("Delete Selected")
+        self._new_button = QPushButton(labelled(ICON_NEW, "New Profile"))
+        self._new_button.setToolTip("Start a new, empty profile in the editor below")
+        self._edit_button = QPushButton(labelled(ICON_EDIT, "Edit Selected"))
+        self._edit_button.setToolTip("Load the selected profile into the editor below")
+        self._delete_button = QPushButton(labelled(ICON_DELETE, "Delete Selected"))
+        self._delete_button.setToolTip("Permanently delete the selected profile")
         self._edit_button.setEnabled(False)
         self._delete_button.setEnabled(False)
 
@@ -93,7 +105,7 @@ class ConfigurationView(QWidget):
         self._output_combo = QComboBox()
         self._output_combo.addItem("(None)", None)
         output_layout.addWidget(self._output_combo)
-        self._refresh_output_button = QPushButton("🔄")
+        self._refresh_output_button = QPushButton(ICON_REFRESH)
         self._refresh_output_button.setMaximumWidth(40)
         self._refresh_output_button.setToolTip("Refresh output devices")
         output_layout.addWidget(self._refresh_output_button)
@@ -108,7 +120,7 @@ class ConfigurationView(QWidget):
         self._input_combo = QComboBox()
         self._input_combo.addItem("(None)", None)
         input_layout.addWidget(self._input_combo)
-        self._refresh_input_button = QPushButton("🔄")
+        self._refresh_input_button = QPushButton(ICON_REFRESH)
         self._refresh_input_button.setMaximumWidth(40)
         self._refresh_input_button.setToolTip("Refresh input devices")
         input_layout.addWidget(self._refresh_input_button)
@@ -116,8 +128,8 @@ class ConfigurationView(QWidget):
 
         # Save/Cancel buttons
         button_layout = QHBoxLayout()
-        self._save_button = QPushButton("Save Profile")
-        self._cancel_button = QPushButton("Cancel")
+        self._save_button = QPushButton(labelled(ICON_SAVE, "Save Profile"))
+        self._cancel_button = QPushButton(labelled(ICON_CANCEL, "Cancel"))
         button_layout.addWidget(self._save_button)
         button_layout.addWidget(self._cancel_button)
         button_layout.addStretch()

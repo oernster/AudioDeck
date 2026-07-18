@@ -15,6 +15,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QColor
 
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+from src.presentation.views.icons import ICON_REFRESH, ICON_SWITCH, labelled
 from src.presentation.workers.background_runner import BackgroundRunner
 
 # Colour for a profile whose configured device is currently offline.
@@ -88,12 +89,17 @@ class ActuationView(QWidget):
 
         # Action buttons
         button_layout = QHBoxLayout()
-        self._switch_button = QPushButton("Switch to Selected Profile")
+        self._switch_button = QPushButton(
+            labelled(ICON_SWITCH, "Switch to Selected Profile")
+        )
         self._switch_button.setEnabled(False)
         self._switch_button.setMinimumHeight(40)
+        self._switch_button.setToolTip(
+            "Make the selected profile's devices the Windows defaults"
+        )
         button_layout.addWidget(self._switch_button)
 
-        self._refresh_button = QPushButton("🔄 Refresh Devices")
+        self._refresh_button = QPushButton(labelled(ICON_REFRESH, "Refresh Devices"))
         self._refresh_button.setMinimumWidth(160)
         self._refresh_button.setToolTip(
             "Rescan audio devices and update the current defaults"
