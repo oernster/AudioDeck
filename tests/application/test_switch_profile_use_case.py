@@ -4,18 +4,17 @@ from uuid import uuid4
 
 import pytest
 
-from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.application.dtos.switch_outcome import SkipReason
-from src.domain.value_objects.device_type import DeviceType
-from src.domain.value_objects.device_state import DeviceState
+from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.domain.exceptions.domain_exceptions import (
     DeviceControlException,
     ProfileNotFoundException,
 )
+from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.windows.windows_device_repository import (
     WindowsDeviceRepository,
 )
-
 from tests.conftest import (
     FakeDeviceController,
     FakeEnumerator,

@@ -5,11 +5,10 @@ from uuid import uuid4
 import pytest
 
 import src.infrastructure.persistence.json_profile_repository as repo_module
+from src.domain.exceptions.domain_exceptions import ProfileStorageException
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
 )
-from src.domain.exceptions.domain_exceptions import ProfileStorageException
-
 from tests.conftest import save_profile
 
 

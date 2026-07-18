@@ -5,14 +5,13 @@ from uuid import uuid4
 import pytest
 
 from src.application.use_cases.create_profile_use_case import CreateProfileUseCase
-from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
 from src.application.use_cases.delete_profile_use_case import DeleteProfileUseCase
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
+from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
 from src.domain.exceptions.domain_exceptions import (
     ProfileNotFoundException,
     ProfileStorageException,
 )
-
 from tests.conftest import save_profile
 
 # --- Create -------------------------------------------------------------------

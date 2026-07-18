@@ -5,8 +5,8 @@ from uuid import uuid4
 
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.profile_dto import ProfileDTO
-from src.domain.value_objects.device_type import DeviceType
 from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 
 
 def device(is_default=False, state=DeviceState.AVAILABLE):

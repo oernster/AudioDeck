@@ -5,7 +5,6 @@ from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.windows.windows_device_repository import (
     WindowsDeviceRepository,
 )
-
 from tests.conftest import FakeEnumerator, make_device
 
 

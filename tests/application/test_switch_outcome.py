@@ -1,8 +1,8 @@
 """Tests for the SwitchOutcome result object."""
 
 from src.application.dtos.switch_outcome import (
-    SkipReason,
     SkippedDevice,
+    SkipReason,
     SwitchOutcome,
 )
 from src.domain.value_objects.device_type import DeviceType

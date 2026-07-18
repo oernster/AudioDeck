@@ -8,17 +8,23 @@ fakes so tests never touch real hardware or change system audio.
 
 from __future__ import annotations
 
-from typing import List, Optional
-from uuid import UUID, uuid4
+import os
 
-import pytest
+# Qt tests run headless. This must be set before any QApplication is created,
+# so it happens at import time rather than in a fixture.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from src.domain.entities.audio_device import AudioDevice
-from src.domain.entities.audio_profile import AudioProfile
-from src.domain.value_objects.device_type import DeviceType
-from src.domain.value_objects.device_state import DeviceState
+from typing import List, Optional  # noqa: E402
+from uuid import uuid4  # noqa: E402
+
+import pytest  # noqa: E402
+
 from src.application.dtos.profile_dto import ProfileDTO
 from src.application.dtos.switch_outcome import SwitchOutcome
+from src.domain.entities.audio_device import AudioDevice
+from src.domain.entities.audio_profile import AudioProfile
+from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
 )

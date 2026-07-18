@@ -3,8 +3,8 @@
 import pytest
 
 from src.domain.entities.audio_device import AudioDevice
-from src.domain.value_objects.device_type import DeviceType
 from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 
 
 def make(is_default=False, state=DeviceState.AVAILABLE):

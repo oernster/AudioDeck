@@ -1,16 +1,15 @@
 """Tests for the CLI handler (use cases injected; no real COM)."""
 
-from src.cli.cli_handler import CLIHandler
-from src.cli.argument_parser import CLIArguments
-from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.dtos.switch_outcome import (
-    SkipReason,
     SkippedDevice,
+    SkipReason,
     SwitchOutcome,
 )
-from src.domain.value_objects.device_type import DeviceType
+from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
+from src.cli.argument_parser import CLIArguments
+from src.cli.cli_handler import CLIHandler
 from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
-
+from src.domain.value_objects.device_type import DeviceType
 from tests.conftest import FakeGetProfilesUseCase, FakeSwitchUseCase, save_profile
 
 

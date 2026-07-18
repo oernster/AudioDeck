@@ -1,16 +1,15 @@
 """Tests for the configuration presenter."""
 
-from src.presentation.presenters.configuration_presenter import (
-    ConfigurationPresenter,
-)
 from src.application.dtos.device_dto import DeviceDTO
-from src.domain.value_objects.device_type import DeviceType
-from src.domain.value_objects.device_state import DeviceState
 from src.domain.exceptions.domain_exceptions import (
     ProfileNotFoundException,
     ProfileStorageException,
 )
-
+from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
+from src.presentation.presenters.configuration_presenter import (
+    ConfigurationPresenter,
+)
 from tests.conftest import (
     FakeDeleteProfileUseCase,
     FakeGetDevicesUseCase,

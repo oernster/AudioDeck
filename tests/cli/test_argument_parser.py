@@ -1,7 +1,5 @@
 """Tests for the CLI argument parser."""
 
-import pytest
-
 from src.cli.argument_parser import CLIArguments, parse_arguments
 
 

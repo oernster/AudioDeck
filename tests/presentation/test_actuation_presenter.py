@@ -1,16 +1,15 @@
 """Tests for the actuation presenter."""
 
-from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.switch_outcome import (
-    SkipReason,
     SkippedDevice,
+    SkipReason,
     SwitchOutcome,
 )
-from src.domain.value_objects.device_type import DeviceType
-from src.domain.value_objects.device_state import DeviceState
 from src.domain.exceptions.domain_exceptions import ProfileStorageException
-
+from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
+from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from tests.conftest import (
     FakeGetDevicesUseCase,
     FakeGetProfilesUseCase,
