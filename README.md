@@ -42,6 +42,9 @@ account, no cloud and no background service.
 - Partial switching: the available devices in a profile are applied even if one
   is currently missing, and the missing one is reported.
 - Automatic and on-demand rescanning of devices, with offline devices marked.
+- A single window per user: launching Audio Deck again brings the open window to
+  the front instead of starting a second copy. Command-line switching is not
+  restricted, so Stream Deck buttons keep working while the window is open.
 - Check for updates from the Help menu.
 - Profiles persisted locally with no external dependencies.
 
@@ -63,11 +66,25 @@ account, no cloud and no background service.
 
 ## Installation
 
-1. Download the latest `AudioDeck.exe` from the releases page.
-2. Place it in any folder.
-3. Run `AudioDeck.exe`.
+Two options, both per user and neither needing admin rights.
 
-No installation step is required and the app runs per user without admin rights.
+### Installer (recommended)
+
+1. Download `AudioDeckSetup.exe` from the releases page.
+2. Run it and choose Install.
+3. It installs to `%LOCALAPPDATA%\Programs\AudioDeck`, offers Desktop and Start
+   Menu shortcuts and registers an entry in Add or Remove Programs.
+
+Running the same setup again on an installed copy offers Update, Reinstall,
+Repair and Uninstall, chosen from the version it finds.
+
+### Portable
+
+1. Download the standalone `AudioDeck.exe` from the releases page.
+2. Place it in any folder.
+3. Run it. Nothing is installed and no registry entry is written.
+
+Both builds read and write the same profiles file, so you can move between them.
 
 ## Quick start
 
@@ -141,21 +158,26 @@ Back up this file to keep your profiles.
 
 ## Building from source
 
-```
+```powershell
 pip install -r requirements.txt
 python buildexe.py
+python buildinstaller.py
 ```
 
-The executable is written to `dist/AudioDeck.exe`. See
-[DEVELOPMENT_QUICKSTART.md](DEVELOPMENT_QUICKSTART.md) for a fuller walkthrough
-and [ARCHITECTURE.md](ARCHITECTURE.md) for the design.
+`buildexe.py` writes the portable executable to `dist/AudioDeck.exe`.
+`buildinstaller.py` wraps that build into `dist-installer/AudioDeckSetup.exe`,
+so run it after `buildexe.py`.
 
-## Testing
+## Documentation
 
-```
-pip install -r requirements-dev.txt
-pytest -v --cov
-```
+This README covers using Audio Deck. The rest is split by audience.
+
+| Document | What it covers |
+| --- | --- |
+| [DEVELOPMENT_QUICKSTART.md](DEVELOPMENT_QUICKSTART.md) | The short path from a clean checkout to a working build and a Stream Deck button |
+| [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Fuller developer notes: setup, workflow, code style, releasing |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | The design, the layers, the dependency direction and the enforced invariants |
+| [TESTING.md](TESTING.md) | How to run the tests, what the coverage gate measures and what it excludes |
 
 ## Troubleshooting
 
@@ -177,6 +199,13 @@ Deck picks it up automatically, or you can press **Refresh Devices**.
 This is expected when one of the profile's devices is currently offline. The
 available device is applied and the offline one is reported. It is applied
 automatically when it reconnects, or you can switch again once it is connected.
+
+### Audio Deck will not open a second window
+
+This is deliberate. Only one window may be open per Windows user, because two
+windows editing the same profiles file would conflict. Launching it again brings
+the window you already have to the front. Command-line switching is exempt, so
+`--profile` and `--list` still run as often as you like.
 
 ### A Stream Deck button does nothing
 

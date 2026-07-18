@@ -8,7 +8,7 @@ see [DEVELOPMENT_README.md](DEVELOPMENT_README.md).
 
 ### 1. Install dependencies
 
-```bash
+```powershell
 # Activate the virtual environment if it is not already active
 venv\Scripts\activate
 
@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 ### 2. Run from source
 
-```bash
+```powershell
 # From the AudioDeck directory
 python src/main.py
 ```
@@ -26,13 +26,30 @@ python src/main.py
 The application opens a GUI window. Close it normally or press Ctrl+C in the
 terminal.
 
-### 3. Build the executable
+Only one Audio Deck window may be open per Windows user. If an installed or
+packaged copy is already running, launching from source will raise that window
+and exit immediately rather than opening a second one. Close the other copy
+first when testing GUI changes.
 
-```bash
+### 3. Build the executable and the installer
+
+```powershell
 python buildexe.py
+python buildinstaller.py
 ```
 
-The executable is created at `dist/AudioDeck.exe`.
+`buildexe.py` creates the portable executable at `dist/AudioDeck.exe`.
+`buildinstaller.py` wraps that build into `dist-installer/AudioDeckSetup.exe`,
+so it has to run after `buildexe.py`.
+
+### 4. Run the tests
+
+```powershell
+pip install -r requirements-dev.txt
+pytest -v --cov
+```
+
+Coverage is gated at 100 percent over the tested surface; the run fails below it.
 
 ## Usage
 
@@ -143,6 +160,12 @@ Run the batch file manually first to read any error in the console, then check:
 - **Wrong profile switches**: check the name in the batch file matches exactly
   ("Gaming" is not "gaming").
 
+### Running from source does nothing
+
+Another Audio Deck window is already open, most likely an installed or packaged
+copy. Only one window is allowed per Windows user, so the second launch raises
+the first and exits. Close the running copy and try again.
+
 ### Build errors
 
 - Ensure dependencies are installed with `pip install -r requirements.txt`.
@@ -159,10 +182,17 @@ AudioDeck/
     infrastructure/  Windows integration and storage
     presentation/    GUI
     cli/             Command-line interface
-    main.py          Entry point
+    main.py          Entry point and composition root
+  tests/             Mirrors src/, plus structural boundary tests
+  installer/         The bespoke themed setup application
+  assets/            Generated icon set (one master image)
+  docs/              GitHub Pages site and screenshots
   examples/
-  requirements.txt
-  buildexe.py
+  VERSION            Single source of truth for the version
+  buildexe.py        Portable executable
+  buildinstaller.py  Setup executable, run after buildexe.py
+  generate_icons.py  Regenerates assets/ from the master image
+  ARCHITECTURE.md
   README.md
 ```
 

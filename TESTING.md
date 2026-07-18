@@ -1,0 +1,140 @@
+# Testing
+
+How Audio Deck is tested, what the coverage gate measures and what it
+deliberately does not. For the design see [ARCHITECTURE.md](ARCHITECTURE.md);
+for developer setup see [DEVELOPMENT_README.md](DEVELOPMENT_README.md).
+
+## Running the tests
+
+```powershell
+pip install -r requirements-dev.txt
+pytest -v --cov
+```
+
+That is the whole command. Coverage settings live in `pyproject.toml` under
+`[tool.coverage.run]`, so the flags do not have to be remembered.
+
+Read the **exit code**, not the output. A coverage-gated run prints the coverage
+table last and emits no "N passed" summary line, so grepping the text for
+`passed` or `failed` matches coverage filenames instead of results.
+
+```powershell
+pytest -v --cov
+$LASTEXITCODE   # 0 = all tests passed AND the coverage gate was met
+```
+
+Useful variations:
+
+```powershell
+pytest -q --no-cov                      # fast run, no coverage
+pytest tests/domain -p no:cacheprovider # one layer
+pytest --cov-report=html                # then open htmlcov/index.html
+```
+
+## The gate
+
+The build fails below **100 percent**, measured with **branch coverage** as well
+as statement coverage. This is deliberate: at 100 percent a gap is a signal
+rather than noise, because it can only be one of two things.
+
+- A missing test, which should be written.
+- Unreachable code, which should be deleted.
+
+Branch coverage found exactly that in `cli_handler`: an `if profiles:` guard
+whose false path could never run, because the empty case had already returned
+earlier. The fix was to remove the dead branch, not to write a test for it.
+
+## What is measured
+
+Everything under `src/` except the exclusions below, which is the domain, the
+application layer, both repositories, the CLI, the presenters, the version
+reader, the single-instance guard, the device-change notifier and the background
+worker.
+
+## What is excluded, and why
+
+Set in `[tool.coverage.run]` in `pyproject.toml`. Each exclusion is a considered
+decision rather than a convenience.
+
+| Excluded | Why |
+| --- | --- |
+| `*/__init__.py` | Package markers hold no logic |
+| `src/main.py` | The composition root builds real COM objects and a QApplication; wiring is proved by running the app |
+| `src/presentation/views/*` | PySide6 widget construction. Layout is judged by looking at the running app, not by brittle tests that break on every UI tweak |
+| `src/infrastructure/windows/device_enumerator.py` | Raw COM enumeration against live Windows audio endpoints, needing real hardware |
+| `src/infrastructure/windows/windows_device_controller.py` | Sets the machine's actual default devices. A test that ran this would change your audio while it ran |
+
+The two COM modules are excluded at the module level but not untested in effect:
+everything that consumes them is driven through fakes at their seams, so the
+logic around them is fully covered.
+
+Line-level exclusions (`[tool.coverage.report]`) cover `pragma: no cover`,
+`if TYPE_CHECKING:`, `raise NotImplementedError` and bare `...` Protocol bodies.
+
+## No mock libraries
+
+There is no `unittest.mock`, no `MagicMock` and no `pytest-mock` in the suite.
+Doubles are hand written and live in `tests/conftest.py`: `FakeEnumerator`,
+`FakeDeviceController` and small fakes for each use case. Where a real
+implementation is safe it is used directly, so `JsonProfileRepository` is tested
+against real files in a `tmp_path`.
+
+`monkeypatch` is used sparingly for things like `sys.argv` and `sys._MEIPASS`.
+It is a pytest builtin for patching attributes, not a mock framework, so it does
+not conflict with this rule.
+
+Qt is never mocked. Qt tests use a real `QApplication` through pytest-qt's
+`qapp` fixture, with `QT_QPA_PLATFORM=offscreen` set in `tests/conftest.py` at
+import time so the suite runs headless.
+
+## Layout
+
+`tests/` mirrors `src/`.
+
+```
+tests/
+  conftest.py       Hand-written doubles, shared fixtures, headless Qt setup
+  domain/           Entities, value objects, exceptions, Protocol conformance
+  application/      Use cases and DTOs
+  infrastructure/   JSON repository, device repository, single-instance guard
+  presentation/     Presenters, background worker, device-change notifier
+  cli/              Argument parsing and the CLI handler
+  structural/       AST scans enforcing the layer boundaries
+  test_version.py   The VERSION file reader
+```
+
+## Testing patterns worth knowing
+
+**Windows APIs go behind a Protocol.** `SingleInstanceGuard` takes a `MutexApi`,
+so its logic is tested against a fake while the real `Win32MutexApi` stays a thin
+`pragma: no cover` shim. Anything needing a Win32 call should follow this shape.
+
+**Native event filters can be tested directly.** The device-change notifier is
+exercised by building a real `ctypes` `MSG`, so the pointer cast is genuinely
+executed rather than stubbed.
+
+**Code on a QThread is not traced.** Coverage cannot see code Qt runs on a native
+thread, so `_Worker._run` is unit-tested directly on the main thread while
+separate tests cover the cross-thread wiring. If a new module runs work on a
+QThread, expect the same split.
+
+**Structural tests guard the architecture.** `tests/structural/` parses the
+source with `ast` so a layering violation fails the build rather than being
+caught in review. Seven checks currently run: the domain and application
+boundaries, presentation not importing infrastructure or the CLI, CLI
+infrastructure imports staying inside its composition root, the composition-root
+whitelist, and a scan for module-level service singletons.
+
+If you add a new entry point, add it to `COMPOSITION_ROOTS` in
+`tests/structural/test_architecture.py` and say why in ARCHITECTURE.md. The
+whitelist is meant to make a third composition root a deliberate decision rather
+than an accident.
+
+## Adding tests
+
+1. Put the test beside its layer, mirroring `src/`.
+2. Prefer the real implementation. If it touches COM, the network or the user's
+   machine, put it behind a Protocol and write a fake.
+3. Name the test for the behaviour, not the method: `test_second_instance_is_refused`
+   rather than `test_acquire_returns_false`.
+4. Run `pytest -v --cov` and check `$LASTEXITCODE` is 0 before handing over.

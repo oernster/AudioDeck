@@ -16,18 +16,30 @@ suite rather than left to convention.
 | The domain layer imports no framework, no I/O and no platform code | Keeps business rules portable and unit-testable in isolation | Structural import-scan test (`tests/structural/test_architecture.py`) |
 | The application layer depends only on the domain and the standard library | Use cases stay decoupled from Qt, COM and storage details | Structural import-scan test |
 | Infrastructure implements domain interfaces and is never imported by the domain or application | Dependency direction stays inward; Windows and JSON stay swappable | Structural import-scan test |
-| The UI and the CLI depend only on the application layer | One composition root wires concretes; views stay passive | Structural import-scan test |
-| Dependencies are wired in one explicit composition root, with constructor injection only | No hidden singletons or service locators | Composition-root whitelist test |
+| The presentation layer never imports infrastructure | Views and presenters receive their use cases rather than building them | Structural import-scan test |
+| Only a composition root names an infrastructure concrete | Everything else is constructor-injected and stays swappable | Composition-root whitelist test (`main.py` and `cli_handler.py`) |
+| No module-level service singletons | No hidden global state or service locators | Structural AST scan for module-level service construction |
 | The version string exists only in the root `VERSION` file | Single source of truth; no drift across code and packaging | `version.py` reads `VERSION`; `pyproject.toml` reads the same file |
-| Code is formatted with black and passes flake8 | Mechanical consistency without review effort | `black --check` and `flake8` run as in-suite assertions |
+| Code is formatted with black | Mechanical consistency without review effort | `black --check .`, run manually |
+| Only one GUI instance runs per logon session | Two windows would race over the same profiles file | Named-mutex guard, covered by `tests/infrastructure/test_single_instance.py` |
+| Every testable line and branch is covered | A gap is either a missing test or dead code, and both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 
 The test suite targets 100% coverage measured with `pytest -v --cov`, using real
 implementations where safe and small hand-written fakes at the Windows boundary,
 with no mock libraries. Fragile PySide6 UI views and the raw-COM enumerator and
 controller are excluded from coverage via `.coveragerc`, so the meaningful
 surface (domain, application, repository logic, CLI and presenters) stays at
-100%. The suite is being established; until each check lands, these invariants
-are maintained by review.
+100%.
+
+There are two composition roots, not one, because the GUI and the CLI are
+separate entry points: `main.py` wires the GUI and `CLIHandler.from_profiles_path`
+wires the headless path. The whitelist test names both, so adding a third would
+fail the build rather than pass unnoticed.
+
+The presentation layer does import a small number of domain types (the exception
+hierarchy and `DeviceType`), which is deliberate: presenters translate domain
+errors for display. The enforced rule is therefore the one that matters, that
+presentation never reaches for infrastructure.
 
 ## Layers
 
@@ -42,12 +54,14 @@ src/
     use_cases/         Get/Create/Update/Delete/GetProfiles, GetDevices, SwitchProfile
     dtos/              DeviceDTO, ProfileDTO, SwitchOutcome
   infrastructure/       External integrations
-    windows/           Core Audio enumeration and control (pycaw, comtypes)
+    windows/           Core Audio enumeration and control (pycaw, comtypes),
+                       SingleInstanceGuard (named mutex, Win32 behind Protocols)
     persistence/       JSON profile storage
   presentation/         GUI layer (PySide6)
-    views/             MainWindow, ConfigurationView, ActuationView
+    views/             MainWindow, ConfigurationView, ActuationView, icons
     presenters/        ConfigurationPresenter, ActuationPresenter (MVP)
     notifiers/         WindowsDeviceChangeNotifier (WM_DEVICECHANGE)
+    workers/           BackgroundRunner (keeps device work off the GUI thread)
   cli/                  Headless command-line interface
   main.py              Composition root and entry point
 ```
@@ -146,8 +160,15 @@ Profiles are persisted as a JSON array under
 
 ## Quality enforcement
 
-- Formatting: black (line length 88).
-- Linting: flake8 and ruff.
-- Types: mypy.
-- Tests: pytest with coverage, 100% target on the non-UI surface, no mock
-  libraries (see the invariants section above).
+- Formatting: black (line length 88). Clean.
+- Linting: ruff. Clean. Note that `src/main.py` carries a per-file ignore for
+  `E402` and `I001` in `pyproject.toml`, because it inserts the project root on
+  `sys.path` before importing from `src`; sorting those imports would break
+  running `python src/main.py` directly. Do not remove that ignore.
+- Types: mypy over `src`, in its strict configuration. Clean. Qt enums must be
+  written fully qualified (`Qt.ItemDataRole.UserRole`, not `Qt.UserRole`);
+  PySide6 forwards the shorthand at runtime but does not declare it in its
+  stubs, so the shorthand form fails type checking.
+- Tests: pytest with statement and branch coverage, gated at 100% over the
+  measured surface, with no mock libraries. See [TESTING.md](TESTING.md) for
+  what is measured, what is excluded and why.
