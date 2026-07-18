@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src import __version__
 
-from PySide6.QtWidgets import QApplication, QSplashScreen, QLabel, QVBoxLayout, QWidget
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QMainWindow, QSplashScreen
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QFont
 
 from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
@@ -53,12 +53,12 @@ def get_resource_path(relative_path: str) -> Path:
     Returns:
         Absolute path to resource
     """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = Path(sys._MEIPASS)
-    except AttributeError:
-        # Running in development mode
-        base_path = Path(__file__).parent.parent
+    # PyInstaller creates a temp folder and stores its path in _MEIPASS, which
+    # only exists in a frozen build, so it is read defensively.
+    bundle_dir = getattr(sys, "_MEIPASS", None)
+    base_path = (
+        Path(bundle_dir) if bundle_dir is not None else Path(__file__).parent.parent
+    )
 
     return base_path / relative_path
 
@@ -103,10 +103,10 @@ def create_splash_screen() -> QSplashScreen:
     color_loading = QColor("#8a7ea3")
 
     splash_pixmap = QPixmap(WIDTH, HEIGHT)
-    splash_pixmap.fill(Qt.transparent)
+    splash_pixmap.fill(Qt.GlobalColor.transparent)
 
     painter = QPainter(splash_pixmap)
-    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
     # Rounded gradient card.
     inset = BORDER_WIDTH
@@ -157,7 +157,10 @@ def create_splash_screen() -> QSplashScreen:
 
     if has_icon:
         icon_pixmap = QPixmap(str(icon_path)).scaled(
-            ICON_SIZE, ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            ICON_SIZE,
+            ICON_SIZE,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
         painter.drawPixmap((WIDTH - icon_pixmap.width()) // 2, y, icon_pixmap)
         y += icon_pixmap.height() + ICON_TITLE_GAP
@@ -191,7 +194,7 @@ def create_splash_screen() -> QSplashScreen:
 
     painter.end()
 
-    splash = QSplashScreen(splash_pixmap, Qt.WindowStaysOnTopHint)
+    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
     splash.setMask(splash_pixmap.mask())
     return splash
 
@@ -208,7 +211,7 @@ def get_profiles_path() -> Path:
     return app_data / "profiles.json"
 
 
-def _set_windows_taskbar_icon(window: "QMainWindow", ico_path: Path) -> None:
+def _set_windows_taskbar_icon(window: QMainWindow, ico_path: Path) -> None:
     """Set Windows taskbar icon via WM_SETICON for reliable display.
 
     Qt's setWindowIcon does not always propagate to the Windows taskbar

@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
-from src.domain.interfaces.profile_repository import IProfileRepository
 from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
+from src.domain.interfaces.profile_repository import IProfileRepository
 
 
 class DeleteProfileUseCase:

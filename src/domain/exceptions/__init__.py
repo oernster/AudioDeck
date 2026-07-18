@@ -2,8 +2,8 @@
 
 from .domain_exceptions import (
     AudioDeckException,
-    DeviceNotFoundException,
     DeviceControlException,
+    DeviceNotFoundException,
     ProfileNotFoundException,
     ProfileStorageException,
 )

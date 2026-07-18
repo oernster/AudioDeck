@@ -68,11 +68,11 @@ class Win32MutexApi:  # pragma: no cover
 
     def create_mutex(self, name: str) -> int:
         """Create or open the named mutex via kernel32."""
-        return ctypes.windll.kernel32.CreateMutexW(None, False, name)
+        return int(ctypes.windll.kernel32.CreateMutexW(None, False, name))
 
     def last_error(self) -> int:
         """Return the calling thread's last Win32 error code."""
-        return ctypes.windll.kernel32.GetLastError()
+        return int(ctypes.windll.kernel32.GetLastError())
 
     def close_handle(self, handle: int) -> None:
         """Close a kernel handle."""
@@ -84,7 +84,7 @@ class Win32WindowApi:  # pragma: no cover
 
     def find_window(self, title: str) -> int:
         """Find a top-level window by its exact title."""
-        return ctypes.windll.user32.FindWindowW(None, title)
+        return int(ctypes.windll.user32.FindWindowW(None, title))
 
     def is_minimized(self, handle: int) -> bool:
         """Return True if the window is minimized."""

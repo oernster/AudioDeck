@@ -3,12 +3,12 @@
 from typing import Optional
 from uuid import UUID
 
-from src.domain.interfaces.profile_repository import IProfileRepository
+from src.application.dtos.profile_dto import ProfileDTO
 from src.domain.exceptions.domain_exceptions import (
     ProfileNotFoundException,
     ProfileStorageException,
 )
-from src.application.dtos.profile_dto import ProfileDTO
+from src.domain.interfaces.profile_repository import IProfileRepository
 
 
 class UpdateProfileUseCase:

@@ -1,12 +1,13 @@
 """Windows device enumerator using pycaw."""
 
 import warnings
-from typing import List, Optional
-from pycaw.pycaw import AudioUtilities, DEVICE_STATE, EDataFlow, ERole
+from typing import Any, List, Optional
+
+from pycaw.pycaw import DEVICE_STATE, AudioUtilities, EDataFlow, ERole
 
 from src.domain.entities.audio_device import AudioDevice
-from src.domain.value_objects.device_type import DeviceType
 from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 
 # pycaw raises a UserWarning while building its device list whenever it cannot
 # read a friendly name from an inactive device (disconnected or disabled). That
@@ -39,7 +40,7 @@ _WINDOWS_STATE_TO_DEVICE_STATE = {
 class WindowsDeviceEnumerator:
     """Enumerates audio devices using Windows Core Audio API."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the enumerator."""
         self._default_output_id: Optional[str] = None
         self._default_input_id: Optional[str] = None
@@ -66,13 +67,13 @@ class WindowsDeviceEnumerator:
             if default_device is None:
                 return None
 
-            device_id = default_device.GetId()
+            device_id: Optional[str] = default_device.GetId()
             return device_id
         except Exception:
             return None
 
     def enumerate_devices(
-        self, data_flow: int, all_devices_cache: List = None
+        self, data_flow: int, all_devices_cache: Optional[List[Any]] = None
     ) -> List[AudioDevice]:
         """Enumerate devices of a specific flow type.
 
@@ -83,7 +84,7 @@ class WindowsDeviceEnumerator:
         Returns:
             List of AudioDevice entities
         """
-        devices = []
+        devices: List[AudioDevice] = []
 
         try:
             # Use cached default device ID (set in get_all_devices)

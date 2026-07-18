@@ -41,9 +41,9 @@ class JsonProfileRepository:
                 data = json.load(f)
                 return [AudioProfile.from_dict(p) for p in data]
         except json.JSONDecodeError as e:
-            raise ProfileStorageException(f"Failed to parse profiles file: {e}")
+            raise ProfileStorageException(f"Failed to parse profiles file: {e}") from e
         except Exception as e:
-            raise ProfileStorageException(f"Failed to read profiles: {e}")
+            raise ProfileStorageException(f"Failed to read profiles: {e}") from e
 
     def _write_profiles(self, profiles: List[AudioProfile]) -> None:
         """Write profiles to file.
@@ -59,7 +59,7 @@ class JsonProfileRepository:
             with open(self._file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
-            raise ProfileStorageException(f"Failed to write profiles: {e}")
+            raise ProfileStorageException(f"Failed to write profiles: {e}") from e
 
     def save(self, profile: AudioProfile) -> None:
         """Save a profile.

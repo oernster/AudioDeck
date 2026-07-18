@@ -3,9 +3,9 @@
 Author: Oliver Ernster
 """
 
-import PyInstaller.__main__
-import sys
 from pathlib import Path
+
+import PyInstaller.__main__
 
 
 def build_executable() -> None:

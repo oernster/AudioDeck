@@ -3,10 +3,10 @@
 from typing import Optional
 from uuid import uuid4
 
-from src.domain.entities.audio_profile import AudioProfile
-from src.domain.interfaces.profile_repository import IProfileRepository
-from src.domain.exceptions.domain_exceptions import ProfileStorageException
 from src.application.dtos.profile_dto import ProfileDTO
+from src.domain.entities.audio_profile import AudioProfile
+from src.domain.exceptions.domain_exceptions import ProfileStorageException
+from src.domain.interfaces.profile_repository import IProfileRepository
 
 
 class CreateProfileUseCase:

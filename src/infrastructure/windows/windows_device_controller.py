@@ -1,12 +1,13 @@
 """Windows device controller using pycaw."""
 
-import comtypes
-from comtypes import GUID, CLSCTX_ALL, HRESULT, COMMETHOD
-from ctypes import POINTER, c_wchar_p
+from ctypes import c_wchar_p
 from ctypes.wintypes import DWORD
 
-from src.domain.value_objects.device_type import DeviceType
+import comtypes
+from comtypes import CLSCTX_ALL, COMMETHOD, GUID, HRESULT
+
 from src.domain.exceptions.domain_exceptions import DeviceControlException
+from src.domain.value_objects.device_type import DeviceType
 
 
 # IPolicyConfig interface definition for Windows 10/11
@@ -64,7 +65,7 @@ class WindowsDeviceController:
             except Exception as e:
                 raise DeviceControlException(
                     f"Could not access audio policy interface: {e}"
-                )
+                ) from e
 
             # Set for all roles (Console, Multimedia, Communications)
             # ERole values: eConsole=0, eMultimedia=1, eCommunications=2
@@ -73,7 +74,7 @@ class WindowsDeviceController:
             success_count = 0
             for role in roles:
                 try:
-                    result = policy_config.SetDefaultEndpoint(device_id, role)
+                    policy_config.SetDefaultEndpoint(device_id, role)
                     success_count += 1
                 except Exception:
                     # Continue with other roles
@@ -87,7 +88,7 @@ class WindowsDeviceController:
         except DeviceControlException:
             raise
         except Exception as e:
-            raise DeviceControlException(f"Failed to set default device: {e}")
+            raise DeviceControlException(f"Failed to set default device: {e}") from e
 
     def refresh_devices(self) -> None:
         """Refresh device list after changes."""

@@ -3,9 +3,9 @@
 from typing import List, Optional
 from uuid import UUID
 
-from src.domain.interfaces.profile_repository import IProfileRepository
-from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
 from src.application.dtos.profile_dto import ProfileDTO
+from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
+from src.domain.interfaces.profile_repository import IProfileRepository
 
 
 class GetProfilesUseCase:

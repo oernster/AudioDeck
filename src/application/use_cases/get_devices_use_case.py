@@ -2,9 +2,9 @@
 
 from typing import List, Optional
 
+from src.application.dtos.device_dto import DeviceDTO
 from src.domain.interfaces.device_repository import IDeviceRepository
 from src.domain.value_objects.device_type import DeviceType
-from src.application.dtos.device_dto import DeviceDTO
 
 
 class GetDevicesUseCase:

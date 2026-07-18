@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from src.domain.value_objects.device_type import DeviceType
 from src.domain.value_objects.device_state import DeviceState
+from src.domain.value_objects.device_type import DeviceType
 
 
 @dataclass(frozen=True)

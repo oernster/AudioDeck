@@ -2,16 +2,15 @@
 
 import sys
 from pathlib import Path
-from typing import NoReturn
 
+from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
+from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
+from src.cli.argument_parser import CLIArguments
+from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
+from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
 from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
 from src.infrastructure.windows.windows_device_controller import WindowsDeviceController
 from src.infrastructure.windows.windows_device_repository import WindowsDeviceRepository
-from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
-from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
-from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
-from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
-from src.cli.argument_parser import CLIArguments
 
 
 class CLIHandler:
@@ -108,10 +107,10 @@ class CLIHandler:
             print(f"  • {profile.name}{device_info}")
 
         print("\nTo switch to a profile, use:")
-        print(f'  AudioDeck.exe --profile "PROFILE_NAME"')
+        print('  AudioDeck.exe --profile "PROFILE_NAME"')
         print("\nExample:")
-        if profiles:
-            print(f'  AudioDeck.exe --profile "{profiles[0].name}"')
+        # The empty case returned above, so there is always a first profile.
+        print(f'  AudioDeck.exe --profile "{profiles[0].name}"')
 
         return 0
 

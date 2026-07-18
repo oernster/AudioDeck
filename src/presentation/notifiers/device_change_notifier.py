@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import ctypes
 from ctypes import wintypes
-from typing import Callable
+from typing import Any, Callable
 
 from PySide6.QtCore import QAbstractNativeEventFilter
 
@@ -31,7 +31,7 @@ class WindowsDeviceChangeNotifier(QAbstractNativeEventFilter):
         super().__init__()
         self._on_change = on_change
 
-    def install(self, app) -> None:
+    def install(self, app: Any) -> None:
         """Install this filter on the application.
 
         Args:
@@ -39,7 +39,9 @@ class WindowsDeviceChangeNotifier(QAbstractNativeEventFilter):
         """
         app.installNativeEventFilter(self)
 
-    def nativeEventFilter(self, event_type, message):  # noqa: N802 (Qt override)
+    def nativeEventFilter(  # noqa: N802 (Qt override)
+        self, event_type: Any, message: Any
+    ) -> tuple[bool, int]:
         """Handle native events, calling back on WM_DEVICECHANGE."""
         try:
             if event_type == _WINDOWS_MSG_EVENT:

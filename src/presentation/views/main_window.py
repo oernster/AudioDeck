@@ -5,33 +5,33 @@ Author: Oliver Ernster
 
 import sys
 from pathlib import Path
+
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QAction, QDesktopServices, QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QTabWidget,
-    QWidget,
-    QVBoxLayout,
+    QApplication,
+    QDialog,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
-    QDialog,
-    QTextBrowser,
-    QPushButton,
-    QSizePolicy,
+    QMainWindow,
     QMenu,
+    QMessageBox,
+    QPushButton,
+    QTabWidget,
+    QTextBrowser,
     QToolButton,
-    QApplication,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QAction, QIcon, QPixmap, QDesktopServices
 
 from src import __version__
-from src.presentation.views.configuration_view import ConfigurationView
-from src.presentation.views.actuation_view import ActuationView
 from src.presentation.notifiers.device_change_notifier import (
     WindowsDeviceChangeNotifier,
 )
-from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
+from src.presentation.views.actuation_view import ActuationView
+from src.presentation.views.configuration_view import ConfigurationView
 
 # GitHub releases page for the Check for Updates action.
 RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         # Create Help button with menu
         help_button = QToolButton()
         help_button.setText("HELP")
-        help_button.setPopupMode(QToolButton.InstantPopup)
+        help_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         help_button.setStyleSheet("""
             QToolButton {
                 background-color: #4A90E2;
@@ -170,7 +170,7 @@ class MainWindow(QMainWindow):
         help_button.setMenu(help_menu)
 
         # Add Help button to tab widget corner (top-right)
-        self._tab_widget.setCornerWidget(help_button, Qt.TopRightCorner)
+        self._tab_widget.setCornerWidget(help_button, Qt.Corner.TopRightCorner)
 
     def _get_resource_path(self, relative_path: str) -> Path:
         """Get absolute path to resource, works for dev and for PyInstaller.
@@ -181,14 +181,14 @@ class MainWindow(QMainWindow):
         Returns:
             Absolute path to resource
         """
-        try:
-            # PyInstaller creates a temp folder and stores path in _MEIPASS
-            base_path = Path(sys._MEIPASS)
-        except AttributeError:
-            # Running in development mode
-            base_path = Path(__file__).parent.parent.parent.parent
+        # PyInstaller creates a temp folder and stores its path in _MEIPASS,
+        # which only exists in a frozen build, so it is read defensively.
+        bundle_dir = getattr(sys, "_MEIPASS", None)
+        if bundle_dir is not None:
+            return Path(bundle_dir) / relative_path
 
-        return base_path / relative_path
+        # Running in development mode.
+        return Path(__file__).parent.parent.parent.parent / relative_path
 
     def _show_documentation(self) -> None:
         """Show the documentation viewer dialog."""
@@ -238,7 +238,10 @@ class MainWindow(QMainWindow):
             icon_label = QLabel(dialog)
             pixmap = QPixmap(str(icon_path))
             scaled_pixmap = pixmap.scaled(
-                64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                64,
+                64,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
             icon_label.setPixmap(scaled_pixmap)
             icon_label.setFixedSize(64, 64)
@@ -250,7 +253,7 @@ class MainWindow(QMainWindow):
             icon_label.setScaledContents(False)
 
             # Position icon after dialog is shown
-            def position_icon():
+            def position_icon() -> None:
                 icon_label.move(dialog.width() - 84, 10)
                 icon_label.raise_()
 
@@ -282,13 +285,13 @@ class MainWindow(QMainWindow):
         left_layout = QVBoxLayout()
 
         title_label = QLabel("<h2>Development Documentation</h2>")
-        title_label.setTextFormat(Qt.RichText)
+        title_label.setTextFormat(Qt.TextFormat.RichText)
         left_layout.addWidget(title_label)
 
         desc_label = QLabel(
             "<p>Technical documentation for developers and advanced users.</p>"
         )
-        desc_label.setTextFormat(Qt.RichText)
+        desc_label.setTextFormat(Qt.TextFormat.RichText)
         left_layout.addWidget(desc_label)
 
         header_layout.addLayout(left_layout)
@@ -300,10 +303,13 @@ class MainWindow(QMainWindow):
             icon_label = QLabel()
             pixmap = QPixmap(str(icon_path))
             scaled_pixmap = pixmap.scaled(
-                64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                64,
+                64,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
             icon_label.setPixmap(scaled_pixmap)
-            icon_label.setAlignment(Qt.AlignTop)
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
             header_layout.addWidget(icon_label)
 
         layout.addLayout(header_layout)
@@ -336,7 +342,7 @@ Technical architecture, design patterns, and development guidelines.</p>
         text_browser.setHtml(dev_docs_content)
 
         # Handle link clicks to open files
-        def handle_link_click(url):
+        def handle_link_click(url: QUrl) -> None:
             file_name = url.toString().replace("file:///", "")
             file_path = self._get_resource_path(file_name)
 
@@ -453,15 +459,15 @@ Technical architecture, design patterns, and development guidelines.</p>
         left_layout = QVBoxLayout()
 
         title_label = QLabel("<h2>Audio Deck</h2>")
-        title_label.setTextFormat(Qt.RichText)
+        title_label.setTextFormat(Qt.TextFormat.RichText)
         left_layout.addWidget(title_label)
 
         version_label = QLabel(f"<p><b>Version:</b> {__version__}</p>")
-        version_label.setTextFormat(Qt.RichText)
+        version_label.setTextFormat(Qt.TextFormat.RichText)
         left_layout.addWidget(version_label)
 
         author_label = QLabel("<p><b>Author:</b> Oliver Ernster</p>")
-        author_label.setTextFormat(Qt.RichText)
+        author_label.setTextFormat(Qt.TextFormat.RichText)
         left_layout.addWidget(author_label)
 
         header_layout.addLayout(left_layout)
@@ -473,10 +479,13 @@ Technical architecture, design patterns, and development guidelines.</p>
             icon_label = QLabel()
             pixmap = QPixmap(str(icon_path))
             scaled_pixmap = pixmap.scaled(
-                64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                64,
+                64,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
             icon_label.setPixmap(scaled_pixmap)
-            icon_label.setAlignment(Qt.AlignTop)
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
             header_layout.addWidget(icon_label)
 
         layout.addLayout(header_layout)
@@ -484,7 +493,7 @@ Technical architecture, design patterns, and development guidelines.</p>
         subtitle_label = QLabel(
             "<p>A professional audio device switcher for Windows with Stream Deck integration.</p>"
         )
-        subtitle_label.setTextFormat(Qt.RichText)
+        subtitle_label.setTextFormat(Qt.TextFormat.RichText)
         subtitle_label.setWordWrap(True)
         layout.addWidget(subtitle_label)
 
@@ -502,7 +511,7 @@ Technical architecture, design patterns, and development guidelines.</p>
 <p>For more information, select <b>Help > View License</b> or <b>Help > View Documentation</b>.</p>"""
 
         text_label = QLabel(about_text)
-        text_label.setTextFormat(Qt.RichText)
+        text_label.setTextFormat(Qt.TextFormat.RichText)
         text_label.setWordWrap(True)
         layout.addWidget(text_label)
 

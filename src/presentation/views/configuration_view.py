@@ -3,23 +3,21 @@
 from typing import Optional
 from uuid import UUID
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
+    QComboBox,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QComboBox,
-    QPushButton,
     QListWidget,
     QListWidgetItem,
-    QGroupBox,
     QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt
 
-from src.application.dtos.device_dto import DeviceDTO
-from src.application.dtos.profile_dto import ProfileDTO
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.views.icons import (
     ICON_CANCEL,
@@ -89,7 +87,9 @@ class ConfigurationView(QWidget):
         name_layout = QHBoxLayout()
         name_label = QLabel("Profile Name:")
         name_label.setFixedWidth(140)
-        name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        name_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         name_layout.addWidget(name_label)
         self._name_input = QLineEdit()
         self._name_input.setPlaceholderText("Enter profile name...")
@@ -100,7 +100,9 @@ class ConfigurationView(QWidget):
         output_layout = QHBoxLayout()
         output_label = QLabel("Output Device:")
         output_label.setFixedWidth(140)
-        output_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        output_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         output_layout.addWidget(output_label)
         self._output_combo = QComboBox()
         self._output_combo.addItem("(None)", None)
@@ -115,7 +117,9 @@ class ConfigurationView(QWidget):
         input_layout = QHBoxLayout()
         input_label = QLabel("Input Device:")
         input_label.setFixedWidth(140)
-        input_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        input_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         input_layout.addWidget(input_label)
         self._input_combo = QComboBox()
         self._input_combo.addItem("(None)", None)
@@ -170,7 +174,7 @@ class ConfigurationView(QWidget):
 
         for profile in profiles:
             item = QListWidgetItem(profile.display_name)
-            item.setData(Qt.UserRole, profile.id)
+            item.setData(Qt.ItemDataRole.UserRole, profile.id)
             self._profile_list.addItem(item)
 
     def _load_devices(self, refresh: bool = False) -> None:
@@ -231,7 +235,7 @@ class ConfigurationView(QWidget):
         if not selected_items:
             return
 
-        profile_id = selected_items[0].data(Qt.UserRole)
+        profile_id = selected_items[0].data(Qt.ItemDataRole.UserRole)
         profile = self._presenter.get_profile_by_id(profile_id)
 
         if profile is None:
@@ -265,7 +269,7 @@ class ConfigurationView(QWidget):
         if not selected_items:
             return
 
-        profile_id = selected_items[0].data(Qt.UserRole)
+        profile_id = selected_items[0].data(Qt.ItemDataRole.UserRole)
         profile = self._presenter.get_profile_by_id(profile_id)
 
         if profile is None:
@@ -275,11 +279,11 @@ class ConfigurationView(QWidget):
             self,
             "Confirm Delete",
             f"Are you sure you want to delete profile '{profile.name}'?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             self._presenter.delete_profile(profile_id)
             self._load_profiles()
 

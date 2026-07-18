@@ -5,15 +5,15 @@ from uuid import UUID
 
 from PySide6.QtCore import QObject, Signal
 
-from src.application.use_cases.get_devices_use_case import GetDevicesUseCase
-from src.application.use_cases.create_profile_use_case import CreateProfileUseCase
-from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
-from src.application.use_cases.delete_profile_use_case import DeleteProfileUseCase
-from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.dtos.device_dto import DeviceDTO
 from src.application.dtos.profile_dto import ProfileDTO
-from src.domain.value_objects.device_type import DeviceType
+from src.application.use_cases.create_profile_use_case import CreateProfileUseCase
+from src.application.use_cases.delete_profile_use_case import DeleteProfileUseCase
+from src.application.use_cases.get_devices_use_case import GetDevicesUseCase
+from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
+from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
 from src.domain.exceptions.domain_exceptions import AudioDeckException
+from src.domain.value_objects.device_type import DeviceType
 
 
 class ConfigurationPresenter(QObject):

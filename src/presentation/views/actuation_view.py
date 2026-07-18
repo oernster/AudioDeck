@@ -1,19 +1,22 @@
 """Actuation view for quick profile switching."""
 
+from typing import Optional, Set
+
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
+    QApplication,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QListWidget,
     QListWidgetItem,
-    QGroupBox,
-    QApplication,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QColor
 
+from src.application.dtos.device_dto import DeviceDTO
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views.icons import ICON_REFRESH, ICON_SWITCH, labelled
 from src.presentation.workers.background_runner import BackgroundRunner
@@ -23,10 +26,10 @@ _OFFLINE_COLOR = QColor("#c0392b")
 _OFFLINE_SUFFIX = "  (device offline)"
 
 # Item data roles.
-_PROFILE_ID_ROLE = Qt.UserRole
-_OUTPUT_ID_ROLE = Qt.UserRole + 1
-_INPUT_ID_ROLE = Qt.UserRole + 2
-_BASE_TEXT_ROLE = Qt.UserRole + 3
+_PROFILE_ID_ROLE = Qt.ItemDataRole.UserRole
+_OUTPUT_ID_ROLE = Qt.ItemDataRole.UserRole + 1
+_INPUT_ID_ROLE = Qt.ItemDataRole.UserRole + 2
+_BASE_TEXT_ROLE = Qt.ItemDataRole.UserRole + 3
 
 # How often to rescan audio devices so newly connected hardware (for example a
 # Bluetooth headset switched on) is picked up without a manual refresh.
@@ -47,7 +50,7 @@ class ActuationView(QWidget):
         super().__init__()
         self._presenter = presenter
         self._runner = BackgroundRunner(self)
-        self._available_ids = set()
+        self._available_ids: Set[str] = set()
 
         app = QApplication.instance()
         if app is not None:
@@ -169,7 +172,7 @@ class ActuationView(QWidget):
             item = QListWidgetItem(
                 "No profiles configured. Use Configuration tab to create profiles."
             )
-            item.setFlags(Qt.NoItemFlags)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
             self._profile_list.addItem(item)
             return
 
@@ -196,7 +199,7 @@ class ActuationView(QWidget):
                 "Switching will apply the available device(s)."
             )
         else:
-            item.setData(Qt.ForegroundRole, None)
+            item.setData(Qt.ItemDataRole.ForegroundRole, None)
             item.setToolTip("")
 
     def _item_is_offline(self, item: QListWidgetItem) -> bool:
@@ -207,7 +210,12 @@ class ActuationView(QWidget):
             for device_id in configured
         )
 
-    def _on_status_ready(self, output_device, input_device, available_ids) -> None:
+    def _on_status_ready(
+        self,
+        output_device: Optional[DeviceDTO],
+        input_device: Optional[DeviceDTO],
+        available_ids: Optional[Set[str]],
+    ) -> None:
         """Render device status produced on the worker thread."""
         self._available_ids = available_ids or set()
 

@@ -4,19 +4,19 @@ import time
 from typing import List
 from uuid import UUID
 
-from src.domain.interfaces.profile_repository import IProfileRepository
-from src.domain.interfaces.device_repository import IDeviceRepository
-from src.domain.interfaces.device_controller import IDeviceController
-from src.domain.value_objects.device_type import DeviceType
-from src.domain.exceptions.domain_exceptions import (
-    ProfileNotFoundException,
-    DeviceControlException,
-)
 from src.application.dtos.switch_outcome import (
-    SkipReason,
     SkippedDevice,
+    SkipReason,
     SwitchOutcome,
 )
+from src.domain.exceptions.domain_exceptions import (
+    DeviceControlException,
+    ProfileNotFoundException,
+)
+from src.domain.interfaces.device_controller import IDeviceController
+from src.domain.interfaces.device_repository import IDeviceRepository
+from src.domain.interfaces.profile_repository import IProfileRepository
+from src.domain.value_objects.device_type import DeviceType
 
 # Settle time after each default-device change, so Windows applies it.
 _SETTLE_SECONDS = 0.1

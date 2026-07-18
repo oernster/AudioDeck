@@ -8,7 +8,7 @@ that are delivered back to the GUI thread by queued connections.
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable, Optional
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
@@ -30,7 +30,7 @@ class BackgroundRunner(QObject):
 
     _task = Signal(object)
 
-    def __init__(self, parent: QObject = None) -> None:
+    def __init__(self, parent: Optional[QObject] = None) -> None:
         """Start the worker thread.
 
         Args:
@@ -43,7 +43,7 @@ class BackgroundRunner(QObject):
         self._task.connect(self._worker._run)
         self._thread.start()
 
-    def submit(self, fn: Callable, *args) -> None:
+    def submit(self, fn: Callable[..., Any], *args: Any) -> None:
         """Run fn(*args) on the worker thread.
 
         Args:
