@@ -242,6 +242,17 @@
     .ic-lav    { background: rgba(180,190,254,0.15); color: var(--lavender); }
     .ic-yellow { background: rgba(249,226,175,0.15); color: var(--yellow); }
     .ic-mauve  { background: rgba(203,166,247,0.15); color: var(--mauve); }
+    .ic-pink   { background: rgba(245,194,231,0.15); color: var(--pink); }
+    /* A tenth card would sit alone on a fourth row, so it spans the grid and
+       lays out horizontally, reading as a closing note rather than a leftover. */
+    .feat-wide { grid-column: 1 / -1; display: flex; align-items: center; gap: 1.25rem; }
+    .feat-wide .feat-icon { flex: 0 0 auto; margin-bottom: 0; }
+    .feat-wide .feat-wide-body { display: flex; flex-direction: column; gap: 0.35rem; }
+    .feat-wide h3 { margin: 0; }
+    .feat-wide p { margin: 0; }
+    @media (max-width: 700px) {
+      .feat-wide { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    }
     .feat h3 { font-size: 0.975rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
     .feat p { font-size: 0.875rem; color: var(--subtext0); line-height: 1.65; }
 
@@ -562,6 +573,15 @@
       <h3>Update check</h3>
       <p>Check for a newer release straight from the Help menu, so you always know when an update is available.</p>
     </div>
+    <div class="feat feat-wide">
+      <div class="feat-icon ic-pink">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M9 10l2 2 4-4"/></svg>
+      </div>
+      <div class="feat-wide-body">
+        <h3>One window</h3>
+        <p>Launch it twice and the window you already have comes to the front, rather than a second copy competing over the same profiles. Command-line switching is exempt, so Stream Deck keys keep working while the window is open.</p>
+      </div>
+    </div>
 
   </div>
 </section>
@@ -595,7 +615,7 @@
 <section class="section" id="cli">
   <div class="section-label">Automation</div>
   <h2 class="section-title">Drive it from a key,<br>a script, or the shell.</h2>
-  <p class="section-sub">With no arguments Audio Deck opens the GUI. With <code class="inline">--list</code> or <code class="inline">--profile</code> it runs headless and returns an exit code, which is exactly what a Stream Deck button or a batch file needs.</p>
+  <p class="section-sub">With no arguments Audio Deck opens the GUI. With <code class="inline">--list</code> or <code class="inline">--profile</code> it runs headless and returns an exit code, which is exactly what a Stream Deck button or a batch file needs. Headless switches are never blocked by the running window, so a key still works while the app is open.</p>
 
   <div class="cli-grid">
     <div class="code-block">
@@ -639,7 +659,7 @@ AudioDeck.exe
 <section class="section" id="architecture">
   <div class="section-label">Architecture</div>
   <h2 class="section-title">Clean by construction</h2>
-  <p class="section-sub">Audio Deck follows a four-layer clean architecture: UI and CLI are clients of the application layer, which orchestrates a pure domain, while infrastructure implements the domain's interfaces against Windows Core Audio and the filesystem. Dependencies point inward and are wired in one explicit composition root.</p>
+  <p class="section-sub">Audio Deck follows a four-layer clean architecture: UI and CLI are clients of the application layer, which orchestrates a pure domain, while infrastructure implements the domain's interfaces against Windows Core Audio and the filesystem. Dependencies point inward and are wired by constructor injection in an explicit composition root, one for the GUI and one for the CLI. Structural tests parse the source on every run, so a layering violation fails the build rather than being caught in review.</p>
 
   <figure class="arch-figure">
     <svg viewBox="0 0 860 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Audio Deck clean architecture: UI and CLI depend on Application, Application depends on Domain, Infrastructure implements Domain interfaces. All dependencies point inward to a pure Domain.">
@@ -729,6 +749,7 @@ AudioDeck.exe
         <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
         <a href="https://github.com/oernster/AudioDeck/blob/main/CLI_USAGE.md">CLI Usage</a>
         <a href="https://github.com/oernster/AudioDeck/blob/main/ARCHITECTURE.md">Architecture</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/TESTING.md">Testing</a>
         <a href="https://github.com/oernster/AudioDeck/blob/main/LICENSE">Licence</a>
       </nav>
     </div>
