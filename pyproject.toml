@@ -42,6 +42,33 @@ addopts = [
     "--cov-fail-under=100",
 ]
 
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    # Package markers hold no logic.
+    "*/__init__.py",
+    # Composition root: constructs real COM objects and a QApplication.
+    "src/main.py",
+    # PySide6 view construction. Widget layout is asserted by looking at the
+    # running app, not by brittle tests that break on every UI tweak.
+    "src/presentation/views/*",
+    # Raw COM against the live Windows audio endpoints. Exercising these would
+    # need real hardware, and the controller would change the machine's actual
+    # default devices, so they are driven through fakes at their seams instead.
+    "src/infrastructure/windows/device_enumerator.py",
+    "src/infrastructure/windows/windows_device_controller.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    # Protocol and abstract method bodies.
+    "^\\s*\\.\\.\\.$",
+]
+
 [tool.black]
 line-length = 88
 target-version = ["py310"]
@@ -63,6 +90,8 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -77,8 +106,13 @@ ignore = [
     "C901",  # too complex
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
+# Re-exports are the point of a package marker.
 "__init__.py" = ["F401"]
+# The entry point must insert the project root on sys.path BEFORE importing
+# from src, so its imports cannot be hoisted or reordered. Sorting them would
+# break running `python src/main.py` directly.
+"src/main.py" = ["E402", "I001"]
 
 [tool.mypy]
 python_version = "3.10"
