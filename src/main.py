@@ -28,9 +28,20 @@ from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
-from src.presentation.views.main_window import MainWindow
+from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
+from src.infrastructure.windows.single_instance import (
+    SingleInstanceGuard,
+    Win32MutexApi,
+    Win32WindowApi,
+    activate_existing_window,
+)
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
+
+# Mutex name for the single-instance guard. The "Local\" namespace scopes it
+# to the current logon session, matching the per-user profiles store: two
+# different Windows users may each run their own copy.
+SINGLE_INSTANCE_MUTEX_NAME = "Local\\OliverErnster.AudioDeck.SingleInstance"
 
 
 def get_resource_path(relative_path: str) -> Path:
@@ -238,7 +249,16 @@ def main() -> int:
         cli_handler = CLIHandler.from_profiles_path(get_profiles_path())
         return cli_handler.handle(args)
 
-    # Run in GUI mode
+    # Run in GUI mode. Only one GUI instance may run per logon session; the
+    # CLI path above is deliberately left unguarded so a Stream Deck button
+    # can switch profiles while the window is open.
+    guard = SingleInstanceGuard(SINGLE_INSTANCE_MUTEX_NAME, Win32MutexApi())
+    if not guard.acquire():
+        # Another instance owns the mutex. Raise its window rather than
+        # exiting silently, which would look like a failed launch.
+        activate_existing_window(WINDOW_TITLE, Win32WindowApi())
+        return 0
+
     # Set Windows taskbar icon (must be done before creating QApplication)
     if sys.platform == "win32":
         # Set application user model ID to ensure proper taskbar icon display
@@ -354,7 +374,10 @@ def main() -> int:
         _set_windows_taskbar_icon(main_window, icon_path)
 
     # Run application
-    return app.exec()
+    try:
+        return app.exec()
+    finally:
+        guard.release()
 
 
 if __name__ == "__main__":

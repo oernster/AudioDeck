@@ -74,15 +74,18 @@ at by it.
 ### GUI
 
 1. `main.py` parses arguments. With no CLI arguments it builds the GUI.
-2. It constructs the infrastructure (device enumerator, device controller, device
+2. A `SingleInstanceGuard` takes a named mutex scoped to the logon session. If
+   another instance already holds it, this process raises that instance's window
+   and exits 0 without constructing anything.
+3. It constructs the infrastructure (device enumerator, device controller, device
    repository, JSON profile repository), then the application use cases, then the
    presenters, then `MainWindow`.
-3. Views call presenter methods; presenters call use cases; use cases act through
+4. Views call presenter methods; presenters call use cases; use cases act through
    domain interfaces implemented by infrastructure.
-4. Presenters report outcomes back to views with Qt signals
+5. Presenters report outcomes back to views with Qt signals
    (`error_occurred`, `profile_saved`, `profile_switched`, `device_unavailable`,
    `current_devices_changed`, `auto_applied`).
-5. Device changes are delivered two ways: a `WindowsDeviceChangeNotifier`
+6. Device changes are delivered two ways: a `WindowsDeviceChangeNotifier`
    (native `WM_DEVICECHANGE`) and a periodic timer fallback both call the
    actuation presenter's `on_devices_changed`, which refreshes the current
    defaults and re-applies any profile device that has just reconnected.
@@ -137,6 +140,9 @@ Profiles are persisted as a JSON array under
 | Windows-only Core Audio via pycaw | Direct, dependency-light access to the platform default-endpoint policy |
 | Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |
 | Event-driven device changes (WM_DEVICECHANGE) plus a timer fallback | Reconnected devices apply promptly without polling, while the timer guarantees recovery if no event arrives |
+| Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it |
+| Named mutex rather than a lock file or port | Creating a named mutex is one atomic Win32 call, so two simultaneous launches cannot both win, and it cannot be left stale by a crash |
+| The guard fails open | If Windows refuses the mutex the application still starts; a guard that cannot be established must never be the reason it will not run |
 
 ## Quality enforcement
 

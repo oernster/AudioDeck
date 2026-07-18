@@ -36,6 +36,10 @@ from src.presentation.presenters.actuation_presenter import ActuationPresenter
 # GitHub releases page for the Check for Updates action.
 RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
 
+# The main window's title. A second launch locates the running instance by
+# this exact string, so the two must never drift apart.
+WINDOW_TITLE = "Audio Deck"
+
 
 class MainWindow(QMainWindow):
     """Main application window with tabbed interface."""
@@ -60,7 +64,7 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
-        self.setWindowTitle("Audio Deck")
+        self.setWindowTitle(WINDOW_TITLE)
         self.setMinimumSize(600, 500)
 
         # Set window icon
