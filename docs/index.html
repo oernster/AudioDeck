@@ -474,6 +474,7 @@
     <a class="nav-link" href="#features">Features</a>
     <a class="nav-link" href="#cli">CLI &amp; Stream Deck</a>
     <a class="nav-link" href="#architecture">Architecture</a>
+    <a class="nav-link" href="why.html">Why</a>
     <a class="nav-link" href="#download">Download</a>
     <a class="btn-primary" href="#download">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -804,9 +805,9 @@ AudioDeck.exe
 <script>
     // The download buttons never go stale: each points at GitHub's releases/latest/download
     // redirect, which always serves the newest release's asset (the asset names are version-free
-    // by design). This script only decorates the page with live details: the version chip, the
-    // release date and each installer's size, fetched from the GitHub API. If the call fails
-    // (offline, rate-limited), the static text above stands on its own.
+    // by design). This script only decorates the page with live details: the version chip and
+    // each installer's size, fetched from the GitHub API. If the call fails (offline,
+    // rate-limited), the static text above stands on its own.
     (function () {
         var api = 'https://api.github.com/repos/oernster/AudioDeck/releases/latest';
         fetch(api).then(function (r) {
@@ -815,12 +816,7 @@ AudioDeck.exe
         }).then(function (rel) {
             var version = (rel.tag_name || '').replace(/^v/, '');
             if (version) {
-                var when = '';
-                if (rel.published_at) {
-                    when = ' · ' + new Date(rel.published_at).toLocaleDateString(undefined,
-                        {day: 'numeric', month: 'long', year: 'numeric'});
-                }
-                document.getElementById('dl-version').textContent = 'Version ' + version + when;
+                document.getElementById('dl-version').textContent = 'Version ' + version;
             }
             if (rel.html_url) {
                 document.getElementById('dl-whats-new').href = rel.html_url;

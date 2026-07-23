@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why Audio Deck exists: audio switching without the settings dig</title>
+  <meta name="description" content="Why Audio Deck was built: Windows buries default-device switching several clicks deep and every setup change means digging again. Audio Deck pins each setup as a named profile and switches in one click, one command or one Stream Deck key.">
+  <link rel="canonical" href="https://ernster.dev/AudioDeck/why.html">
+  <meta name="theme-color" content="#1e1e2e">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Audio Deck">
+  <meta property="og:url" content="https://ernster.dev/AudioDeck/why.html">
+  <meta property="og:title" content="Why Audio Deck exists: audio switching without the settings dig">
+  <meta property="og:description" content="Windows buries default-device switching several clicks deep. Audio Deck pins each setup as a named profile and switches in one click, one command or one Stream Deck key.">
+  <meta property="og:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Audio Deck app icon">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Why Audio Deck exists: audio switching without the settings dig">
+  <meta name="twitter:description" content="Windows buries default-device switching several clicks deep. Audio Deck pins each setup as a named profile and switches in one click, one command or one Stream Deck key.">
+  <meta name="twitter:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    /* Catppuccin Mocha palette, matching index.html */
+    :root {
+      --base:     #1e1e2e;
+      --mantle:   #181825;
+      --crust:    #11111b;
+      --surface0: #313244;
+      --surface1: #45475a;
+      --subtext0: #a6adc8;
+      --subtext1: #bac2de;
+      --text:     #cdd6f4;
+      --green:    #a6e3a1;
+      --accent:        var(--green);
+      --accent-rgb:    166, 227, 161;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--base);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(24, 24, 37, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--surface0);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+    .nav-brand img { width: 30px; height: 30px; }
+    .nav-brand span { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 1.75rem; }
+    .nav-right a.nav-link {
+      color: var(--subtext1);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.18s;
+    }
+    .nav-right a.nav-link:hover { color: var(--text); }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--accent);
+      color: var(--crust);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      transition: opacity 0.18s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--surface0);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--surface1);
+      transition: background 0.18s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { background: var(--surface1); transform: translateY(-1px); }
+    .section { max-width: 1100px; margin: 0 auto; padding: 5.5rem 2rem; }
+    .section-label {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .section-title { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 1.5rem; }
+    .prose p {
+      color: var(--subtext1);
+      font-size: 1.025rem;
+      max-width: 820px;
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+    .prose a { color: var(--accent); text-decoration: none; }
+    .prose a:hover { text-decoration: underline; }
+    .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+    footer { border-top: 1px solid var(--surface0); padding: 3rem 2rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+    .footer-brand img { width: 26px; height: 26px; }
+    .footer-brand span { font-size: 1rem; font-weight: 700; color: var(--subtext1); }
+    .footer-links { display: flex; gap: 1.75rem; flex-wrap: wrap; }
+    .footer-links a { color: var(--subtext0); text-decoration: none; font-size: 0.875rem; transition: color 0.18s; }
+    .footer-links a:hover { color: var(--text); }
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-right .nav-link { display: none; }
+      .section { padding: 3.5rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">
+    <img src="audiodeck-512.png" alt="Audio Deck icon">
+    <span>Audio Deck</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="index.html#features">Features</a>
+    <a class="nav-link" href="index.html#cli">CLI &amp; Stream Deck</a>
+    <a class="nav-link" href="why.html">Why</a>
+    <a class="nav-link" href="index.html#download">Download</a>
+    <a class="btn-primary" href="index.html#download">Download</a>
+  </div>
+</nav>
+
+<main>
+  <section class="section" id="exists">
+    <div class="prose">
+      <div class="section-label">The reasoning</div>
+      <h2 class="section-title">Why this exists</h2>
+      <p>Windows treats changing your default audio devices as a settings task: several clicks
+        deep, once for output and again for input, every single time your setup changes. If you
+        move between speakers for music, a headset for calls and an interface for recording, that
+        dig happens many times a day and it always happens at the worst moment, mid-call or
+        mid-session, while everyone waits.</p>
+      <p>Audio Deck turns each setup into a named profile pinning one default output and one
+        default input, applied together in one click. The same switch is available headless from
+        the command line with a proper exit code, which is exactly what a Stream Deck key or a
+        batch file needs, so a whole setup change becomes one physical button press. Edge cases
+        are handled honestly: a profile naming a device that is currently offline (a powered-off
+        Bluetooth headset) applies the moment it reconnects and a partial switch reports what is
+        missing rather than silently half-failing.</p>
+      <p>Under the surface it is a four-layer clean architecture in Python: a pure domain, an
+        application layer of use cases, infrastructure speaking to Windows Core Audio through
+        pycaw and comtypes and two thin clients (the PySide6 GUI and the CLI) wired in separate
+        composition roots. Structural tests parse the source on every run, so a layering
+        violation fails the build instead of surviving into review.</p>
+      <p>What works now is a two-tab app that installs per-user with no administrator rights,
+        stores profiles in a local JSON file under your own AppData and talks to nothing outside
+        your machine: no account, no cloud, no background service. Launch it twice and the
+        existing window fronts itself; headless switches stay exempt, so the Stream Deck keys
+        keep working while the window is open.</p>
+      <p>Full reasoning at <a href="https://www.crankthecode.com/posts/audiodeck">crankthecode.com</a>.</p>
+      <div class="cta-row">
+        <a class="btn-primary" href="index.html#download">Download Audio Deck</a>
+        <a class="btn-secondary" href="index.html">Back to overview</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a class="footer-brand" href="index.html">
+        <img src="audiodeck-512.png" alt="Audio Deck">
+        <span>Audio Deck</span>
+      </a>
+      <nav class="footer-links">
+        <a href="https://github.com/oernster/AudioDeck">GitHub</a>
+        <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
+        <a href="https://www.crankthecode.com/">crankthecode.com</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
