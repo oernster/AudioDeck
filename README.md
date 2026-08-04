@@ -178,6 +178,7 @@ This README covers using Audio Deck. The rest is split by audience.
 | [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Fuller developer notes: setup, workflow, code style, releasing |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The design, the layers, the dependency direction and the enforced invariants |
 | [TESTING.md](TESTING.md) | How to run the tests, what the coverage gate measures and what it excludes |
+| [TECH_DEBT.md](TECH_DEBT.md) | What is still open, what is deliberately left and what only looks like debt |
 
 ## Troubleshooting
 
