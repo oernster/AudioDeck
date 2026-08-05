@@ -322,17 +322,17 @@ class MainWindow(QMainWindow):
         dev_docs_content = """
 <h3>Available Documentation</h3>
 
-<p><b>📘 Development Quick Start</b><br>
-<a href="file:///DEVELOPMENT_QUICKSTART.md">DEVELOPMENT_QUICKSTART.md</a><br>
-Step-by-step guide for setting up the development environment and building the application.</p>
+<p><b>📘 Development README</b><br>
+<a href="file:///DEVELOPMENT_README.md">DEVELOPMENT_README.md</a><br>
+Setting up the development environment, running from source, building the application, the checks and the release steps.</p>
 
 <p><b>💻 CLI Usage Reference</b><br>
 <a href="file:///CLI_USAGE.md">CLI_USAGE.md</a><br>
 Complete command-line interface reference for automation and scripting.</p>
 
-<p><b>🏗️ Development README</b><br>
-<a href="file:///DEVELOPMENT_README.md">DEVELOPMENT_README.md</a><br>
-Technical architecture, design patterns, and development guidelines.</p>
+<p><b>🏗️ Architecture</b><br>
+<a href="file:///ARCHITECTURE.md">ARCHITECTURE.md</a><br>
+The layers, the dependency direction, the execution flow and the enforced invariants.</p>
 
 <hr>
 

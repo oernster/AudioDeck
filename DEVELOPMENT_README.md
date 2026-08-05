@@ -2,9 +2,12 @@
 
 **Author:** Oliver Ernster
 
-Technical notes for working on the AudioDeck codebase. For user documentation see
-[README.md](README.md). For the design and its invariants see
-[ARCHITECTURE.md](ARCHITECTURE.md).
+The single developer guide for the AudioDeck codebase: setup, running from
+source, the build, the workflow, the checks and the release steps. For user
+documentation see [README.md](README.md); for the design and its invariants see
+[ARCHITECTURE.md](ARCHITECTURE.md); for the test suite and the coverage gate see
+[TESTING.md](TESTING.md); for the command-line surface see
+[CLI_USAGE.md](CLI_USAGE.md).
 
 ## Development setup
 
@@ -45,6 +48,12 @@ python src/main.py --list
 python src/main.py --profile "Gaming Setup"
 ```
 
+Only one Audio Deck window may be open per Windows user. If an installed or
+packaged copy is already running, launching from source raises that window and
+exits immediately rather than opening a second one, so close the other copy
+before testing GUI changes. Headless runs (`--list` and `--profile`) are exempt
+and can be run as often as you like.
+
 ### Building the executable and the installer
 
 ```powershell
@@ -62,6 +71,29 @@ The executable is written to `dist/AudioDeck.exe`. The build uses PyInstaller in
 when run with arguments), collects `comtypes`, declares the `pycaw` hidden
 imports and bundles the icon, the `VERSION` file, the licence and the
 documentation. Build identity and inputs live at the top of `buildexe.py`.
+
+## Project structure
+
+```
+AudioDeck/
+  src/
+    domain/          Pure business model
+    application/     Use cases and DTOs
+    infrastructure/  Windows Core Audio and JSON storage
+    presentation/    PySide6 GUI (views, presenters, notifiers, workers)
+    cli/             Command-line interface
+    main.py          Entry point and GUI composition root
+  tests/             Mirrors src/, plus structural boundary tests
+  installer/         The bespoke themed setup application
+  assets/            Generated icon set (one master image)
+  docs/              GitHub Pages site and screenshots
+  examples/          Stream Deck batch-file templates
+  VERSION            Single source of truth for the version
+  buildexe.py        Portable executable
+  buildinstaller.py  Setup executable, run after buildexe.py
+  generate_icons.py  Regenerates assets/ from the master image
+  pyproject.toml     Packaging plus the pytest, coverage, black, ruff and mypy configuration
+```
 
 ## Architecture
 
@@ -157,8 +189,7 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
    the first window), `--list`, `--profile` and a Stream Deck button.
 7. Refresh `docs/screenshots/` if the interface changed.
 8. Assemble the release with `AudioDeckSetup.exe`, the portable `AudioDeck.exe`,
-   `README.md`, `DEVELOPMENT_QUICKSTART.md`, `examples/streamdeck_profiles/` and
-   `LICENSE`.
+   `README.md`, `CLI_USAGE.md`, `examples/streamdeck_profiles/` and `LICENSE`.
 
 ## Troubleshooting development issues
 
@@ -166,6 +197,12 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
 
 Ensure the virtual environment is active, the dependencies are installed and the
 project root is on the Python path.
+
+### Running from source appears to do nothing
+
+Another Audio Deck window is already open, most likely an installed or packaged
+copy. Only one window is allowed per Windows user, so the second launch raises
+the first and exits. Close the running copy and try again.
 
 ### Build errors
 

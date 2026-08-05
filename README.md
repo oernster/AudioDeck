@@ -174,8 +174,8 @@ This README covers using Audio Deck. The rest is split by audience.
 
 | Document | What it covers |
 | --- | --- |
-| [DEVELOPMENT_QUICKSTART.md](DEVELOPMENT_QUICKSTART.md) | The short path from a clean checkout to a working build and a Stream Deck button |
-| [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Fuller developer notes: setup, workflow, code style, releasing |
+| [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Developer notes: setup, running from source, the build, workflow, code style and releasing |
+| [CLI_USAGE.md](CLI_USAGE.md) | The command-line surface in depth, with batch-file recipes for Stream Deck |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The design, the layers, the dependency direction and the enforced invariants |
 | [TESTING.md](TESTING.md) | How to run the tests, what the coverage gate measures and what it excludes |
 | [TECH_DEBT.md](TECH_DEBT.md) | What is still open, what is deliberately left and what only looks like debt |

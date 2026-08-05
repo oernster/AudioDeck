@@ -21,44 +21,44 @@ Two things close this, and they are independent: add a size assertion to the str
 
 `src/main.py` should drop to 350 or below in the same pass. It is the composition root, so a root that needs 387 lines is worth a second look regardless of the cap.
 
-## 2. Two development guides with overlapping names
-
-`DEVELOPMENT_README.md` and `DEVELOPMENT_QUICKSTART.md` sit at root alongside `TESTING.md` and `CLI_USAGE.md`.
-
-Four development documents for an 8,000-line project is more surface than the project has content, and the two whose names begin `DEVELOPMENT_` are the problem: nobody can predict which holds the answer, so the next note lands in whichever was opened last and the two drift.
-
-Merge them into one `DEVELOPMENT-README.md`, matching the name used elsewhere in the portfolio. `TESTING.md` and `CLI_USAGE.md` both have distinct subjects and should stay.
-
-## 3. A macOS icon is tracked for a platform the project cannot run on
+## 2. A macOS icon is tracked for a platform the project cannot run on
 
 `assets/audiodeck.icns` is tracked. There is no `builddmg.py`, no Flatpak script and no macOS or Linux delivery path of any kind, and there cannot be one: the whole device layer is raw COM against Windows audio endpoints (`device_enumerator.py`, `windows_device_controller.py`).
 
 The `.icns` is a by-product of `generate_icons.py` emitting the full portfolio icon set regardless of target. It costs nothing but it implies a platform that will never be supported.
 
-Either teach `generate_icons.py` to skip the macOS asset for Windows-only projects, or leave it and say plainly in `README.md` that AudioDeck is Windows-only by design. The second is the smaller change and the more useful one, because the constraint is real and worth stating: this application manipulates the Windows default audio endpoint and has no meaning elsewhere.
+`README.md` already states the constraint plainly, under "Who it is not for", so what is left is the tracked asset itself. There are two ways out: teach `generate_icons.py` to skip the macOS output for Windows-only projects and drop the file; or accept it as harmless generator output. The first is the honest one, because the constraint is real: this application manipulates the Windows default audio endpoint and has no meaning elsewhere.
 
-## 4. The CLI writes its own presentation inline
+## 3. The CLI writes its own presentation inline
 
-`src/cli/cli_handler.py` is one of the two declared composition roots and it carries around twenty-five `print` calls that build the user-facing output directly: profile listings, the bullet-point device summaries, the usage examples, the error text.
+`src/cli/cli_handler.py` is one of the two declared composition roots and it carries twenty-two `print` calls that build the user-facing output directly: profile listings, the bullet-point device summaries, the usage examples, the error text.
 
 This is normal for a CLI and it works. The debt is narrow and specific: `cli_handler.py` is a composition root by the structural test's own definition, so it is permitted to import infrastructure, and it has now also become the presentation layer for the command-line surface. Two responsibilities in the one file the architecture rules deliberately exempt from the usual constraints.
 
 If the CLI grows, the output formatting wants lifting into a small presenter that takes DTOs and returns strings, which is testable and leaves `cli_handler.py` as a genuine root. At its current size this is a watch item, not a task.
 
-## 5. Around twenty-six broad exception handlers, almost none with a reason
+## 4. Twenty-five broad exception handlers, almost none with a reason
 
 They fall into two groups:
 
-- **`src/infrastructure/windows/` (about ten, across `device_enumerator.py` and `windows_device_controller.py`).** Raw COM. Broad handling is correct here, because COM surfaces failure in many shapes and an audio-device enumeration that raises would take the application down. These need one line each saying what is being degraded to.
-- **`src/presentation/presenters/` (about eight, across `actuation_presenter.py` and `configuration_presenter.py`).** These matter more. A presenter swallowing an exception means the user pressed a button, the profile did not switch and nothing said so. Actuation is the entire point of the application; a silent failure there is the worst outcome available. Each of these should either surface the failure to the view or be narrowed to the specific exception it is tolerating.
+- **`src/infrastructure/windows/` (nine, across `device_enumerator.py` and `windows_device_controller.py`).** Raw COM. Broad handling is correct here, because COM surfaces failure in many shapes and an audio-device enumeration that raises would take the application down. These need one line each saying what is being degraded to.
+- **`src/presentation/presenters/` (eight, across `actuation_presenter.py` and `configuration_presenter.py`).** These matter more. A presenter swallowing an exception means the user pressed a button, the profile did not switch and nothing said so. Actuation is the entire point of the application; a silent failure there is the worst outcome available. Each of these should either surface the failure to the view or be narrowed to the specific exception it is tolerating.
 
 `installer/worker.py:49` shows the house style done correctly (`# surface any failure to the UI`). Apply it everywhere.
 
-## 6. `htmlcov/` is regenerated on every test run
+## 5. `htmlcov/` is regenerated on every test run
 
 `addopts` includes `--cov-report=html`, so every invocation of `pytest` writes an HTML coverage report into `htmlcov/` at root. It is correctly untracked and correctly ignored, so nothing is broken.
 
 It is listed because the terminal report is the one that is actually read and the HTML report is a build artefact produced unconditionally on a surface that is already gated. Dropping the flag from `addopts` and generating HTML on demand keeps the working tree clean. Minor, and purely a preference until someone is confused by a stale report.
+
+## 6. Two development dependency lists that disagree, one of them naming a banned library
+
+`requirements-dev.txt` and the `dev` extra in `pyproject.toml` both claim to describe the development environment and they do not match. The extra adds `pytest-mock` and `hypothesis`; neither appears in `requirements-dev.txt` and neither is imported anywhere in `tests/`.
+
+`pytest-mock` is the one that matters. TESTING.md states as a rule that the suite uses no mock libraries and the suite honours that, so advertising the plugin as a development dependency invites the next contributor to reach for exactly the thing the project has decided against. `hypothesis` is merely unused.
+
+The fix is to pick one list as authoritative (`requirements-dev.txt` is the one the documentation tells people to install) and make the other match it or point at it, dropping both unused entries in the process.
 
 ---
 

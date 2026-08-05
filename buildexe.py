@@ -41,7 +41,6 @@ def build_executable() -> None:
         f"--add-data={project_root / 'LICENSE'};.",
         # Bundle development documentation files
         f"--add-data={project_root / 'ARCHITECTURE.md'};.",
-        f"--add-data={project_root / 'DEVELOPMENT_QUICKSTART.md'};.",
         f"--add-data={project_root / 'CLI_USAGE.md'};.",
         f"--add-data={project_root / 'DEVELOPMENT_README.md'};.",
     ]

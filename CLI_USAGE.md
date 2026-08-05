@@ -213,5 +213,5 @@ Make sure the batch file passes the `--profile` argument.
 ## Support
 
 - See `README.md` for the user documentation.
-- See `DEVELOPMENT_QUICKSTART.md` for setup instructions.
+- See `DEVELOPMENT_README.md` for setup and build instructions.
 - See `examples/streamdeck_profiles/` for working examples.
