@@ -70,6 +70,9 @@ class WindowsDeviceEnumerator:
             device_id: Optional[str] = default_device.GetId()
             return device_id
         except Exception:
+            # Degrade to "no default known". A machine with no endpoint of this
+            # flow, or one mid-way through a device change, is a normal state
+            # rather than an error, and the caller renders it as None.
             return None
 
     def enumerate_devices(
@@ -134,6 +137,10 @@ class WindowsDeviceEnumerator:
                             device_name = f"Audio Device {i+1}"
 
                     except Exception:
+                        # Degrade to a positional name and an assumed-available
+                        # state. An endpoint that will not report its name or
+                        # state is still a real device the user can select, so
+                        # losing it from the list would be the worse outcome.
                         device_name = f"Audio Device {i+1}"
                         device_state = DeviceState.AVAILABLE
 
@@ -156,9 +163,15 @@ class WindowsDeviceEnumerator:
                     devices.append(device)
 
                 except Exception:
+                    # Degrade to skipping this one endpoint. The collection can
+                    # hand back an item that vanishes before it is read, so
+                    # dropping it keeps every other device in the list.
                     continue
 
         except Exception:
+            # Degrade to whatever was collected before the failure. The
+            # enumerator itself can disappear mid-walk during a device change,
+            # and a partial list still lets the user switch to a known device.
             pass
 
         return devices

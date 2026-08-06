@@ -170,6 +170,9 @@ class ActuationPresenter(QObject):
         try:
             profile = self._get_profiles_use_case.get_by_id(self._active_profile_id)
         except Exception:
+            # Silent by design: this runs off a device-change event the user did
+            # not trigger, so a dialog here would appear out of nowhere. The
+            # pending set is left intact, so the next event tries again.
             return
         if profile is None:
             self._pending_device_ids = set()
@@ -178,6 +181,9 @@ class ActuationPresenter(QObject):
         try:
             outcome = self._switch_profile_use_case.execute(self._active_profile_id)
         except Exception:
+            # Same reasoning as above: unprompted work, so it fails quietly and
+            # leaves the pending set for the next device-change event. A switch
+            # the user asked for is handled by switch_profile, which does report.
             return
 
         if outcome.anything_applied:
