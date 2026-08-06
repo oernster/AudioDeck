@@ -1,11 +1,15 @@
 """Generate all platform icon assets from a single master PNG.
 
-Reads the repo-root master PNG (``audiodeck.png``) and emits the full icon
-set into ``assets/``: per-size hicolor PNGs, a canonical 256px badge, a
-multi-frame Windows ``.ico`` and a macOS ``.icns``. Every consumer
-(buildexe.py, buildinstaller.py, the installer UI and the in-app icon
-resolver) points at this generated set, so it is the single source for all
-icon assets.
+Reads the repo-root master PNG (``audiodeck.png``) and emits the icon set into
+``assets/``: per-size PNGs, a canonical 256px badge and a multi-frame Windows
+``.ico``. Every consumer (buildexe.py, buildinstaller.py, the installer UI and
+the in-app icon resolver) points at this generated set, so it is the single
+source for all icon assets.
+
+No macOS ``.icns`` is emitted. AudioDeck is Windows only and cannot be
+otherwise: the device layer is raw COM against Windows audio endpoints. An
+icon for a platform the application will never run on is a claim the rest of
+the repository does not make.
 
 Author: Oliver Ernster
 """
@@ -26,11 +30,8 @@ PNG_SIZES = (16, 24, 32, 48, 64, 96, 128, 256, 512, 1024)
 ICO_SIZES = (16, 24, 32, 48, 64, 128, 256)
 # The single canonical badge size used by dialogs and the installer window.
 CANONICAL_PNG_SIZE = 256
-# macOS .icns is generated from the largest square source.
-ICNS_SOURCE_SIZE = 1024
 
 ICO_NAME = "audiodeck.ico"
-ICNS_NAME = "audiodeck.icns"
 CANONICAL_PNG_NAME = "audiodeck_icon.png"
 PER_SIZE_PNG_TEMPLATE = "audiodeck_icon_{size}.png"
 
@@ -133,11 +134,6 @@ def generate_icons() -> None:
         ico_path, format="ICO", sizes=[(s, s) for s in ICO_SIZES]
     )
     print(f"  wrote {ico_path.name}")
-
-    # macOS .icns.
-    icns_path = ASSETS_DIR / ICNS_NAME
-    _resized(master, ICNS_SOURCE_SIZE).save(icns_path, format="ICNS")
-    print(f"  wrote {icns_path.name}")
 
 
 if __name__ == "__main__":
