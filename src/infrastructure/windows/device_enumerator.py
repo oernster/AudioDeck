@@ -52,7 +52,7 @@ class WindowsDeviceEnumerator:
             data_flow: 0 for output (eRender), 1 for input (eCapture)
 
         Returns:
-            Device ID of the default device, or None if not found
+            Device ID of the default device, else None if not found
         """
         try:
             device_enumerator = AudioUtilities.GetDeviceEnumerator()
@@ -71,8 +71,8 @@ class WindowsDeviceEnumerator:
             return device_id
         except Exception:
             # Degrade to "no default known". A machine with no endpoint of this
-            # flow, or one mid-way through a device change, is a normal state
-            # rather than an error, and the caller renders it as None.
+            # flow (or one mid-way through a device change) is a normal state
+            # rather than an error, so the caller renders it as None.
             return None
 
     def enumerate_devices(

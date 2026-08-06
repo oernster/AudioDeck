@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Audio Deck: one-click Windows audio device switching</title>
-  <meta name="description" content="A local-first audio device switcher for Windows. Save named profiles that pin a default output and input device, then switch in one click, one command, or one Stream Deck button. GUI and CLI, no account, no cloud.">
+  <meta name="description" content="A local-first audio device switcher for Windows. Save named profiles that pin a default output and input device, then switch in one click, one command or one Stream Deck button. GUI and CLI, no account, no cloud.">
   <link rel="canonical" href="https://ernster.dev/AudioDeck/">
   <meta name="theme-color" content="#1e1e2e">
   <!-- Social link previews. og:image must be an absolute URL and a raster
@@ -13,7 +13,7 @@
   <meta property="og:site_name" content="Audio Deck">
   <meta property="og:url" content="https://ernster.dev/AudioDeck/">
   <meta property="og:title" content="Audio Deck: one-click Windows audio device switching">
-  <meta property="og:description" content="Save named profiles that pin a default output and input device, then switch Windows in one click, one command, or one Stream Deck button. Local-first, no account, no cloud.">
+  <meta property="og:description" content="Save named profiles that pin a default output and input device, then switch Windows in one click, one command or one Stream Deck button. Local-first, no account, no cloud.">
   <meta property="og:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
   <meta property="og:image:width" content="512">
   <meta property="og:image:height" content="512">
@@ -21,7 +21,7 @@
   <meta property="og:locale" content="en_GB">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Audio Deck: one-click Windows audio device switching">
-  <meta name="twitter:description" content="Save named profiles that pin a default output and input device, then switch Windows in one click, one command, or one Stream Deck button.">
+  <meta name="twitter:description" content="Save named profiles that pin a default output and input device, then switch Windows in one click, one command or one Stream Deck button.">
   <meta name="twitter:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
   <script type="application/ld+json">
   {
@@ -496,7 +496,7 @@
 
   <p class="hero-desc fade d2">
     Audio Deck saves named profiles that each pin a default <strong>output</strong> and <strong>input</strong> device,
-    then switches Windows to a profile in <strong>one click</strong>, one command, or one Stream Deck button.
+    then switches Windows to a profile in <strong>one click</strong>, one command or one Stream Deck button.
     Profiles live in a local JSON file. No account, no cloud, no background service.
   </p>
 
@@ -513,7 +513,7 @@
 
   <div class="hero-shot fade d4">
     <div class="shot">
-      <img src="screenshots/audiodeck1.png" width="772" height="766" alt="Audio Deck Quick Switch tab: a list of saved profiles with offline devices marked, and the current default output and input devices shown below.">
+      <img src="screenshots/audiodeck1.png" width="772" height="766" alt="Audio Deck Quick Switch tab: a list of saved profiles with offline devices marked, above the current default output and input devices.">
     </div>
     <p class="shot-caption">Quick Switch: pick a profile and switch. Offline devices are marked and applied automatically when they reconnect.</p>
   </div>
@@ -551,7 +551,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       </div>
       <h3>One-click switching</h3>
-      <p>The Quick Switch tab lists every profile. Click <em>Switch to Selected Profile</em>, or just double-click a profile to apply it.</p>
+      <p>The Quick Switch tab lists every profile. Click <em>Switch to Selected Profile</em> or just double-click a profile to apply it.</p>
     </div>
 
     <div class="feat">
@@ -567,7 +567,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       </div>
       <h3>Stream Deck ready</h3>
-      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin, or a one-line batch file. One press, one setup.</p>
+      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin or a one-line batch file. One press, one setup.</p>
     </div>
 
     <div class="feat">
@@ -629,7 +629,7 @@
       <div class="split-text">
         <div class="section-label">Configuration</div>
         <h2 class="section-title" style="margin-bottom:1.25rem;">Two tabs, that's<br>the whole app.</h2>
-        <p>Create and edit profiles on the Configuration tab. Name the profile, pick an output device and an input device from the live dropdowns, and save.</p>
+        <p>Create and edit profiles on the Configuration tab. Name the profile, pick an output device and an input device from the live dropdowns, then save.</p>
         <ul>
           <li>New, edit and delete from the saved-profiles list.</li>
           <li>Output and input chosen independently per profile.</li>
@@ -650,7 +650,7 @@
 <!-- CLI / Stream Deck -->
 <section class="section" id="cli">
   <div class="section-label">Automation</div>
-  <h2 class="section-title">Drive it from a key,<br>a script, or the shell.</h2>
+  <h2 class="section-title">Drive it from a key,<br>a script or the shell.</h2>
   <p class="section-sub">With no arguments Audio Deck opens the GUI. With <code class="inline">--list</code> or <code class="inline">--profile</code> it runs headless and returns an exit code, which is exactly what a Stream Deck button or a batch file needs. Headless switches are never blocked by the running window, so a key still works while the app is open.</p>
 
   <div class="cli-grid">
@@ -665,7 +665,7 @@
 <span class="tc"># Switch to a profile by name</span>
 <span class="tk">AudioDeck.exe</span> <span class="tf">--profile</span> <span class="ts">"Gaming Setup"</span>
 
-<span class="tc"># Version, help, or launch the GUI</span>
+<span class="tc"># Version, help or launch the GUI</span>
 <span class="tk">AudioDeck.exe</span> <span class="tf">--version</span>
 <span class="tk">AudioDeck.exe</span> <span class="tf">--help</span>
 <span class="tk">AudioDeck.exe</span>           <span class="tc"># no args = GUI</span></pre>

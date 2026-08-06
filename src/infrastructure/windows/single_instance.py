@@ -8,7 +8,7 @@ to do nothing.
 
 This guards the GUI only. The headless CLI path (--profile, --list) must
 stay freely runnable, because that is how a Stream Deck button drives the
-application, and those invocations switch a profile then exit.
+application; those invocations switch a profile then exit.
 """
 
 from __future__ import annotations

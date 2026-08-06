@@ -62,7 +62,7 @@ class LicenceDialog(QDialog):
 
     @staticmethod
     def _licence_text() -> str:
-        """Return the bundled licence text, or a fallback."""
+        """Return the bundled licence text, falling back to a placeholder."""
         try:
             return c.resource_path("LICENSE").read_text(encoding="utf-8")
         except OSError:

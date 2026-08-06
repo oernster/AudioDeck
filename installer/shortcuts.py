@@ -75,7 +75,7 @@ def create_shortcut(
 
 
 def remove_shortcut(shortcut_path: Path) -> None:
-    """Delete a shortcut if present, and prune an empty Start Menu folder.
+    """Delete a shortcut if present, then prune an empty Start Menu folder.
 
     Args:
         shortcut_path: The .lnk path to remove.

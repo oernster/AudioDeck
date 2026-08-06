@@ -90,7 +90,7 @@ Some devices were not available and were skipped:
   - Input (not available)
 ```
 
-The exit code is 0 when at least one device is applied, and non-zero when none
+The exit code is 0 when at least one device is applied; it is non-zero when none
 are. In the GUI, an offline device is applied automatically when it reconnects.
 
 ## Stream Deck integration
@@ -151,7 +151,8 @@ Message: `Some devices were not available and were skipped`
 
 - The profile references a device that is currently disconnected.
 - The available devices are still applied; the skipped one applies automatically
-  when it reconnects (in the GUI), or run the command again once it is connected.
+  when it reconnects (in the GUI). Running the command again once it is
+  connected has the same effect.
 - To change the profile, open the GUI and edit it.
 
 ## Advanced usage

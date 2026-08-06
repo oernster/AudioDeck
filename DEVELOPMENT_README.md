@@ -103,7 +103,7 @@ The full description, the dependency direction, the execution flow and the
 enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
 
 - **Domain**: `AudioDevice` and `AudioProfile` entities, `DeviceType` and
-  `DeviceState` value objects, the repository and controller Protocols, and the
+  `DeviceState` value objects, the repository and controller Protocols plus the
   exception hierarchy.
 - **Application**: the use cases (`GetDevices`, `GetProfiles`, `CreateProfile`,
   `UpdateProfile`, `DeleteProfile`, `SwitchProfile`) and the DTOs (`DeviceDTO`,
@@ -111,7 +111,7 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   profile applies its available devices and reports any that are skipped.
 - **Infrastructure**: `WindowsDeviceEnumerator`, `WindowsDeviceController` and
   `WindowsDeviceRepository` (Core Audio via pycaw and comtypes),
-  `JsonProfileRepository`, and `SingleInstanceGuard` (a named mutex that keeps
+  `JsonProfileRepository` plus `SingleInstanceGuard` (a named mutex that keeps
   the GUI to one instance per logon session, with the Win32 calls behind
   Protocols so the logic is testable). The enumerator lists disconnected and
   disabled devices too, so they can be selected.
@@ -183,7 +183,8 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
 1. Update `VERSION`.
 2. Draft the release notes in `NOTES.md` (local, not committed).
 3. Run `pytest -v --cov` and confirm `$LASTEXITCODE` is 0.
-4. Run the code-quality checks (black, mypy).
+4. Run the code-quality checks (`ruff check`, `black --check .`, `mypy src`) and
+   confirm each exits 0.
 5. Build with `python buildexe.py` then `python buildinstaller.py`.
 6. Smoke-test both artefacts: GUI mode, launching twice (the second should raise
    the first window), `--list`, `--profile` and a Stream Deck button.

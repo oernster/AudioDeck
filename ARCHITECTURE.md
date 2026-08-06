@@ -20,14 +20,15 @@ suite rather than left to convention.
 | Only a composition root names an infrastructure concrete | Everything else is constructor-injected and stays swappable | Composition-root whitelist test (`main.py` and `cli_handler.py`) |
 | No module-level service singletons | No hidden global state or service locators | Structural AST scan for module-level service construction |
 | The version string exists only in the root `VERSION` file | Single source of truth; no drift across code and packaging | `version.py` reads `VERSION`; `pyproject.toml` reads the same file |
-| Code is formatted with black | Mechanical consistency without review effort | `black --check .`, run manually |
+| Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually |
 | Only one GUI instance runs per logon session | Two windows would race over the same profiles file | Named-mutex guard, covered by `tests/infrastructure/test_single_instance.py` |
-| Every testable line and branch is covered | A gap is either a missing test or dead code, and both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
+| Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 
 The test suite targets 100% coverage measured with `pytest -v --cov`, using real
 implementations where safe and small hand-written fakes at the Windows boundary,
 with no mock libraries. Fragile PySide6 UI views and the raw-COM enumerator and
-controller are excluded from coverage via `.coveragerc`, so the meaningful
+controller are excluded from coverage via the `[tool.coverage.run]` omit list in
+`pyproject.toml`, so the meaningful
 surface (domain, application, repository logic, CLI and presenters) stays at
 100%.
 
@@ -155,7 +156,7 @@ Profiles are persisted as a JSON array under
 | Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |
 | Event-driven device changes (WM_DEVICECHANGE) plus a timer fallback | Reconnected devices apply promptly without polling, while the timer guarantees recovery if no event arrives |
 | Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it |
-| Named mutex rather than a lock file or port | Creating a named mutex is one atomic Win32 call, so two simultaneous launches cannot both win, and it cannot be left stale by a crash |
+| Named mutex rather than a lock file or port | Creating a named mutex is one atomic Win32 call, so two simultaneous launches cannot both win; it also cannot be left stale by a crash |
 | The guard fails open | If Windows refuses the mutex the application still starts; a guard that cannot be established must never be the reason it will not run |
 
 ## Quality enforcement

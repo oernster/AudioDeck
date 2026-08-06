@@ -43,7 +43,7 @@ class ActuationPresenter(QObject):
         self._get_devices_use_case = get_devices_use_case
         self._get_profiles_use_case = get_profiles_use_case
         self._switch_profile_use_case = switch_profile_use_case
-        # The last profile the user switched to, and any of its devices that
+        # The last profile the user switched to, plus any of its devices that
         # were unavailable, so they can be auto-applied when they reconnect.
         self._active_profile_id: Optional[UUID] = None
         self._pending_device_ids: Set[str] = set()
@@ -130,7 +130,7 @@ class ActuationPresenter(QObject):
             self.error_occurred.emit(f"Unexpected error switching profile: {e}")
 
     def refresh_status(self) -> None:
-        """Read the current defaults and availability, and publish them.
+        """Read the current defaults and availability, then publish them.
 
         Runs on a background thread; emits status_ready with plain data so the
         GUI thread only renders (it never touches the audio API itself).
@@ -144,9 +144,8 @@ class ActuationPresenter(QObject):
         """React to a device add, remove or state change.
 
         Called (on a background thread) by the periodic timer and the native
-        device-change notifier. Refreshes the current-default display and, if a
-        device a profile was waiting for has reconnected, applies it
-        automatically.
+        device-change notifier. Refreshes the current-default display, then
+        applies a device a profile was waiting for if it has reconnected.
         """
         self.refresh_status()
         self._reapply_pending_if_ready()
@@ -204,10 +203,10 @@ class ActuationPresenter(QObject):
         )
         if outcome.anything_applied:
             return (
-                f"Switched '{profile.name}', but the {directions} device is not "
+                f"Switched '{profile.name}'. The {directions} device is not "
                 "available right now. It will need to be connected."
             )
         return (
             f"Could not switch '{profile.name}': the {directions} device is not "
-            "available. Connect it, or edit the profile in the Configuration tab."
+            "available. Connect it or edit the profile in the Configuration tab."
         )

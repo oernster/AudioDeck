@@ -34,7 +34,7 @@ def read_installed_info() -> Optional[InstalledInfo]:
 
 
 def _read_str(key: "winreg.HKEYType", name: str) -> str:
-    """Read a string value from a registry key, or return an empty string."""
+    """Read a string value from a registry key, falling back to an empty string."""
     try:
         value, _ = winreg.QueryValueEx(key, name)
         return str(value)

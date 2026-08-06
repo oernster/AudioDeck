@@ -5,9 +5,9 @@ here so the set stays consistent and a glyph is changed in one place.
 Emoji are used rather than image assets because they theme themselves and
 need no packaging step.
 
-Glyphs are written as escape sequences rather than literal characters so
-the file survives any editor or terminal encoding, and so the invisible
-variation selector is visible in source.
+Glyphs are written as escape sequences rather than literal characters for two
+reasons: the file survives any editor or terminal encoding, plus the invisible
+variation selector becomes visible in source.
 """
 
 # Variation selector 16, requesting the colour emoji presentation rather

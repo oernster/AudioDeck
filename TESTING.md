@@ -51,7 +51,7 @@ application layer, both repositories, the CLI, the presenters, the version
 reader, the single-instance guard, the device-change notifier and the background
 worker.
 
-## What is excluded, and why
+## What is excluded and why
 
 Set in `[tool.coverage.run]` in `pyproject.toml`. Each exclusion is a considered
 decision rather than a convenience.
@@ -120,10 +120,18 @@ QThread, expect the same split.
 
 **Structural tests guard the architecture.** `tests/structural/` parses the
 source with `ast` so a layering violation fails the build rather than being
-caught in review. Seven checks currently run: the domain and application
+caught in review. Nine checks currently run: the domain and application
 boundaries, presentation not importing infrastructure or the CLI, CLI
 infrastructure imports staying inside its composition root, the composition-root
-whitelist, and a scan for module-level service singletons.
+whitelist, a scan for module-level service singletons, the 400-line module cap
+and the danger band beneath it.
+
+The last two are the module size rule in its two tiers. The cap is 400 lines and
+the band is the top 5% of it, so a file between 381 and 399 fails and has to come
+down to 350 rather than being trimmed by a line. The band width is derived from
+the cap in the test rather than written as a second literal, so the two numbers
+cannot drift apart. Delivery scripts at the repo root are out of scope, being
+linear recipes where splitting costs more than it saves.
 
 If you add a new entry point, add it to `COMPOSITION_ROOTS` in
 `tests/structural/test_architecture.py` and say why in ARCHITECTURE.md. The

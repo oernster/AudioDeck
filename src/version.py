@@ -22,7 +22,7 @@ def _read_version() -> str:
     development sentinel if the file cannot be read.
 
     Returns:
-        The version string, or the development sentinel on failure.
+        The version string, else the development sentinel on failure.
     """
     candidates = []
 

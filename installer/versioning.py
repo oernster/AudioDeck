@@ -19,7 +19,7 @@ def _release_tuple(version: str) -> Tuple[int, ...]:
         version: A version string such as "1.2.0" or "1.2.0-rc1".
 
     Returns:
-        The leading dotted-numeric part as a tuple, or (0,) if none is found.
+        The leading dotted-numeric part as a tuple, else (0,) if none is found.
     """
     match = _RELEASE_RE.match(version.strip())
     if match is None:

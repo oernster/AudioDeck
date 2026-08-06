@@ -1,4 +1,4 @@
-# <img width="64" height="64" alt="{9C57229E-4B80-4394-94CF-B15DB37A0A28}" src="https://github.com/user-attachments/assets/0ee08d6a-0311-414b-8188-cf09a58c46b5" /> Audio Deck
+# <img width="64" height="64" alt="Audio Deck icon" src="https://github.com/user-attachments/assets/0ee08d6a-0311-414b-8188-cf09a58c46b5" /> Audio Deck
 
 A local-first audio device switcher for Windows, with a GUI, a command-line
 interface and Stream Deck integration.
@@ -40,7 +40,7 @@ account, no cloud and no background service.
 - Selecting devices that are not connected yet (for example a Bluetooth headset
   that is currently off), which are applied automatically when they reconnect.
 - Partial switching: the available devices in a profile are applied even if one
-  is currently missing, and the missing one is reported.
+  is currently missing; the missing one is reported.
 - Automatic and on-demand rescanning of devices, with offline devices marked.
 - A single window per user: launching Audio Deck again brings the open window to
   the front instead of starting a second copy. Command-line switching is not
@@ -101,12 +101,12 @@ Both builds read and write the same profiles file, so you can move between them.
 
 1. Open the **Quick Switch** tab.
 2. Select a profile.
-3. Click **Switch to Selected Profile**, or double-click the profile.
+3. Click **Switch to Selected Profile** or double-click the profile.
 
 A profile whose device is currently offline is marked in the list. Switching to
 it applies whatever devices are available now; a device that is off is applied
 automatically the moment it reconnects (for example when you turn on a Bluetooth
-headset). The device list rescans on device changes and periodically, and the
+headset). The device list rescans on device changes and periodically; the
 **Refresh Devices** button forces an immediate rescan.
 
 ## Stream Deck integration
@@ -186,20 +186,21 @@ This README covers using Audio Deck. The rest is split by audience.
 
 Set each application to use the Windows default device for input and output, so
 that switching the default takes effect. For example, in Discord set
-Settings > Voice & Video to "Default", and in Spotify set the output device to
+Settings > Voice & Video to "Default"; in Spotify set the output device to
 "Default".
 
 ### A device is missing
 
 Disconnected devices still appear in the Configuration tab marked as offline, so
 you can build profiles around them. To use one now, connect and enable it; Audio
-Deck picks it up automatically, or you can press **Refresh Devices**.
+Deck picks it up automatically, though **Refresh Devices** forces it.
 
 ### A profile only switched some devices
 
 This is expected when one of the profile's devices is currently offline. The
 available device is applied and the offline one is reported. It is applied
-automatically when it reconnects, or you can switch again once it is connected.
+automatically when it reconnects; switching again once it is connected also
+works.
 
 ### Audio Deck will not open a second window
 
@@ -211,7 +212,7 @@ the window you already have to the front. Command-line switching is exempt, so
 ### A Stream Deck button does nothing
 
 Run the batch file manually to read the error, confirm the path to
-`AudioDeck.exe`, and verify the profile name with `--list`.
+`AudioDeck.exe` and verify the profile name with `--list`.
 
 ## License
 

@@ -84,7 +84,7 @@ def test_tasks_run_serially_in_submission_order(runner):
 
 
 # The worker method is also exercised directly. Qt runs it on a native thread
-# that coverage cannot trace, and calling it here proves the same body handles
+# that coverage cannot trace, so calling it here proves the same body handles
 # both a normal task and a raising one.
 
 

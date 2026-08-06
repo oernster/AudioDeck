@@ -81,7 +81,7 @@ def run(
         progress: Callback receiving (percent, message).
 
     Returns:
-        The installed executable path for deploy and repair operations, or None
+        The installed executable path for deploy and repair operations, else None
         for uninstall.
     """
     if operation == Operation.UNINSTALL:
