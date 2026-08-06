@@ -16,12 +16,26 @@ from pathlib import Path
 
 import PyInstaller.__main__
 
+from buildexe import (
+    fail_on_missing,
+    read_version,
+    warn_file_for,
+    write_version_resource,
+)
 from installer import build_payload
+from installer import constants as identity
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
+# Modules the setup program cannot start without. Same reasoning as buildexe.py:
+# PyInstaller writes an executable even when it cannot resolve an import, so a
+# setup program built by the wrong interpreter fails only in the user's hands.
+REQUIRED_MODULES = ("PySide6", "installer")
+
 # Identity and inputs (no inline literals elsewhere).
 SETUP_NAME = "AudioDeckSetup"
+# PE FileDescription for the setup program, which is what Task Manager shows.
+SETUP_DESCRIPTION = f"{identity.APP_DISPLAY_NAME} Setup"
 INSTALLER_ENTRY = PROJECT_ROOT / "installer" / "app.py"
 ICON_FILE = PROJECT_ROOT / "assets" / "audiodeck.ico"
 VERSION_FILE = PROJECT_ROOT / "VERSION"
@@ -77,6 +91,13 @@ def build_installer() -> None:
     if TEMP_DIST_DIR.exists():
         shutil.rmtree(TEMP_DIST_DIR, ignore_errors=True)
 
+    version_resource = write_version_resource(
+        WORK_DIR,
+        read_version(PROJECT_ROOT),
+        SETUP_DESCRIPTION,
+        identity.INSTALLER_EXE_NAME,
+    )
+
     args = [
         "--noconfirm",
         "--clean",
@@ -84,6 +105,7 @@ def build_installer() -> None:
         "--windowed",
         f"--name={SETUP_NAME}",
         f"--icon={ICON_FILE}",
+        f"--version-file={version_resource}",
         f"--paths={PROJECT_ROOT}",
         f"--distpath={TEMP_DIST_DIR}",
         f"--workpath={WORK_DIR}",
@@ -106,6 +128,9 @@ def build_installer() -> None:
 
     print(f"Building {SETUP_NAME}.exe...")
     PyInstaller.__main__.run(args)
+
+    # Refuse to move a setup program that is missing what it needs to run.
+    fail_on_missing(warn_file_for(WORK_DIR, SETUP_NAME), REQUIRED_MODULES)
 
     built = TEMP_DIST_DIR / f"{SETUP_NAME}.exe"
     final = FINAL_DIST_DIR / f"{SETUP_NAME}.exe"

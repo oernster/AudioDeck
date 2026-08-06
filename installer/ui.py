@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -31,6 +31,18 @@ from installer import ops, registry
 from installer.state import InstallerState, Operation
 from installer.theme import stylesheet
 from installer.worker import InstallerWorker
+
+# Delay before the window closes itself after launching the application. Any
+# value posts the close onto a later turn of the event loop, which is the point;
+# a short one also leaves the "Starting..." line readable.
+CLOSE_ON_NEXT_TURN_MS = 400
+
+# Upper bound on joining the worker thread while the window closes. The worker
+# has finished its work by then and only has to unwind, so this is a guard
+# against hanging the close rather than a real wait. A QThread destroyed while
+# still running takes the process with it, so the join is never unbounded and
+# never skipped.
+WORKER_JOIN_TIMEOUT_MS = 5000
 
 
 def _app_icon() -> QIcon:
@@ -301,13 +313,23 @@ class InstallerWindow(QWidget):
         self._progress_text.setText(message)
 
     def _on_finished(self, installed_exe: object) -> None:
-        """Handle a successful operation."""
-        if (
+        """Handle a successful operation, launching and closing when asked to."""
+        launching = (
             installed_exe is not None
             and self._operation != Operation.UNINSTALL
             and self._launch_check.isChecked()
-        ):
+        )
+        if launching:
             ops.launch(installed_exe)
+            self._progress_text.setText(f"Starting {c.APP_DISPLAY_NAME}...")
+            # Close on the next turn of the event loop rather than from inside
+            # this callback. This slot is a bound method of a widget living on
+            # the interface thread, so the worker has already handed control
+            # back by the time it runs; posting the close keeps application
+            # shutdown out of a signal emission altogether, which is the state
+            # that hung the o7Debrief setup program twice on launch-on-finish.
+            QTimer.singleShot(CLOSE_ON_NEXT_TURN_MS, self.close)
+            return
 
         for button in (self._left_button, self._right_button, self._uninstall_button):
             if button is not None:
@@ -320,3 +342,16 @@ class InstallerWindow(QWidget):
         self._progress_text.setText(f"Failed: {message}")
         for widget in self._action_widgets:
             widget.setEnabled(True)
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
+        """Join the worker before the window goes away.
+
+        The window can close while the worker is still unwinding, whether the
+        user pressed Close or the launch-on-finish path posted it. Destroying a
+        running QThread aborts the process, so the join is bounded and always
+        runs.
+        """
+        worker = self._worker
+        if worker is not None and worker.isRunning():
+            worker.wait(WORKER_JOIN_TIMEOUT_MS)
+        super().closeEvent(event)
