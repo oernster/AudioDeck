@@ -3,38 +3,28 @@
 Author: Oliver Ernster
 """
 
-import sys
-from pathlib import Path
-
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QAction, QDesktopServices, QIcon, QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
-    QDialog,
-    QHBoxLayout,
-    QLabel,
     QMainWindow,
     QMenu,
     QMessageBox,
-    QPushButton,
     QTabWidget,
-    QTextBrowser,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
-from src import __version__
 from src.presentation.notifiers.device_change_notifier import (
     WindowsDeviceChangeNotifier,
 )
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
+from src.presentation.views import help_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
-
-# GitHub releases page for the Check for Updates action.
-RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
+from src.presentation.views.resource_paths import resource_path
 
 # The main window's title. A second launch locates the running instance by
 # this exact string, so the two must never drift apart.
@@ -68,7 +58,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(600, 500)
 
         # Set window icon
-        icon_path = self._get_resource_path("assets/audiodeck.ico")
+        icon_path = resource_path("assets/audiodeck.ico")
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
 
@@ -172,355 +162,22 @@ class MainWindow(QMainWindow):
         # Add Help button to tab widget corner (top-right)
         self._tab_widget.setCornerWidget(help_button, Qt.Corner.TopRightCorner)
 
-    def _get_resource_path(self, relative_path: str) -> Path:
-        """Get absolute path to resource, works for dev and for PyInstaller.
-
-        Args:
-            relative_path: Relative path to resource file
-
-        Returns:
-            Absolute path to resource
-        """
-        # PyInstaller creates a temp folder and stores its path in _MEIPASS,
-        # which only exists in a frozen build, so it is read defensively.
-        bundle_dir = getattr(sys, "_MEIPASS", None)
-        if bundle_dir is not None:
-            return Path(bundle_dir) / relative_path
-
-        # Running in development mode.
-        return Path(__file__).parent.parent.parent.parent / relative_path
-
+    # The Help actions are thin wrappers so the menu wiring above reads as
+    # a menu, so a Qt signal always has a bound method to connect to.
     def _show_documentation(self) -> None:
-        """Show the documentation viewer dialog."""
-        # Try to find README.md
-        readme_path = self._get_resource_path("README.md")
-
-        if not readme_path.exists():
-            QMessageBox.warning(
-                self,
-                "Documentation Not Found",
-                "README.md file not found. Please check the installation.",
-            )
-            return
-
-        # Read README content
-        try:
-            with open(readme_path, "r", encoding="utf-8") as f:
-                readme_content = f.read()
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to read README.md: {e}",
-            )
-            return
-
-        # Create documentation dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Audio Deck Documentation")
-        dialog.setMinimumSize(800, 600)
-
-        layout = QVBoxLayout(dialog)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Create text browser for markdown display with slightly smaller font
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(True)
-        text_browser.setStyleSheet(
-            "font-size: 11.7pt;"
-        )  # 1.3x base size instead of 1.5x
-        text_browser.setMarkdown(readme_content)
-        layout.addWidget(text_browser)
-
-        # Add floating icon overlay in top-right corner
-        icon_path = self._get_resource_path("assets/audiodeck_icon_256.png")
-        if icon_path.exists():
-            icon_label = QLabel(dialog)
-            pixmap = QPixmap(str(icon_path))
-            scaled_pixmap = pixmap.scaled(
-                64,
-                64,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            icon_label.setPixmap(scaled_pixmap)
-            icon_label.setFixedSize(64, 64)
-            icon_label.setStyleSheet("""
-                background-color: rgba(42, 42, 42, 200);
-                padding: 5px;
-                border-radius: 5px;
-            """)
-            icon_label.setScaledContents(False)
-
-            # Position icon after dialog is shown
-            def position_icon() -> None:
-                icon_label.move(dialog.width() - 84, 10)
-                icon_label.raise_()
-
-            # Use a timer to position after dialog is fully rendered
-            from PySide6.QtCore import QTimer
-
-            QTimer.singleShot(0, position_icon)
-
-        # Add close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.exec()
+        help_dialogs.show_documentation(self)
 
     def _show_dev_documentation(self) -> None:
-        """Show the development documentation dialog with links to dev files."""
-        # Create development documentation dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Development Documentation")
-        dialog.setMinimumSize(700, 500)
-
-        layout = QVBoxLayout(dialog)
-
-        # Create header with icon in top-right
-        header_layout = QHBoxLayout()
-
-        # Left side: Title and description
-        left_layout = QVBoxLayout()
-
-        title_label = QLabel("<h2>Development Documentation</h2>")
-        title_label.setTextFormat(Qt.TextFormat.RichText)
-        left_layout.addWidget(title_label)
-
-        desc_label = QLabel(
-            "<p>Technical documentation for developers and advanced users.</p>"
-        )
-        desc_label.setTextFormat(Qt.TextFormat.RichText)
-        left_layout.addWidget(desc_label)
-
-        header_layout.addLayout(left_layout)
-        header_layout.addStretch()
-
-        # Right side: App icon
-        icon_path = self._get_resource_path("assets/audiodeck_icon_256.png")
-        if icon_path.exists():
-            icon_label = QLabel()
-            pixmap = QPixmap(str(icon_path))
-            scaled_pixmap = pixmap.scaled(
-                64,
-                64,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            icon_label.setPixmap(scaled_pixmap)
-            icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-            header_layout.addWidget(icon_label)
-
-        layout.addLayout(header_layout)
-
-        # Create text browser for documentation links
-        text_browser = QTextBrowser()
-        text_browser.setOpenExternalLinks(False)
-
-        # Build documentation content with links
-        dev_docs_content = """
-<h3>Available Documentation</h3>
-
-<p><b>📘 Development README</b><br>
-<a href="file:///DEVELOPMENT_README.md">DEVELOPMENT_README.md</a><br>
-Setting up the development environment, running from source, building the application, the checks and the release steps.</p>
-
-<p><b>💻 CLI Usage Reference</b><br>
-<a href="file:///CLI_USAGE.md">CLI_USAGE.md</a><br>
-Complete command-line interface reference for automation and scripting.</p>
-
-<p><b>🏗️ Architecture</b><br>
-<a href="file:///ARCHITECTURE.md">ARCHITECTURE.md</a><br>
-The layers, the dependency direction, the execution flow and the enforced invariants.</p>
-
-<hr>
-
-<p><i>Note: Click on any link above to open the documentation file. These files are located in the project root directory.</i></p>
-"""
-
-        text_browser.setHtml(dev_docs_content)
-
-        # Handle link clicks to open files
-        def handle_link_click(url: QUrl) -> None:
-            file_name = url.toString().replace("file:///", "")
-            file_path = self._get_resource_path(file_name)
-
-            if file_path.exists():
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-
-                    # Create a new dialog to show the file content
-                    file_dialog = QDialog(dialog)
-                    file_dialog.setWindowTitle(f"Audio Deck - {file_name}")
-                    file_dialog.setMinimumSize(800, 600)
-
-                    file_layout = QVBoxLayout(file_dialog)
-
-                    file_browser = QTextBrowser()
-                    file_browser.setOpenExternalLinks(True)
-                    file_browser.setStyleSheet("font-size: 11.7pt;")
-                    file_browser.setMarkdown(content)
-                    file_layout.addWidget(file_browser)
-
-                    close_btn = QPushButton("Close")
-                    close_btn.clicked.connect(file_dialog.accept)
-                    file_layout.addWidget(close_btn)
-
-                    file_dialog.exec()
-
-                    # Restore the content after child dialog closes
-                    text_browser.setHtml(dev_docs_content)
-                except Exception as e:
-                    QMessageBox.critical(
-                        dialog,
-                        "Error",
-                        f"Failed to read {file_name}: {e}",
-                    )
-            else:
-                QMessageBox.warning(
-                    dialog,
-                    "File Not Found",
-                    f"{file_name} not found. Please check the installation.",
-                )
-
-        text_browser.anchorClicked.connect(handle_link_click)
-        layout.addWidget(text_browser)
-
-        # Add close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.exec()
+        help_dialogs.show_dev_documentation(self)
 
     def _show_license(self) -> None:
-        """Show the License dialog."""
-        # Try to find LICENSE file
-        license_path = self._get_resource_path("LICENSE")
-
-        if not license_path.exists():
-            QMessageBox.warning(
-                self,
-                "License Not Found",
-                "LICENSE file not found. Please check the installation.",
-            )
-            return
-
-        # Read LICENSE content
-        try:
-            with open(license_path, "r", encoding="utf-8") as f:
-                license_content = f.read()
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to read LICENSE file: {e}",
-            )
-            return
-
-        # Create license dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("License - GNU LGPL v3.0")
-        dialog.setMinimumSize(800, 600)
-
-        layout = QVBoxLayout(dialog)
-
-        # Create text browser for license display
-        text_browser = QTextBrowser()
-        text_browser.setPlainText(license_content)
-        layout.addWidget(text_browser)
-
-        # Add close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.exec()
+        help_dialogs.show_license(self)
 
     def _check_for_updates(self) -> None:
-        """Open the GitHub releases page in the default browser."""
-        QDesktopServices.openUrl(QUrl(RELEASES_URL))
+        help_dialogs.check_for_updates()
 
     def _show_about(self) -> None:
-        """Show the About dialog."""
-        # Create custom dialog instead of QMessageBox for better layout control
-        dialog = QDialog(self)
-        dialog.setWindowTitle("About Audio Deck")
-        dialog.setMinimumSize(500, 400)
-
-        layout = QVBoxLayout(dialog)
-
-        # Create header layout with content on left, icon on right
-        header_layout = QHBoxLayout()
-
-        # Left side: Title, version, author, subtitle
-        left_layout = QVBoxLayout()
-
-        title_label = QLabel("<h2>Audio Deck</h2>")
-        title_label.setTextFormat(Qt.TextFormat.RichText)
-        left_layout.addWidget(title_label)
-
-        version_label = QLabel(f"<p><b>Version:</b> {__version__}</p>")
-        version_label.setTextFormat(Qt.TextFormat.RichText)
-        left_layout.addWidget(version_label)
-
-        author_label = QLabel("<p><b>Author:</b> Oliver Ernster</p>")
-        author_label.setTextFormat(Qt.TextFormat.RichText)
-        left_layout.addWidget(author_label)
-
-        header_layout.addLayout(left_layout)
-        header_layout.addStretch()
-
-        # Right side: App icon
-        icon_path = self._get_resource_path("assets/audiodeck_icon_256.png")
-        if icon_path.exists():
-            icon_label = QLabel()
-            pixmap = QPixmap(str(icon_path))
-            scaled_pixmap = pixmap.scaled(
-                64,
-                64,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            icon_label.setPixmap(scaled_pixmap)
-            icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-            header_layout.addWidget(icon_label)
-
-        layout.addLayout(header_layout)
-
-        subtitle_label = QLabel(
-            "<p>A professional audio device switcher for Windows with Stream Deck integration.</p>"
-        )
-        subtitle_label.setTextFormat(Qt.TextFormat.RichText)
-        subtitle_label.setWordWrap(True)
-        layout.addWidget(subtitle_label)
-
-        # Add about text (features and license)
-        about_text = """
-<p><b>Features:</b></p>
-<ul>
-<li>Quick profile switching</li>
-<li>Command-line interface for automation</li>
-<li>Stream Deck integration</li>
-<li>Profile management</li>
-</ul>
-<p><b>License:</b> GNU Lesser General Public License v3.0 (LGPL-3.0)</p>
-<p>Copyright (C) 2024-2026 Oliver Ernster</p>
-<p>For more information, select <b>Help > View License</b> or <b>Help > View Documentation</b>.</p>"""
-
-        text_label = QLabel(about_text)
-        text_label.setTextFormat(Qt.TextFormat.RichText)
-        text_label.setWordWrap(True)
-        layout.addWidget(text_label)
-
-        # Add close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-
-        dialog.exec()
+        help_dialogs.show_about(self)
 
     def _connect_signals(self) -> None:
         """Connect signals and slots."""

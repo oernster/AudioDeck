@@ -7,7 +7,9 @@ described in ARCHITECTURE.md.
 import ast
 from pathlib import Path
 
-SRC = Path(__file__).resolve().parent.parent.parent / "src"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+SRC = PROJECT_ROOT / "src"
+TESTS = PROJECT_ROOT / "tests"
 
 DOMAIN = SRC / "domain"
 APPLICATION = SRC / "application"
@@ -16,9 +18,20 @@ CLI = SRC / "cli"
 
 # The only modules permitted to name infrastructure concretes. Everything else
 # receives its dependencies through a constructor. Two entries because the GUI
-# and the CLI are separate entry points: main.py wires the GUI, and
+# and the CLI are separate entry points: main.py wires the GUI, while
 # CLIHandler.from_profiles_path wires the headless path.
 COMPOSITION_ROOTS = frozenset({"main.py", "cli_handler.py"})
+
+# The module size limit, plus the band just under it where a file is one edit
+# from breaking the rule. Shaving a module to a line under the cap buys
+# nothing, because the next change puts it back over and the same file gets
+# refactored again and again, so a module that reaches the band is taken to
+# DANGER_BAND_TARGET instead. The band width is derived from the cap rather
+# than written as a second literal, so the two cannot drift apart.
+MAX_MODULE_LINES = 400
+DANGER_BAND_FRACTION = 0.05
+DANGER_BAND_FLOOR = MAX_MODULE_LINES - int(MAX_MODULE_LINES * DANGER_BAND_FRACTION)
+DANGER_BAND_TARGET = 350
 
 # A module-level name bound to a call of a class matching one of these suffixes
 # would be a hidden singleton, wired outside a composition root.
@@ -120,6 +133,11 @@ def test_cli_infrastructure_imports_stay_in_its_composition_root():
     assert offenders == []
 
 
+def _line_count(path: Path) -> int:
+    """Return how many lines a module has."""
+    return len(path.read_text(encoding="utf-8").splitlines())
+
+
 def test_only_composition_roots_import_infrastructure():
     # Infrastructure may import itself; everything else outside it must be
     # wired by a composition root rather than reaching for a concrete.
@@ -139,5 +157,38 @@ def test_no_module_level_service_singletons():
         finding
         for path in SRC.rglob("*.py")
         for finding in _module_level_service_bindings(path)
+    ]
+    assert offenders == []
+
+
+def _measured_modules() -> list[Path]:
+    """Return every module the size rule applies to.
+
+    The application package and the tests. Delivery scripts at the repo root
+    are deliberately out of scope: they are linear recipes of flags and steps,
+    where splitting a sequence across modules costs more than it saves.
+    """
+    return sorted(SRC.rglob("*.py")) + sorted(TESTS.rglob("*.py"))
+
+
+def test_no_module_exceeds_the_line_limit():
+    # Size is a structural property like layering: left unmeasured, a view
+    # reaches 600 lines and nothing anywhere reports it.
+    offenders = [
+        f"{path.relative_to(PROJECT_ROOT)}: {_line_count(path)} lines"
+        for path in _measured_modules()
+        if _line_count(path) > MAX_MODULE_LINES
+    ]
+    assert offenders == []
+
+
+def test_no_module_sits_in_the_danger_band():
+    # A module just under the cap is one edit from breaking it, so it is taken
+    # to DANGER_BAND_TARGET rather than trimmed by a line.
+    offenders = [
+        f"{path.relative_to(PROJECT_ROOT)}: {_line_count(path)} lines, take it "
+        f"to {DANGER_BAND_TARGET} or fewer"
+        for path in _measured_modules()
+        if DANGER_BAND_FLOOR < _line_count(path) < MAX_MODULE_LINES
     ]
     assert offenders == []

@@ -15,12 +15,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Kept in step with requirements-dev.txt, which is the list the development
+# guide tells people to install. No mock library appears here on purpose:
+# TESTING.md states the suite uses hand-written fakes instead, so naming
+# pytest-mock as a dependency would invite exactly what the project decided
+# against.
 dev = [
     "pytest>=7.4.0",
     "pytest-qt>=4.2.0",
-    "pytest-mock>=3.11.0",
     "pytest-cov>=4.1.0",
-    "hypothesis>=6.82.0",
     "black>=23.7.0",
     "mypy>=1.4.1",
     "ruff>=0.0.280",
@@ -38,7 +41,6 @@ addopts = [
     "--verbose",
     "--cov=src",
     "--cov-report=term-missing",
-    "--cov-report=html",
     "--cov-fail-under=100",
 ]
 
@@ -54,7 +56,7 @@ omit = [
     # running app, not by brittle tests that break on every UI tweak.
     "src/presentation/views/*",
     # Raw COM against the live Windows audio endpoints. Exercising these would
-    # need real hardware, and the controller would change the machine's actual
+    # need real hardware, plus the controller would change the machine's actual
     # default devices, so they are driven through fakes at their seams instead.
     "src/infrastructure/windows/device_enumerator.py",
     "src/infrastructure/windows/windows_device_controller.py",

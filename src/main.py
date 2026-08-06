@@ -10,11 +10,7 @@ import ctypes
 # Add parent directory to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src import __version__
-
-from PySide6.QtWidgets import QApplication, QMainWindow, QSplashScreen
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
 from src.infrastructure.windows.windows_device_controller import WindowsDeviceController
@@ -29,6 +25,8 @@ from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCa
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
+from src.presentation.views.resource_paths import resource_path
+from src.presentation.views.splash_screen import create_splash_screen
 from src.infrastructure.windows.single_instance import (
     SingleInstanceGuard,
     Win32MutexApi,
@@ -42,161 +40,6 @@ from src.cli.cli_handler import CLIHandler
 # to the current logon session, matching the per-user profiles store: two
 # different Windows users may each run their own copy.
 SINGLE_INSTANCE_MUTEX_NAME = "Local\\OliverErnster.AudioDeck.SingleInstance"
-
-
-def get_resource_path(relative_path: str) -> Path:
-    """Get absolute path to resource, works for dev and for PyInstaller.
-
-    Args:
-        relative_path: Relative path to resource file
-
-    Returns:
-        Absolute path to resource
-    """
-    # PyInstaller creates a temp folder and stores its path in _MEIPASS, which
-    # only exists in a frozen build, so it is read defensively.
-    bundle_dir = getattr(sys, "_MEIPASS", None)
-    base_path = (
-        Path(bundle_dir) if bundle_dir is not None else Path(__file__).parent.parent
-    )
-
-    return base_path / relative_path
-
-
-def create_splash_screen() -> QSplashScreen:
-    """Create and configure a themed splash screen.
-
-    A rounded card with the app's purple gradient, the icon, the version and the
-    author. The version is read from the single source of truth (the VERSION
-    file, via __version__).
-
-    Returns:
-        Configured splash screen widget
-    """
-    from PySide6.QtGui import (
-        QPainter,
-        QColor,
-        QFontMetrics,
-        QLinearGradient,
-        QPainterPath,
-        QPen,
-    )
-
-    # Geometry and spacing (named, no magic numbers).
-    WIDTH = 440
-    HEIGHT = 300
-    CORNER_RADIUS = 18
-    BORDER_WIDTH = 2
-    ICON_SIZE = 112
-    ICON_TITLE_GAP = 16
-    TITLE_VERSION_GAP = 8
-    VERSION_AUTHOR_GAP = 4
-    BOTTOM_MARGIN = 22
-
-    # Palette: Audio Deck signature purple, fading to dark.
-    color_top = QColor("#4a2c6a")
-    color_bottom = QColor("#262430")
-    color_border = QColor("#7b5caa")
-    color_title = QColor("#ffffff")
-    color_version = QColor("#d8ccea")
-    color_author = QColor("#b0a4c4")
-    color_loading = QColor("#8a7ea3")
-
-    splash_pixmap = QPixmap(WIDTH, HEIGHT)
-    splash_pixmap.fill(Qt.GlobalColor.transparent)
-
-    painter = QPainter(splash_pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-    # Rounded gradient card.
-    inset = BORDER_WIDTH
-    card = QPainterPath()
-    card.addRoundedRect(
-        inset,
-        inset,
-        WIDTH - 2 * inset,
-        HEIGHT - 2 * inset,
-        CORNER_RADIUS,
-        CORNER_RADIUS,
-    )
-    gradient = QLinearGradient(0, 0, 0, HEIGHT)
-    gradient.setColorAt(0, color_top)
-    gradient.setColorAt(1, color_bottom)
-    painter.fillPath(card, gradient)
-    painter.setPen(QPen(color_border, BORDER_WIDTH))
-    painter.drawPath(card)
-
-    # Fonts.
-    font_title = QFont()
-    font_title.setPointSize(22)
-    font_title.setBold(True)
-    font_version = QFont()
-    font_version.setPointSize(11)
-    font_author = QFont()
-    font_author.setPointSize(10)
-    font_loading = QFont()
-    font_loading.setPointSize(9)
-
-    fm_title = QFontMetrics(font_title)
-    fm_version = QFontMetrics(font_version)
-    fm_author = QFontMetrics(font_author)
-
-    icon_path = get_resource_path("assets/audiodeck_icon_256.png")
-    has_icon = icon_path.exists()
-    icon_block = ICON_SIZE + ICON_TITLE_GAP if has_icon else 0
-
-    block_height = (
-        icon_block
-        + fm_title.height()
-        + TITLE_VERSION_GAP
-        + fm_version.height()
-        + VERSION_AUTHOR_GAP
-        + fm_author.height()
-    )
-    y = (HEIGHT - block_height) // 2
-
-    if has_icon:
-        icon_pixmap = QPixmap(str(icon_path)).scaled(
-            ICON_SIZE,
-            ICON_SIZE,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-        painter.drawPixmap((WIDTH - icon_pixmap.width()) // 2, y, icon_pixmap)
-        y += icon_pixmap.height() + ICON_TITLE_GAP
-
-    def draw_centered(text: str, font: QFont, color: QColor, gap: int) -> None:
-        nonlocal y
-        painter.setFont(font)
-        painter.setPen(color)
-        metrics = QFontMetrics(font)
-        text_width = metrics.horizontalAdvance(text)
-        painter.drawText((WIDTH - text_width) // 2, y + metrics.ascent(), text)
-        y += metrics.height() + gap
-
-    draw_centered("Audio Deck", font_title, color_title, TITLE_VERSION_GAP)
-    draw_centered(
-        f"Version {__version__}", font_version, color_version, VERSION_AUTHOR_GAP
-    )
-    draw_centered("by Oliver Ernster", font_author, color_author, 0)
-
-    # Loading line pinned near the bottom edge.
-    painter.setFont(font_loading)
-    painter.setPen(color_loading)
-    fm_loading = QFontMetrics(font_loading)
-    loading_text = "Loading..."
-    loading_width = fm_loading.horizontalAdvance(loading_text)
-    painter.drawText(
-        (WIDTH - loading_width) // 2,
-        HEIGHT - BOTTOM_MARGIN,
-        loading_text,
-    )
-
-    painter.end()
-
-    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
-    splash.setMask(splash_pixmap.mask())
-    return splash
 
 
 def get_profiles_path() -> Path:
@@ -274,7 +117,7 @@ def main() -> int:
     app.setOrganizationName("AudioDeck")
 
     # Set application icon for Windows taskbar
-    icon_path = get_resource_path("assets/audiodeck.ico")
+    icon_path = resource_path("assets/audiodeck.ico")
     if icon_path.exists():
         from PySide6.QtGui import QIcon
 
