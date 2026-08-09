@@ -17,6 +17,17 @@ from src.infrastructure.windows.windows_device_controller import WindowsDeviceCo
 from src.infrastructure.windows.windows_device_repository import WindowsDeviceRepository
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
 from src.application.use_cases.get_devices_use_case import GetDevicesUseCase
+from src.application.use_cases.check_for_updates_use_case import (
+    CheckForUpdatesUseCase,
+    platform_key_for,
+)
+from src.infrastructure.updates.github_release_source import GitHubReleaseSource
+from src.infrastructure.persistence.json_update_settings_repository import (
+    JsonUpdateSettingsRepository,
+)
+from src.presentation.presenters.update_presenter import UpdatePresenter
+from src.presentation.workers.background_runner import BackgroundRunner
+from src.version import __version__
 from src.application.use_cases.create_profile_use_case import CreateProfileUseCase
 from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
 from src.application.use_cases.delete_profile_use_case import DeleteProfileUseCase
@@ -52,6 +63,15 @@ def get_profiles_path() -> Path:
     app_data = Path.home() / "AppData" / "Local" / "AudioDeck"
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data / "profiles.json"
+
+
+def get_update_settings_path() -> Path:
+    """Get the path for the update check's settings, beside the profiles.
+
+    Returns:
+        Path to the update settings JSON file
+    """
+    return get_profiles_path().parent / "update_settings.json"
 
 
 def _set_windows_taskbar_icon(window: QMainWindow, ico_path: Path) -> None:
@@ -206,8 +226,21 @@ def main() -> int:
         get_devices_use_case, get_profiles_use_case, switch_profile_use_case
     )
 
+    # Update check: the use case over the GitHub adapter, the skip stored
+    # beside the profiles, the blocking call run off the GUI thread.
+    update_runner = BackgroundRunner()
+    update_presenter = UpdatePresenter(
+        CheckForUpdatesUseCase(
+            GitHubReleaseSource(), __version__, platform_key_for(sys.platform)
+        ),
+        JsonUpdateSettingsRepository(get_update_settings_path()),
+        update_runner,
+    )
+
     # Create and show main window (it installs the native device-change notifier)
-    main_window = MainWindow(configuration_presenter, actuation_presenter)
+    main_window = MainWindow(
+        configuration_presenter, actuation_presenter, update_presenter
+    )
     main_window.show_and_raise()
 
     # Close splash screen after main window is shown
@@ -223,6 +256,7 @@ def main() -> int:
     try:
         return app.exec()
     finally:
+        update_runner.stop()
         guard.release()
 
 

@@ -11,7 +11,7 @@ Author: Oliver Ernster
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QUrl
-from PySide6.QtGui import QDesktopServices, QPixmap
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -25,9 +25,6 @@ from PySide6.QtWidgets import (
 
 from src import __version__
 from src.presentation.views.resource_paths import APP_ICON_PNG, resource_path
-
-# GitHub releases page for the Check for Updates action.
-RELEASES_URL = "https://github.com/oernster/AudioDeck/releases"
 
 # Icon size used by every dialog that shows the app icon.
 ICON_PX = 64
@@ -271,11 +268,6 @@ def show_license(parent: QWidget) -> None:
     _add_close_button(dialog, layout)
 
     dialog.exec()
-
-
-def check_for_updates() -> None:
-    """Open the GitHub releases page in the default browser."""
-    QDesktopServices.openUrl(QUrl(RELEASES_URL))
 
 
 def show_about(parent: QWidget) -> None:

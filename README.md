@@ -14,6 +14,11 @@ default input device, then switches the Windows default devices to a profile in
 one click or one command. Profiles are stored locally as JSON; there is no
 account, no cloud and no background service.
 
+The one thing Audio Deck asks the network is whether a newer release exists:
+one anonymous call to GitHub's releases API shortly after launch and once a day
+while the window is open. It carries no identifier and nothing about your
+profiles; a failed check is silent.
+
 ## Who it is for
 
 - Windows users who regularly move between audio setups (speakers for music,
@@ -45,7 +50,11 @@ account, no cloud and no background service.
 - A single window per user: launching Audio Deck again brings the open window to
   the front instead of starting a second copy. Command-line switching is not
   restricted, so Stream Deck buttons keep working while the window is open.
-- Check for updates from the Help menu.
+- An update check against GitHub's releases API: shortly after launch, daily
+  while running and on demand from the Help menu, prompting with Download,
+  Skip This Version and Later. Only a published release can prompt, a skipped
+  version never prompts again and an unreachable network is silent; the manual
+  check reports every outcome and ignores the skip.
 - Profiles persisted locally with no external dependencies.
 
 ## Stack
@@ -155,6 +164,10 @@ Profiles are stored at:
 ```
 
 Back up this file to keep your profiles.
+
+The update check keeps its one setting (a skipped version, if you chose one)
+beside the profiles in `update_settings.json`. Losing it costs nothing but one
+extra prompt after the next release.
 
 ## Building from source
 

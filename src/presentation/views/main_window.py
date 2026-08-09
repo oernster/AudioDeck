@@ -3,7 +3,7 @@
 Author: Oliver Ernster
 """
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -21,7 +21,8 @@ from src.presentation.notifiers.device_change_notifier import (
 )
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
-from src.presentation.views import help_dialogs
+from src.presentation.presenters.update_presenter import UpdatePresenter
+from src.presentation.views import help_dialogs, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.resource_paths import resource_path
@@ -29,6 +30,11 @@ from src.presentation.views.resource_paths import resource_path
 # The main window's title. A second launch locates the running instance by
 # this exact string, so the two must never drift apart.
 WINDOW_TITLE = "Audio Deck"
+
+# The launch update check waits so it never contends with startup work; the
+# periodic re-check covers sessions that stay open for days.
+UPDATE_LAUNCH_DELAY_MS = 3000
+UPDATE_RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 
 class MainWindow(QMainWindow):
@@ -38,19 +44,23 @@ class MainWindow(QMainWindow):
         self,
         configuration_presenter: ConfigurationPresenter,
         actuation_presenter: ActuationPresenter,
+        update_presenter: UpdatePresenter,
     ) -> None:
         """Initialize main window.
 
         Args:
             configuration_presenter: Presenter for configuration view
             actuation_presenter: Presenter for actuation view
+            update_presenter: Presenter for the update check
         """
         super().__init__()
         self._configuration_presenter = configuration_presenter
         self._actuation_presenter = actuation_presenter
+        self._update_presenter = update_presenter
 
         self._setup_ui()
         self._connect_signals()
+        self._start_update_checks()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -174,7 +184,7 @@ class MainWindow(QMainWindow):
         help_dialogs.show_license(self)
 
     def _check_for_updates(self) -> None:
-        help_dialogs.check_for_updates()
+        self._update_presenter.check_manually()
 
     def _show_about(self) -> None:
         help_dialogs.show_about(self)
@@ -197,6 +207,45 @@ class MainWindow(QMainWindow):
         # Connect success signals
         self._configuration_presenter.profile_saved.connect(self._on_profile_saved)
         self._actuation_presenter.profile_switched.connect(self._on_profile_switched)
+
+        # Update check outcomes. The presenter emits from its worker thread;
+        # these bound methods run on the GUI thread via queued connections.
+        self._update_presenter.update_available.connect(self._on_update_available)
+        self._update_presenter.up_to_date.connect(self._on_up_to_date)
+        self._update_presenter.check_failed.connect(self._on_update_check_failed)
+
+    def _start_update_checks(self) -> None:
+        """Schedule the launch update check and the daily re-check."""
+        QTimer.singleShot(
+            UPDATE_LAUNCH_DELAY_MS, self._update_presenter.check_automatically
+        )
+        self._update_timer = QTimer(self)
+        self._update_timer.setInterval(UPDATE_RECHECK_INTERVAL_MS)
+        self._update_timer.timeout.connect(self._update_presenter.check_automatically)
+        self._update_timer.start()
+
+    def _on_update_available(
+        self, latest: str, current: str, download_url: str, page_url: str
+    ) -> None:
+        """Offer an available update.
+
+        Args:
+            latest: The published version
+            current: The running version
+            download_url: The platform asset URL, empty when none matched
+            page_url: The release page URL, empty when the payload lacked one
+        """
+        update_dialogs.show_update_prompt(
+            self, self._update_presenter, latest, current, download_url, page_url
+        )
+
+    def _on_up_to_date(self) -> None:
+        """Report that no newer release exists (manual check only)."""
+        update_dialogs.show_up_to_date(self)
+
+    def _on_update_check_failed(self) -> None:
+        """Report that the manual check could not reach GitHub."""
+        update_dialogs.show_check_failed(self)
 
     def _on_tab_changed(self, index: int) -> None:
         """Handle tab change event.

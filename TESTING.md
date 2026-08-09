@@ -47,9 +47,10 @@ earlier. The fix was to remove the dead branch, not to write a test for it.
 ## What is measured
 
 Everything under `src/` except the exclusions below, which is the domain, the
-application layer, both repositories, the CLI, the presenters, the version
-reader, the single-instance guard, the device-change notifier and the background
-worker.
+application layer, the repositories (profiles, devices and the update
+settings), the update check's GitHub adapter, the CLI, the presenters, the
+version reader, the single-instance guard, the device-change notifier and the
+background worker.
 
 ## What is excluded and why
 

@@ -48,19 +48,26 @@ presentation never reaches for infrastructure.
 src/
   domain/              Pure business model
     entities/          AudioDevice, AudioProfile
-    value_objects/     DeviceType, DeviceState
-    interfaces/        IDeviceRepository, IDeviceController, IProfileRepository (Protocols)
+    value_objects/     DeviceType, DeviceState, ReleaseInfo/ReleaseAsset
+    interfaces/        IDeviceRepository, IDeviceController, IProfileRepository,
+                       IReleaseSource, IUpdateSettingsRepository (Protocols)
     exceptions/        AudioDeckException hierarchy
   application/          Use cases and data transfer objects
-    use_cases/         Get/Create/Update/Delete/GetProfiles, GetDevices, SwitchProfile
-    dtos/              DeviceDTO, ProfileDTO, SwitchOutcome
+    use_cases/         Get/Create/Update/Delete/GetProfiles, GetDevices,
+                       SwitchProfile, CheckForUpdates (with the version compare
+                       and platform asset selection beside it)
+    dtos/              DeviceDTO, ProfileDTO, SwitchOutcome, UpdateStatus
   infrastructure/       External integrations
     windows/           Core Audio enumeration and control (pycaw, comtypes),
                        SingleInstanceGuard (named mutex, Win32 behind Protocols)
-    persistence/       JSON profile storage
+    persistence/       JSON profile storage; JSON update-settings storage
+    updates/           GitHubReleaseSource (stdlib urllib against the GitHub
+                       releases/latest endpoint, opener injected for tests)
   presentation/         GUI layer (PySide6)
-    views/             MainWindow, ConfigurationView, ActuationView, icons
-    presenters/        ConfigurationPresenter, ActuationPresenter (MVP)
+    views/             MainWindow, ConfigurationView, ActuationView, icons,
+                       the update dialogs (offer / up to date / failed)
+    presenters/        ConfigurationPresenter, ActuationPresenter,
+                       UpdatePresenter (MVP)
     notifiers/         WindowsDeviceChangeNotifier (WM_DEVICECHANGE)
     workers/           BackgroundRunner (keeps device work off the GUI thread)
   cli/                  Headless command-line interface
@@ -104,6 +111,14 @@ at by it.
    (native `WM_DEVICECHANGE`) and a periodic timer fallback both call the
    actuation presenter's `on_devices_changed`, which refreshes the current
    defaults and re-applies any profile device that has just reconnected.
+7. The update check runs a few seconds after launch, once a day and on demand
+   from Help > Check for Updates. The `UpdatePresenter` runs the
+   `CheckForUpdates` use case through its own `BackgroundRunner` and reports
+   through `update_available`, `up_to_date` and `check_failed`; the window
+   shows a Download / Skip This Version / Later prompt, with the skip persisted
+   beside the profiles and honoured only by the automatic path. Every failure
+   collapses to None in the adapter, so an automatic check that cannot reach
+   GitHub says nothing.
 
 ### CLI
 
@@ -126,6 +141,10 @@ Devices carry a `DeviceState` (available, disconnected, disabled or not present)
 so disconnected hardware can be listed and selected. A switch returns a
 `SwitchOutcome` recording which devices were applied and which were skipped (and
 why), which drives partial application and the auto-apply-on-reconnect flow.
+
+The update check keeps its one setting (the skipped version) in
+`%LOCALAPPDATA%\AudioDeck\update_settings.json`, beside the profiles but in its
+own file so neither store's failure rules leak into the other.
 
 Profiles are persisted as a JSON array under
 `%LOCALAPPDATA%\AudioDeck\profiles.json`:
@@ -158,6 +177,9 @@ Profiles are persisted as a JSON array under
 | Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it |
 | Named mutex rather than a lock file or port | Creating a named mutex is one atomic Win32 call, so two simultaneous launches cannot both win; it also cannot be left stale by a crash |
 | The guard fails open | If Windows refuses the mutex the application still starts; a guard that cannot be established must never be the reason it will not run |
+| The update check reads only GitHub's `releases/latest` endpoint | That endpoint returns only a published, non-draft, non-prerelease release, so a tag pushed mid-development can never prompt; nothing re-checks those flags client-side |
+| Unparseable versions compare as not-newer | A malformed tag can never raise a spurious prompt and a `0.0.0-dev` source run stays silent |
+| The update settings store is best-effort where the profile store raises | Profiles are user content; losing a skipped-version note costs one extra prompt, so a failed write is swallowed rather than surfaced |
 
 ## Quality enforcement
 

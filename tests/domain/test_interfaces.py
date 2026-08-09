@@ -9,10 +9,16 @@ from src.domain.interfaces import (
     IDeviceController,
     IDeviceRepository,
     IProfileRepository,
+    IReleaseSource,
+    IUpdateSettingsRepository,
 )
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
 )
+from src.infrastructure.persistence.json_update_settings_repository import (
+    JsonUpdateSettingsRepository,
+)
+from src.infrastructure.updates.github_release_source import GitHubReleaseSource
 from src.infrastructure.windows.windows_device_repository import (
     WindowsDeviceRepository,
 )
@@ -45,6 +51,26 @@ def test_json_repository_satisfies_profile_repository():
 def test_fake_controller_satisfies_device_controller():
     missing = _protocol_methods(IDeviceController) - set(dir(FakeDeviceController))
     assert missing == set()
+
+
+def test_github_source_satisfies_release_source():
+    missing = _protocol_methods(IReleaseSource) - set(dir(GitHubReleaseSource))
+    assert missing == set()
+
+
+def test_json_settings_satisfies_update_settings_repository():
+    missing = _protocol_methods(IUpdateSettingsRepository) - set(
+        dir(JsonUpdateSettingsRepository)
+    )
+    assert missing == set()
+
+
+def test_release_source_protocol_declares_methods():
+    assert _protocol_methods(IReleaseSource)
+
+
+def test_update_settings_repository_protocol_declares_methods():
+    assert _protocol_methods(IUpdateSettingsRepository)
 
 
 def test_profile_repository_protocol_declares_methods():

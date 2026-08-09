@@ -183,9 +183,11 @@
         pycaw and comtypes and two thin clients (the PySide6 GUI and the CLI) wired in separate
         composition roots. Structural tests parse the source on every run, so a layering
         violation fails the build instead of surviving into review.</p>
-      <p>What works now is a two-tab app that installs per-user with no administrator rights,
-        stores profiles in a local JSON file under your own AppData and talks to nothing outside
-        your machine: no account, no cloud, no background service. Launch it twice and the
+      <p>What works now is a two-tab app that installs per-user with no administrator rights and
+        stores profiles in a local JSON file under your own AppData: no account, no cloud, no
+        background service. The one thing it asks the network is whether a newer release exists,
+        an anonymous daily call to GitHub's releases API that carries nothing about you or your
+        profiles. Launch it twice and the
         existing window fronts itself; headless switches stay exempt, so the Stream Deck keys
         keep working while the window is open.</p>
       <p>Full reasoning at <a href="https://www.crankthecode.com/posts/audiodeck">crankthecode.com</a>.</p>

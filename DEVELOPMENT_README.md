@@ -106,18 +106,26 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `DeviceState` value objects, the repository and controller Protocols plus the
   exception hierarchy.
 - **Application**: the use cases (`GetDevices`, `GetProfiles`, `CreateProfile`,
-  `UpdateProfile`, `DeleteProfile`, `SwitchProfile`) and the DTOs (`DeviceDTO`,
-  `ProfileDTO`, `SwitchOutcome`). `SwitchProfile` returns a `SwitchOutcome` so a
-  profile applies its available devices and reports any that are skipped.
+  `UpdateProfile`, `DeleteProfile`, `SwitchProfile`, `CheckForUpdates`) and the
+  DTOs (`DeviceDTO`, `ProfileDTO`, `SwitchOutcome`, `UpdateStatus`).
+  `SwitchProfile` returns a `SwitchOutcome` so a profile applies its available
+  devices and reports any that are skipped; `CheckForUpdates` decides whether a
+  newer published release should be offered and with which download.
 - **Infrastructure**: `WindowsDeviceEnumerator`, `WindowsDeviceController` and
   `WindowsDeviceRepository` (Core Audio via pycaw and comtypes),
-  `JsonProfileRepository` plus `SingleInstanceGuard` (a named mutex that keeps
+  `JsonProfileRepository`, `JsonUpdateSettingsRepository` (the skipped-version
+  store, best-effort by design), `GitHubReleaseSource` (stdlib urllib against
+  the GitHub releases endpoint, with the opener injected so tests never touch
+  the network) plus `SingleInstanceGuard` (a named mutex that keeps
   the GUI to one instance per logon session, with the Win32 calls behind
   Protocols so the logic is testable). The enumerator lists disconnected and
   disabled devices too, so they can be selected.
 - **Presentation**: `MainWindow`, `ConfigurationView`, `ActuationView` and their
-  presenters (MVP), plus `WindowsDeviceChangeNotifier` (a `WM_DEVICECHANGE`
-  filter) that drives live updates and auto-apply on reconnect, `BackgroundRunner`
+  presenters (MVP), `UpdatePresenter` (the update check's outcomes as signals,
+  run through its own `BackgroundRunner`) with `update_dialogs` (the offer,
+  the all-clear and the failure), plus `WindowsDeviceChangeNotifier` (a
+  `WM_DEVICECHANGE` filter) that drives live updates and auto-apply on
+  reconnect, `BackgroundRunner`
   (a serial worker thread keeping COM and settle sleeps off the GUI thread) and
   `icons` (the emoji button glyphs, defined once as named constants).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
