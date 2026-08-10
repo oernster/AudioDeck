@@ -29,9 +29,13 @@ from src.presentation.views.resource_paths import APP_ICON_PNG, resource_path
 from src.presentation.widgets.auto_scroller import AutoScroller
 
 # The licence text arrives hard-wrapped, so the dialog is sized to the text
-# rather than to a guessed minimum; the cap guards a pathological line.
+# rather than to a guessed minimum. The cap comes from the screen, not a
+# constant: at the app's 13.5pt base font a 78-column licence line is
+# around 1400px wide, so any fixed cap either truncates the text on a
+# desktop monitor or overflows a small one. The margin keeps the dialog
+# clear of the screen edges when the text wants more than the screen has.
 LICENCE_HEIGHT_PX = 600
-LICENCE_WIDTH_CAP_PX = 900
+LICENCE_SCREEN_MARGIN_PX = 80
 
 # Icon size used by every dialog that shows the app icon.
 ICON_PX = 64
@@ -175,9 +179,8 @@ def _fit_dialog_width_to_text(
         + layout.contentsMargins().left()
         + layout.contentsMargins().right()
     )
-    width = min(
-        math.ceil(browser.document().idealWidth()) + chrome, LICENCE_WIDTH_CAP_PX
-    )
+    cap = dialog.screen().availableGeometry().width() - LICENCE_SCREEN_MARGIN_PX
+    width = min(math.ceil(browser.document().idealWidth()) + chrome, cap)
     dialog.setMinimumSize(width, LICENCE_HEIGHT_PX)
     dialog.resize(width, LICENCE_HEIGHT_PX)
 
