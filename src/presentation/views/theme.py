@@ -204,7 +204,7 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
             color: {tokens["text_muted"]};
         }}
         QPushButton#ViewButton, QPushButton#TrayAction,
-        QPushButton#ThemeToggleButton {{
+        QPushButton#ThemeToggleButton, QPushButton#HelpButton {{
             background-color: transparent;
             border: 2px solid transparent;
             border-radius: 4px;
@@ -215,30 +215,15 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
         QPushButton#TrayAction:enabled:hover,
         QPushButton#TrayAction:enabled:focus,
         QPushButton#ThemeToggleButton:enabled:hover,
-        QPushButton#ThemeToggleButton:enabled:focus {{
+        QPushButton#ThemeToggleButton:enabled:focus,
+        QPushButton#HelpButton:enabled:hover,
+        QPushButton#HelpButton:enabled:focus {{
             background-color: {tokens["surface"]};
             border: 2px solid {tokens["ring"]};
         }}
-        QPushButton#TrayAction:disabled {{
+        QPushButton#ViewButton:disabled, QPushButton#TrayAction:disabled {{
             background-color: transparent;
             border: 2px solid {tokens["danger"]};
-        }}
-        QPushButton#ViewButton[activeView="true"] {{
-            border-bottom: 3px solid {tokens["text"]};
-        }}
-        QToolButton#HelpButton {{
-            background-color: transparent;
-            border: 2px solid transparent;
-            border-radius: 4px;
-            padding: 0px;
-        }}
-        QToolButton#HelpButton:enabled:hover,
-        QToolButton#HelpButton:enabled:focus {{
-            background-color: {tokens["surface"]};
-            border: 2px solid {tokens["ring"]};
-        }}
-        QToolButton#HelpButton::menu-indicator {{
-            image: none;
         }}
         QFrame#Separator {{
             color: {tokens["separator"]};

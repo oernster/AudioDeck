@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QStackedWidget,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -178,12 +177,15 @@ class MainWindow(QMainWindow):
             self._configuration_view.refresh()
 
     def _mark_active_view_button(self, index: int) -> None:
-        """Restyle the view buttons so the displayed view's reads active."""
+        """Disable the displayed view's button: present but inert.
+
+        The disabled state paints the permanent red ring, which is the
+        app-wide marker for a control that exists but cannot be used, and
+        the keyboard ring skips it, so the current view is never a stop.
+        """
         buttons = (self._quick_switch_button, self._configuration_button)
         for position, button in enumerate(buttons):
-            button.setProperty("activeView", position == index)
-            button.style().unpolish(button)
-            button.style().polish(button)
+            button.setEnabled(position != index)
 
     def _install_device_notifier(self) -> None:
         """Install the native device-change notifier on the application."""
@@ -195,7 +197,7 @@ class MainWindow(QMainWindow):
         )
         self._device_notifier.install(app)
 
-    def _create_help_button(self) -> QToolButton:
+    def _create_help_button(self) -> QPushButton:
         """Create the Help icon for the header row, menu wired to this window."""
         return build_help_button(
             self._show_documentation,
