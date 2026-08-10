@@ -211,13 +211,12 @@ def build_executable() -> None:
         f"--add-data={project_root / 'VERSION'};.",
         # Bundle the generated icon set (window, taskbar, splash, about, dialogs)
         f"--add-data={project_root / 'assets'};assets",
-        # Bundle documentation and license files
-        f"--add-data={project_root / 'README.md'};.",
+        # Bundle the in-app user guide and the licence files (the Help menu
+        # reads each of these from the bundle at runtime)
+        f"--add-data={project_root / 'DOCUMENTATION.md'};.",
         f"--add-data={project_root / 'LICENSE'};.",
-        # Bundle development documentation files
-        f"--add-data={project_root / 'ARCHITECTURE.md'};.",
-        f"--add-data={project_root / 'CLI_USAGE.md'};.",
-        f"--add-data={project_root / 'DEVELOPMENT_README.md'};.",
+        f"--add-data={project_root / 'LICENSE-GPL-3.0.txt'};.",
+        f"--add-data={project_root / 'LICENSE-LGPL-3.0.txt'};.",
     ]
 
     print("Building Audio Deck executable...")

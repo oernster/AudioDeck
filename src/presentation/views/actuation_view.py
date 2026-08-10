@@ -76,7 +76,7 @@ class ActuationView(QWidget):
 
         instructions = QLabel(
             "Select a profile below to instantly switch your audio devices.\n"
-            "Use the Configuration tab to create or edit profiles."
+            "Use the Configuration view (the gear icon) to create or edit profiles."
         )
         instructions.setWordWrap(True)
         layout.addWidget(instructions)
@@ -161,7 +161,8 @@ class ActuationView(QWidget):
 
         if not profiles:
             item = QListWidgetItem(
-                "No profiles configured. Use Configuration tab to create profiles."
+                "No profiles configured. Use the Configuration view (the gear "
+                "icon) to create profiles."
             )
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self._profile_list.addItem(item)

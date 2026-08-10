@@ -201,8 +201,8 @@ class MainWindow(QMainWindow):
         """Create the Help icon for the header row, menu wired to this window."""
         return build_help_button(
             self._show_documentation,
-            self._show_dev_documentation,
-            self._show_license,
+            self._show_ui_license,
+            self._show_backend_license,
             self._check_for_updates,
             self._show_about,
         )
@@ -212,11 +212,11 @@ class MainWindow(QMainWindow):
     def _show_documentation(self) -> None:
         help_dialogs.show_documentation(self)
 
-    def _show_dev_documentation(self) -> None:
-        help_dialogs.show_dev_documentation(self)
+    def _show_ui_license(self) -> None:
+        help_dialogs.show_ui_license(self)
 
-    def _show_license(self) -> None:
-        help_dialogs.show_license(self)
+    def _show_backend_license(self) -> None:
+        help_dialogs.show_backend_license(self)
 
     def _check_for_updates(self) -> None:
         self._update_presenter.check_manually()

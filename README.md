@@ -1,7 +1,9 @@
 # <img width="64" height="64" alt="Audio Deck icon" src="https://github.com/user-attachments/assets/0ee08d6a-0311-414b-8188-cf09a58c46b5" /> Audio Deck
 
 A local-first audio device switcher for Windows, Linux and macOS, with a GUI,
-a command-line interface and Stream Deck integration.
+a command-line interface and Stream Deck integration on Windows. Any macro
+deck or macro buttons on any OS that can run a command work through the
+command-line interface.
 
 **Author:** Oliver Ernster
 
@@ -23,8 +25,9 @@ profiles; a failed check is silent.
 
 - Anyone who regularly moves between audio setups (speakers for music,
   a headset for calls, an interface for recording) and wants fast switching.
-- Streamers and gamers who own an Elgato Stream Deck and want a physical button
-  per setup.
+- Streamers and gamers who own an Elgato Stream Deck (Windows) or any macro
+  deck or macro buttons that can run a command (any OS) and want a physical
+  button per setup.
 - Remote workers who switch between a meeting headset and desk speakers.
 
 ## Who it is not for
@@ -79,7 +82,9 @@ profiles; a failed check is silent.
 
 - Windows 10 or Windows 11; a Linux desktop running PulseAudio or PipeWire
   (Ubuntu and every mainstream distribution); or macOS on Apple Silicon.
-- An Elgato Stream Deck is optional.
+- An Elgato Stream Deck is optional and its integration is Windows only;
+  other macro decks and macro buttons work on any OS through the command
+  line.
 
 ## Installation
 
@@ -125,25 +130,29 @@ The DMG is signed and notarised, so Gatekeeper opens it without warnings.
 ### Create a profile
 
 1. Open `AudioDeck.exe`.
-2. Go to the **Configuration** tab.
-3. Click **New Profile**.
+2. Open the **Configuration** view (the gear icon).
+3. Press **➕ New profile** in the header tray.
 4. Name the profile (for example "Gaming Setup").
 5. Select an output device and an input device.
-6. Click **Save Profile**.
+6. Press **💾 Save**.
 
 ### Switch profiles
 
-1. Open the **Quick Switch** tab.
+1. Open the **Quick Switch** view (the arrows icon).
 2. Select a profile.
-3. Click **Switch to Selected Profile** or double-click the profile.
+3. Press **▶️ Switch** in the header tray or double-click the profile.
 
 A profile whose device is currently offline is marked in the list. Switching to
 it applies whatever devices are available now; a device that is off is applied
 automatically the moment it reconnects (for example when you turn on a Bluetooth
 headset). The device list rescans on device changes and periodically; the
-**Refresh Devices** button forces an immediate rescan.
+**📡 Rescan** tray button forces an immediate rescan.
 
-## Stream Deck integration
+## Stream Deck integration (Windows)
+
+Elgato's Stream Deck software is Windows-focused here; on other platforms
+any macro deck or macro buttons that can run a command drive Audio Deck the
+same way, through the command line below.
 
 ### Advanced Launcher plugin (recommended)
 
@@ -237,6 +246,7 @@ This README covers using Audio Deck. The rest is split by audience.
 
 | Document | What it covers |
 | --- | --- |
+| [DOCUMENTATION.md](DOCUMENTATION.md) | The succinct user guide, also shown by Help > View Documentation in the app |
 | [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Developer notes: setup, running from source, the build, workflow, code style and releasing |
 | [CLI_USAGE.md](CLI_USAGE.md) | The command-line surface in depth, with batch-file recipes for Stream Deck |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The design, the layers, the dependency direction and the enforced invariants |
@@ -280,7 +290,12 @@ Run the batch file manually to read the error, confirm the path to
 
 ## License
 
-GNU Lesser General Public License v3.0 (LGPL-3.0). See [LICENSE](LICENSE).
+Distributed under two licences, split by component: the backend (domain,
+application, infrastructure and CLI layers) under
+[GPL-3.0](LICENSE-GPL-3.0.txt) and the PySide6 user interface
+(`src/presentation`) under [LGPL-3.0](LICENSE-LGPL-3.0.txt), aligning with
+Qt's own licensing. See [LICENSE](LICENSE) for the map; the running
+application shows both under Help.
 
 Copyright (C) 2024-2026 Oliver Ernster.
 

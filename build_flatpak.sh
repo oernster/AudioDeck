@@ -142,7 +142,7 @@ modules:
     buildsystem: simple
     build-commands:
       - install -d /app/share/${APP_CMD}
-      - cp -r src assets VERSION LICENSE /app/share/${APP_CMD}/
+      - cp -r src assets VERSION LICENSE LICENSE-GPL-3.0.txt LICENSE-LGPL-3.0.txt DOCUMENTATION.md /app/share/${APP_CMD}/
       - install -Dm755 ${PACKAGING_DIR}/${APP_CMD}-launcher /app/bin/${APP_CMD}
       - install -Dm644 ${PACKAGING_DIR}/${APP_ID}.desktop /app/share/applications/${APP_ID}.desktop
       - install -Dm644 ${PACKAGING_DIR}/${APP_ID}.metainfo.xml /app/share/metainfo/${APP_ID}.metainfo.xml

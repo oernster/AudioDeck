@@ -39,10 +39,9 @@ DMG_PATH = PROJECT_ROOT / f"{APP_NAME}.dmg"
 # The Help menu reads these from the bundle at runtime, so a build that omits
 # one ships a menu entry that opens a "File Not Found" box.
 DOC_FILES = (
-    PROJECT_ROOT / "README.md",
-    PROJECT_ROOT / "ARCHITECTURE.md",
-    PROJECT_ROOT / "CLI_USAGE.md",
-    PROJECT_ROOT / "DEVELOPMENT_README.md",
+    PROJECT_ROOT / "DOCUMENTATION.md",
+    PROJECT_ROOT / "LICENSE-GPL-3.0.txt",
+    PROJECT_ROOT / "LICENSE-LGPL-3.0.txt",
 )
 
 # Modules the application cannot start without. PyInstaller downgrades an

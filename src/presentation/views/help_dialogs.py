@@ -1,9 +1,9 @@
-"""The dialogs behind the Help button: documentation, licence and about.
+"""The dialogs behind the Help button: documentation, licences and about.
 
-These were methods on MainWindow, which put four dialog bodies inside the class
-that owns the tabs and the device notifier. It also took that module half
-again over the module size limit. They are plain functions taking the parent widget,
-because none of them needs anything from the window except somewhere to sit.
+These were methods on MainWindow, which put the dialog bodies inside the
+class that owns the views and the device notifier. They are plain functions
+taking the parent widget, because none of them needs anything from the
+window except somewhere to sit.
 
 Author: Oliver Ernster
 """
@@ -11,7 +11,7 @@ Author: Oliver Ernster
 import math
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QDialog,
@@ -35,50 +35,34 @@ LICENCE_WIDTH_CAP_PX = 900
 
 # Icon size used by every dialog that shows the app icon.
 ICON_PX = 64
-# Inset of the floating icon overlay from the dialog's top-right corner.
-OVERLAY_MARGIN_PX = 10
-OVERLAY_RIGHT_OFFSET_PX = 84
 
-# Body font for the markdown viewers: 1.3x the base size rather than 1.5x.
+# Body font for the markdown viewer: 1.3x the base size rather than 1.5x.
 VIEWER_FONT_CSS = "font-size: 11.7pt;"
 
-OVERLAY_CSS = """
-                background-color: rgba(42, 42, 42, 200);
-                padding: 5px;
-                border-radius: 5px;
-            """
-
-DEV_DOCS_HTML = """
-<h3>Available Documentation</h3>
-
-<p><b>📘 Development README</b><br>
-<a href="file:///DEVELOPMENT_README.md">DEVELOPMENT_README.md</a><br>
-Setting up the development environment, running from source, building the application, the checks and the release steps.</p>
-
-<p><b>💻 CLI Usage Reference</b><br>
-<a href="file:///CLI_USAGE.md">CLI_USAGE.md</a><br>
-Complete command-line interface reference for automation and scripting.</p>
-
-<p><b>🏗️ Architecture</b><br>
-<a href="file:///ARCHITECTURE.md">ARCHITECTURE.md</a><br>
-The layers, the dependency direction, the execution flow and the enforced invariants.</p>
-
+ABOUT_HTML = f"""
+<h2>Audio Deck</h2>
+<p><b>A local-first audio device switcher for Windows, Linux and macOS,
+with Stream Deck integration on Windows.</b></p>
+<p><b>Version:</b> {__version__}</p>
+<p><b>Author:</b> Oliver Ernster</p>
+<p>Audio Deck is free software, distributed under two licences: the
+backend under GPL-3.0 and the user interface under LGPL-3.0. See the Help
+menu for both licences.</p>
 <hr>
-
-<p><i>Note: Click on any link above to open the documentation file. These files are located in the project root directory.</i></p>
-"""
-
-ABOUT_HTML = """
-<p><b>Features:</b></p>
+<h3>Open source credits</h3>
 <ul>
-<li>Quick profile switching</li>
-<li>Command-line interface for automation</li>
-<li>Stream Deck integration</li>
-<li>Profile management</li>
+<li><b>PySide6</b> (Qt for Python) - LGPL-3.0 (the user interface).</li>
+<li><b>Python</b> - PSF License.</li>
+<li><b>pycaw</b> - MIT (the Windows Core Audio seam).</li>
+<li><b>comtypes</b> - MIT (COM bindings under pycaw).</li>
+<li><b>PyInstaller</b> - GPL-2.0 with exception (packaging).</li>
+<li><b>Pillow</b> - HPND (the icon build).</li>
+<li><b>pytest, pytest-qt, pytest-cov, black, ruff, mypy</b> - MIT and
+similar (the development tools).</li>
 </ul>
-<p><b>License:</b> GNU Lesser General Public License v3.0 (LGPL-3.0)</p>
-<p>Copyright (C) 2024-2026 Oliver Ernster</p>
-<p>For more information, select <b>Help > View License</b> or <b>Help > View Documentation</b>.</p>"""
+<p>Built on the Python and Qt ecosystems, with thanks to their
+communities.</p>
+"""
 
 
 def _scaled_app_icon() -> QPixmap | None:
@@ -94,34 +78,14 @@ def _scaled_app_icon() -> QPixmap | None:
     )
 
 
-def _add_header_icon(header_layout: QHBoxLayout) -> None:
-    """Add the app icon to the right of a dialog header, when it resolves."""
+def _make_icon_label() -> QLabel | None:
+    """Return a label carrying the app icon, else None when it is missing."""
     pixmap = _scaled_app_icon()
     if pixmap is None:
-        return
+        return None
     icon_label = QLabel()
     icon_label.setPixmap(pixmap)
-    icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-    header_layout.addWidget(icon_label)
-
-
-def _add_overlay_icon(dialog: QDialog) -> None:
-    """Float the app icon over a dialog's top-right corner, when it resolves."""
-    pixmap = _scaled_app_icon()
-    if pixmap is None:
-        return
-    icon_label = QLabel(dialog)
-    icon_label.setPixmap(pixmap)
-    icon_label.setFixedSize(ICON_PX, ICON_PX)
-    icon_label.setStyleSheet(OVERLAY_CSS)
-    icon_label.setScaledContents(False)
-
-    def position_icon() -> None:
-        icon_label.move(dialog.width() - OVERLAY_RIGHT_OFFSET_PX, OVERLAY_MARGIN_PX)
-        icon_label.raise_()
-
-    # Position once the dialog has been laid out.
-    QTimer.singleShot(0, position_icon)
+    return icon_label
 
 
 def _add_close_button(dialog: QDialog, layout: QVBoxLayout) -> None:
@@ -157,99 +121,35 @@ def _read_bundled_text(
 
 
 def show_documentation(parent: QWidget) -> None:
-    """Show the documentation viewer dialog."""
-    readme_content = _read_bundled_text(
-        parent,
-        resource_path("README.md"),
-        "README.md",
-        "Documentation Not Found",
-    )
-    if readme_content is None:
-        return
-
-    dialog = QDialog(parent)
-    dialog.setWindowTitle("Audio Deck Documentation")
-    dialog.setMinimumSize(800, 600)
-
-    layout = QVBoxLayout(dialog)
-    layout.setContentsMargins(0, 0, 0, 0)
-
-    text_browser = QTextBrowser()
-    text_browser.setOpenExternalLinks(True)
-    text_browser.setStyleSheet(VIEWER_FONT_CSS)
-    text_browser.setMarkdown(readme_content)
-    layout.addWidget(text_browser)
-    AutoScroller(text_browser)
-
-    _add_overlay_icon(dialog)
-    _add_close_button(dialog, layout)
-
-    dialog.exec()
-
-
-def _show_dev_doc_file(dialog: QDialog, file_name: str) -> None:
-    """Open one development document in a child viewer dialog."""
+    """Show the in-app user guide, headed by the app icon on the left."""
     content = _read_bundled_text(
-        dialog, resource_path(file_name), file_name, "File Not Found"
+        parent,
+        resource_path("DOCUMENTATION.md"),
+        "DOCUMENTATION.md",
+        "Documentation Not Found",
     )
     if content is None:
         return
 
-    file_dialog = QDialog(dialog)
-    file_dialog.setWindowTitle(f"Audio Deck - {file_name}")
-    file_dialog.setMinimumSize(800, 600)
-
-    file_layout = QVBoxLayout(file_dialog)
-
-    file_browser = QTextBrowser()
-    file_browser.setOpenExternalLinks(True)
-    file_browser.setStyleSheet(VIEWER_FONT_CSS)
-    file_browser.setMarkdown(content)
-    file_layout.addWidget(file_browser)
-    AutoScroller(file_browser)
-
-    _add_close_button(file_dialog, file_layout)
-
-    file_dialog.exec()
-
-
-def show_dev_documentation(parent: QWidget) -> None:
-    """Show the development documentation dialog with links to dev files."""
     dialog = QDialog(parent)
-    dialog.setWindowTitle("Development Documentation")
-    dialog.setMinimumSize(700, 500)
+    dialog.setWindowTitle("Audio Deck Documentation")
+    dialog.setMinimumSize(760, 600)
 
     layout = QVBoxLayout(dialog)
 
-    header_layout = QHBoxLayout()
-    left_layout = QVBoxLayout()
-
-    title_label = QLabel("<h2>Development Documentation</h2>")
-    title_label.setTextFormat(Qt.TextFormat.RichText)
-    left_layout.addWidget(title_label)
-
-    desc_label = QLabel(
-        "<p>Technical documentation for developers and advanced users.</p>"
-    )
-    desc_label.setTextFormat(Qt.TextFormat.RichText)
-    left_layout.addWidget(desc_label)
-
-    header_layout.addLayout(left_layout)
-    header_layout.addStretch()
-    _add_header_icon(header_layout)
-    layout.addLayout(header_layout)
+    icon_label = _make_icon_label()
+    if icon_label is not None:
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(icon_label)
+        header_layout.addStretch()
+        layout.addLayout(header_layout)
 
     text_browser = QTextBrowser()
-    text_browser.setOpenExternalLinks(False)
-    text_browser.setHtml(DEV_DOCS_HTML)
-
-    def handle_link_click(url: QUrl) -> None:
-        _show_dev_doc_file(dialog, url.toString().replace("file:///", ""))
-        # Restore the link list after the child dialog closes.
-        text_browser.setHtml(DEV_DOCS_HTML)
-
-    text_browser.anchorClicked.connect(handle_link_click)
+    text_browser.setOpenExternalLinks(True)
+    text_browser.setStyleSheet(VIEWER_FONT_CSS)
+    text_browser.setMarkdown(content)
     layout.addWidget(text_browser)
+    AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
 
@@ -261,9 +161,14 @@ def _fit_dialog_width_to_text(
 ) -> None:
     """Size a dialog to its pre-wrapped plain text instead of a guessed width.
 
-    Must run after the text is set. The chrome is the scrollbar, the frame
-    and the layout margins; the height stays a constant.
+    Must run after the text is set, and the browser must be POLISHED first:
+    the app stylesheet's font only lands on the widget at polish time, so an
+    unpolished document measures its ideal width in the default font and
+    undersizes the dialog by the difference. The chrome is the scrollbar,
+    the frame and the layout margins; the height stays a constant.
     """
+    browser.ensurePolished()
+    browser.document().setDefaultFont(browser.font())
     chrome = (
         browser.verticalScrollBar().sizeHint().width()
         + 2 * browser.frameWidth()
@@ -277,22 +182,22 @@ def _fit_dialog_width_to_text(
     dialog.resize(width, LICENCE_HEIGHT_PX)
 
 
-def show_license(parent: QWidget) -> None:
-    """Show the License dialog, sized to the licence text."""
-    license_content = _read_bundled_text(
-        parent, resource_path("LICENSE"), "LICENSE", "License Not Found"
+def _show_licence_file(parent: QWidget, file_name: str, title: str) -> None:
+    """Show one licence text in a dialog sized to fit it."""
+    licence_content = _read_bundled_text(
+        parent, resource_path(file_name), file_name, "Licence Not Found"
     )
-    if license_content is None:
+    if licence_content is None:
         return
 
     dialog = QDialog(parent)
-    dialog.setWindowTitle("License - GNU LGPL v3.0")
+    dialog.setWindowTitle(title)
 
     layout = QVBoxLayout(dialog)
 
     text_browser = QTextBrowser()
     text_browser.setLineWrapMode(QTextBrowser.LineWrapMode.NoWrap)
-    text_browser.setPlainText(license_content)
+    text_browser.setPlainText(licence_content)
     layout.addWidget(text_browser)
     _fit_dialog_width_to_text(dialog, text_browser, layout)
     AutoScroller(text_browser)
@@ -302,41 +207,28 @@ def show_license(parent: QWidget) -> None:
     dialog.exec()
 
 
+def show_ui_license(parent: QWidget) -> None:
+    """Show the user-interface licence (LGPL-3.0), aligning with Qt's."""
+    _show_licence_file(parent, "LICENSE-LGPL-3.0.txt", "UI Licence - GNU LGPL v3.0")
+
+
+def show_backend_license(parent: QWidget) -> None:
+    """Show the backend licence (GPL-3.0)."""
+    _show_licence_file(parent, "LICENSE-GPL-3.0.txt", "Backend Licence - GNU GPL v3.0")
+
+
 def show_about(parent: QWidget) -> None:
-    """Show the About dialog."""
+    """Show the About dialog: icon, identity, licences and credits."""
     dialog = QDialog(parent)
     dialog.setWindowTitle("About Audio Deck")
-    dialog.setMinimumSize(500, 400)
+    dialog.setMinimumSize(540, 520)
 
     layout = QVBoxLayout(dialog)
 
-    header_layout = QHBoxLayout()
-    left_layout = QVBoxLayout()
-
-    title_label = QLabel("<h2>Audio Deck</h2>")
-    title_label.setTextFormat(Qt.TextFormat.RichText)
-    left_layout.addWidget(title_label)
-
-    version_label = QLabel(f"<p><b>Version:</b> {__version__}</p>")
-    version_label.setTextFormat(Qt.TextFormat.RichText)
-    left_layout.addWidget(version_label)
-
-    author_label = QLabel("<p><b>Author:</b> Oliver Ernster</p>")
-    author_label.setTextFormat(Qt.TextFormat.RichText)
-    left_layout.addWidget(author_label)
-
-    header_layout.addLayout(left_layout)
-    header_layout.addStretch()
-    _add_header_icon(header_layout)
-    layout.addLayout(header_layout)
-
-    subtitle_label = QLabel(
-        "<p>A local-first audio device switcher for Windows, Linux and macOS, "
-        "with Stream Deck integration.</p>"
-    )
-    subtitle_label.setTextFormat(Qt.TextFormat.RichText)
-    subtitle_label.setWordWrap(True)
-    layout.addWidget(subtitle_label)
+    icon_label = _make_icon_label()
+    if icon_label is not None:
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(icon_label)
 
     # A browser rather than a label so the body can auto-scroll when the
     # dialog is sized smaller than the content; attaching the scroller to a

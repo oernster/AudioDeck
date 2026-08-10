@@ -24,8 +24,8 @@ from src.presentation.views.tray import style_tray_button
 
 def build_help_button(
     on_documentation: Callable[[], None],
-    on_dev_documentation: Callable[[], None],
-    on_license: Callable[[], None],
+    on_ui_license: Callable[[], None],
+    on_backend_license: Callable[[], None],
     on_check_updates: Callable[[], None],
     on_about: Callable[[], None],
 ) -> QPushButton:
@@ -36,8 +36,9 @@ def build_help_button(
     help_menu = QMenu(help_button)
     entries = (
         ("View Documentation", on_documentation),
-        ("Development Documentation", on_dev_documentation),
-        ("View License (LGPL-3.0)", on_license),
+        None,
+        ("UI Licence (LGPL-3.0)", on_ui_license),
+        ("Backend Licence (GPL-3.0)", on_backend_license),
         None,
         ("Check for Updates", on_check_updates),
         None,
