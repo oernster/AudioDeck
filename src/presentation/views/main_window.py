@@ -6,7 +6,7 @@ Author: Oliver Ernster
 import sys
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction, QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -28,6 +28,9 @@ from src.presentation.views import help_dialogs, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.resource_paths import resource_path
+from src.presentation.widgets.keyboard_nav import KeyboardNavigator
+from src.presentation.widgets.nav_tab_bar import RING_GREEN as NAV_RING_GREEN
+from src.presentation.widgets.nav_tab_bar import NavTabBar
 
 # The main window's title. A second launch locates the running instance by
 # this exact string, so the two must never drift apart.
@@ -59,10 +62,26 @@ class MainWindow(QMainWindow):
         self._configuration_presenter = configuration_presenter
         self._actuation_presenter = actuation_presenter
         self._update_presenter = update_presenter
+        self._started = False
 
         self._setup_ui()
         self._connect_signals()
         self._start_update_checks()
+
+        # Neutral start: a zero-size focus sink absorbs the initial focus so
+        # nothing is highlighted on launch; the first Tab or Right enters the
+        # ring, driven by the application-level navigator.
+        self._focus_sink = QWidget(self)
+        self._focus_sink.setFixedSize(0, 0)
+        self._focus_sink.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self._keyboard_navigator = KeyboardNavigator(self)
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802
+        """Start neutral: focus the sink once, on first show."""
+        super().showEvent(event)
+        if not self._started:
+            self._started = True
+            self._focus_sink.setFocus()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -81,8 +100,10 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create tab widget
+        # Create tab widget; its bar carries the keyboard cursor, one ring
+        # stop per tab.
         self._tab_widget = QTabWidget()
+        self._tab_widget.setTabBar(NavTabBar())
         layout.addWidget(self._tab_widget)
 
         # Create Help button and add to tab widget corner
@@ -93,8 +114,8 @@ class MainWindow(QMainWindow):
         self._actuation_view = ActuationView(self._actuation_presenter)
 
         # Add tabs
-        self._tab_widget.addTab(self._actuation_view, "Quick Switch")
-        self._tab_widget.addTab(self._configuration_view, "Configuration")
+        self._tab_widget.addTab(self._actuation_view, "🔄 Quick Switch")
+        self._tab_widget.addTab(self._configuration_view, "⚙️ Configuration")
 
         # React to device changes via the native notifier (debounced in the view)
         self._install_device_notifier()
@@ -113,29 +134,35 @@ class MainWindow(QMainWindow):
         """Create Help button in the tab widget corner."""
         # Create Help button with menu
         help_button = QToolButton()
-        help_button.setText("HELP")
+        help_button.setObjectName("HelpButton")
+        help_button.setText("ℹ️ Help")
         help_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        help_button.setStyleSheet("""
-            QToolButton {
+        # Blue fill; the ring rules follow the app-wide three-state model
+        # (green on hover or focus while enabled), stated here because an
+        # object-name rule setting border would otherwise swallow them.
+        help_button.setStyleSheet(f"""
+            QToolButton#HelpButton {{
                 background-color: #4A90E2;
                 color: white;
-                border: 2px solid #357ABD;
+                border: 2px solid transparent;
                 border-radius: 20px;
                 padding: 8px 16px;
                 font-weight: bold;
                 font-size: 13.5pt;
                 min-width: 60px;
-            }
-            QToolButton:hover {
-                background-color: #357ABD;
-            }
-            QToolButton:pressed {
+            }}
+            QToolButton#HelpButton:enabled:hover,
+            QToolButton#HelpButton:enabled:focus {{
+                border-color: {NAV_RING_GREEN};
+            }}
+            QToolButton#HelpButton:pressed {{
                 background-color: #2868A8;
-            }
-            QToolButton::menu-indicator {
+            }}
+            QToolButton#HelpButton::menu-indicator {{
                 image: none;
-            }
+            }}
         """)
+        help_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Create Help menu
         help_menu = QMenu(help_button)

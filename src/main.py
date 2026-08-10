@@ -54,6 +54,14 @@ _DARK_MUTED_TEXT = "#6c7086"
 _DARK_ACCENT = "#7b5caa"
 _DARK_LINK = "#89b4fa"
 
+# The three-state ring tokens (no ring at rest, green on hover or focus while
+# enabled, permanent red while disabled) plus the calm slate tab fills that
+# replace the earlier purple gradients.
+_RING_GREEN = "#a6e3a1"
+_RING_RED = "#f38ba8"
+_TAB_SELECTED_FILL = "#585b70"
+_TAB_HOVER_FILL = "#45475a"
+
 
 def _apply_dark_theme(app: "QApplication") -> None:
     """Force the Fusion style with a dark palette.
@@ -205,54 +213,80 @@ def main() -> int:
     splash.show()
     app.processEvents()  # Process events to show splash immediately
 
-    # Set global font size to 1.5x larger (base font size is typically 9pt, so 13.5pt)
-    # Add graduated purple background to tab buttons only
-    app.setStyleSheet("""
-        * {
+    # Global stylesheet: the 13.5pt base size, calm slate tab pills instead
+    # of the earlier purple gradients and the three-state ring model (no ring
+    # at rest, green ring on hover or focus while enabled, permanent red ring
+    # while disabled; the ring is the ONLY focus indicator, so the native
+    # dotted focus rectangle is suppressed with outline: none).
+    app.setStyleSheet(f"""
+        * {{
             font-size: 13.5pt;
-        }
-        QLabel {
-            font-size: 13.5pt;
-        }
-        QPushButton {
+            outline: none;
+        }}
+        QToolTip {{
+            font-size: 10.5pt;
+            color: {_DARK_TEXT};
+            background-color: {_DARK_SURFACE};
+            border: 1px solid {_DARK_MUTED_TEXT};
+        }}
+        QPushButton {{
             font-size: 13.5pt;
             padding: 6px 12px;
-        }
-        QLineEdit, QComboBox, QListWidget {
+            border: 2px solid transparent;
+            border-radius: 6px;
+        }}
+        QPushButton:enabled:hover, QPushButton:enabled:focus {{
+            border-color: {_RING_GREEN};
+        }}
+        QPushButton:disabled {{
+            border: 2px solid {_RING_RED};
+            background-color: {_DARK_SURFACE};
+            color: {_DARK_MUTED_TEXT};
+        }}
+        QLineEdit, QComboBox, QListWidget {{
             font-size: 13.5pt;
             padding: 4px;
-        }
-        QTabWidget::pane {
+            border: 2px solid transparent;
+            border-radius: 4px;
+        }}
+        QLineEdit:enabled:hover, QLineEdit:enabled:focus,
+        QComboBox:enabled:hover, QComboBox:enabled:focus,
+        QListWidget:enabled:hover, QListWidget:enabled:focus {{
+            border-color: {_RING_GREEN};
+        }}
+        QLineEdit:disabled, QComboBox:disabled, QListWidget:disabled {{
+            border: 2px solid {_RING_RED};
+            background-color: {_DARK_SURFACE};
+            color: {_DARK_MUTED_TEXT};
+        }}
+        QTabWidget::pane {{
             font-size: 13.5pt;
-        }
-        QTabBar::tab {
+        }}
+        QTabBar::tab {{
             font-size: 13.5pt;
             padding: 8px 16px;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                       stop:0 #B8A0D0, stop:1 #8B6EAD);
-            color: white;
-            border: 1px solid #5A3D7F;
+            background: {_DARK_SURFACE};
+            color: {_DARK_TEXT};
+            border: 1px solid {_DARK_MUTED_TEXT};
             border-bottom: none;
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             margin-right: 2px;
-        }
-        QTabBar::tab:selected {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                       stop:0 #7B5CAA, stop:1 #4A2C6A);
+        }}
+        QTabBar::tab:selected {{
+            background: {_TAB_SELECTED_FILL};
             font-weight: bold;
-        }
-        QTabBar::tab:hover:!selected {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                       stop:0 #C8B0E0, stop:1 #9B7EBD);
-        }
-        QGroupBox {
+        }}
+        QTabBar::tab:hover:!selected {{
+            background: {_TAB_HOVER_FILL};
+        }}
+        QGroupBox {{
             font-size: 13.5pt;
             font-weight: bold;
-        }
-        QMessageBox {
+        }}
+        QMessageBox {{
             font-size: 13.5pt;
-        }
+        }}
     """)
 
     # Infrastructure layer - dependency injection

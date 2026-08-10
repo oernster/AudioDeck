@@ -11,9 +11,7 @@ from __future__ import annotations
 from typing import Optional, Set
 
 
-def next_candidate(
-    count: int, start: int, delta: int, skip: Set[int]
-) -> Optional[int]:
+def next_candidate(count: int, start: int, delta: int, skip: Set[int]) -> Optional[int]:
     """Return the next usable index, wrapping; None when nothing is usable.
 
     Args:

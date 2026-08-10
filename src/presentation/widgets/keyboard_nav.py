@@ -15,12 +15,15 @@ is up (the modal owns its own focus) or while the window is inactive.
 from __future__ import annotations
 
 import enum
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, cast
 
 from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
+    QLayout,
+    QLayoutItem,
     QLineEdit,
     QListWidget,
     QMainWindow,
@@ -117,10 +120,11 @@ class KeyboardNavigator(QObject):
             if isinstance(child, QWidget):
                 self._walk(child, out)
 
-    def _walk_layout(self, layout, out: List[_Stop]) -> None:
+    def _walk_layout(self, layout: "QLayout", out: List[_Stop]) -> None:
         """Walk a layout's items in their declared order."""
         for position in range(layout.count()):
-            item = layout.itemAt(position)
+            # itemAt never returns None for an index inside count().
+            item = cast("QLayoutItem", layout.itemAt(position))
             child_widget = item.widget()
             if child_widget is not None:
                 self._walk(child_widget, out)
@@ -140,18 +144,17 @@ class KeyboardNavigator(QObject):
         if not self._window_is_active():
             return False
 
-        key = event.key()
+        key_event = cast(QKeyEvent, event)
+        key = key_event.key()
         # The ring belongs to this window, so its own focus widget is the
         # authority (the application-global one is unset while inactive).
         focus = self._window.focusWidget()
 
         # Text inputs keep their horizontal arrows for the caret.
-        if key in (Qt.Key.Key_Left, Qt.Key.Key_Right) and isinstance(
-            focus, QLineEdit
-        ):
+        if key in (Qt.Key.Key_Left, Qt.Key.Key_Right) and isinstance(focus, QLineEdit):
             return False
 
-        shift = bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+        shift = bool(key_event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
         if key == Qt.Key.Key_Backtab or (key == Qt.Key.Key_Tab and shift):
             return self._step(_BACKWARD)
         if key in (Qt.Key.Key_Tab, Qt.Key.Key_Right):
@@ -194,11 +197,13 @@ class KeyboardNavigator(QObject):
 
     # -- Stepping ----------------------------------------------------------
 
-    def _index_of_focus(self, stops: List[_Stop], focus: Optional[QWidget]) -> Optional[int]:
+    def _index_of_focus(
+        self, stops: List[_Stop], focus: Optional[QWidget]
+    ) -> Optional[int]:
         """Find which stop holds the focus, if any."""
         if focus is None:
             return None
-        for position, (kind, widget) in enumerate(stops):
+        for position, (_kind, widget) in enumerate(stops):
             if widget is focus or widget.isAncestorOf(focus):
                 return position
         return None

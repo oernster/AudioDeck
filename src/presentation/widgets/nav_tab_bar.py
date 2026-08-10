@@ -17,7 +17,14 @@ from __future__ import annotations
 from typing import Optional, Set
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFocusEvent, QKeyEvent, QPainter, QPen
+from PySide6.QtGui import (
+    QColor,
+    QFocusEvent,
+    QKeyEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+)
 from PySide6.QtWidgets import QTabBar
 
 from src.presentation.widgets.ring_walk import next_candidate, next_candidate_bounded
@@ -87,9 +94,7 @@ class NavTabBar(QTabBar):
     def step_cursor_wrapping(self, delta: int) -> None:
         """Step the cursor one tab, wrapping (the Up/Down convenience)."""
         start = self._cursor if self._cursor is not None else -1
-        self._cursor = next_candidate(
-            self.count(), start, delta, self._skip_indices()
-        )
+        self._cursor = next_candidate(self.count(), start, delta, self._skip_indices())
         self.update()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
@@ -120,7 +125,7 @@ class NavTabBar(QTabBar):
         self._cursor = None
         self.update()
 
-    def paintEvent(self, event) -> None:  # noqa: N802
+    def paintEvent(self, event: "QPaintEvent") -> None:  # noqa: N802
         """Paint the tabs, then the green ring around the cursor tab."""
         super().paintEvent(event)
         if not self._show_ring or self._cursor is None:
