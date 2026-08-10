@@ -15,6 +15,10 @@ APP_NAME="AudioDeck"
 APP_CMD="audiodeck"
 APP_SUMMARY="Audio device switcher with Stream Deck integration"
 APP_VERSION="$(tr -d '[:space:]' < VERSION)"
+# AppStream requires a date on every release. The day VERSION last changed is
+# the day this version came into being; an uncommitted bump dates as today.
+APP_RELEASE_DATE="$(git log -1 --format=%cs -- VERSION 2>/dev/null)"
+APP_RELEASE_DATE="${APP_RELEASE_DATE:-$(date +%F)}"
 RUNTIME="org.freedesktop.Platform"
 SDK="org.freedesktop.Sdk"
 RUNTIME_VERSION="25.08"
@@ -95,7 +99,7 @@ cat > "${PACKAGING_DIR}/${APP_ID}.metainfo.xml" <<METAINFO
   </description>
   <launchable type="desktop-id">${APP_ID}.desktop</launchable>
   <releases>
-    <release version="${APP_VERSION}"/>
+    <release version="${APP_VERSION}" date="${APP_RELEASE_DATE}"/>
   </releases>
 </component>
 METAINFO
@@ -116,6 +120,11 @@ finish-args:
   - --socket=wayland
   - --device=dri
   - --socket=pulseaudio
+  # PipeWire strips the metadata permission from every sandboxed client, so
+  # from inside the sandbox devices can be listed but never switched, whatever
+  # sockets are granted. Talking to the Flatpak service lets the one metadata
+  # write that changes the default device run in the host session instead.
+  - --talk-name=org.freedesktop.Flatpak
   - --share=network
 modules:
   - name: python-deps

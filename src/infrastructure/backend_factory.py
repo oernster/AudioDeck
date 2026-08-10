@@ -77,6 +77,9 @@ def create_device_backend(platform: str) -> DeviceBackend:
         return DeviceBackend(WindowsDeviceEnumerator(), WindowsDeviceController())
 
     if platform.startswith("linux"):
+        from src.infrastructure.linux.first_answering_enumerator import (
+            FirstAnsweringEnumerator,
+        )
         from src.infrastructure.linux.linux_device_controller import (
             LinuxDeviceController,
         )
@@ -84,9 +87,22 @@ def create_device_backend(platform: str) -> DeviceBackend:
             LinuxDeviceEnumerator,
         )
         from src.infrastructure.linux.pactl_api import SubprocessPactlApi
+        from src.infrastructure.linux.pipewire_device_enumerator import (
+            PipewireDeviceEnumerator,
+        )
+        from src.infrastructure.linux.pw_dump_api import SubprocessPwDumpApi
+        from src.infrastructure.linux.pw_metadata_api import SubprocessPwMetadataApi
 
         pactl = SubprocessPactlApi()
-        return DeviceBackend(LinuxDeviceEnumerator(pactl), LinuxDeviceController(pactl))
+        return DeviceBackend(
+            FirstAnsweringEnumerator(
+                (
+                    LinuxDeviceEnumerator(pactl),
+                    PipewireDeviceEnumerator(SubprocessPwDumpApi()),
+                )
+            ),
+            LinuxDeviceController(pactl, SubprocessPwMetadataApi()),
+        )
 
     if platform == "darwin":
         from src.infrastructure.macos.coreaudio_api import CtypesCoreAudioApi

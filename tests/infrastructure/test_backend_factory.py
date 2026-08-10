@@ -7,8 +7,10 @@ from src.infrastructure.backend_factory import (
     create_device_backend,
     create_single_instance,
 )
+from src.infrastructure.linux.first_answering_enumerator import (
+    FirstAnsweringEnumerator,
+)
 from src.infrastructure.linux.linux_device_controller import LinuxDeviceController
-from src.infrastructure.linux.linux_device_enumerator import LinuxDeviceEnumerator
 from src.infrastructure.macos.macos_device_controller import MacosDeviceController
 from src.infrastructure.macos.macos_device_enumerator import MacosDeviceEnumerator
 from src.infrastructure.posix.single_instance import PosixSingleInstanceGuard
@@ -31,7 +33,7 @@ def test_win32_gets_the_windows_backend():
 
 def test_linux_gets_the_pactl_backend():
     backend = create_device_backend("linux")
-    assert isinstance(backend.enumerator, LinuxDeviceEnumerator)
+    assert isinstance(backend.enumerator, FirstAnsweringEnumerator)
     assert isinstance(backend.controller, LinuxDeviceController)
 
 
