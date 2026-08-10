@@ -62,6 +62,18 @@ installer/payload/
 *.msi
 *.dmg
 
+# Flatpak build outputs. build_flatpak.sh generates the manifest, the
+# packaging directory and the wheel cache from VERSION and the sources, so
+# none of them are inputs worth tracking; cleanup_flatpak.sh deletes the
+# same set.
+.flatpak-build/
+.flatpak-builder/
+.flatpak-repo/
+.flatpak-wheels/
+packaging/
+uk.codecrafter.AudioDeck.yml
+*.flatpak
+
 # macOS
 .DS_Store
 
