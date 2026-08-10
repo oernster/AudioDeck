@@ -13,7 +13,6 @@ Author: Oliver Ernster
 from __future__ import annotations
 
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -30,11 +29,12 @@ ENTRY_SCRIPT = PROJECT_ROOT / "src" / "main.py"
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 LICENSE_FILE = PROJECT_ROOT / "LICENSE"
 ASSETS_DIR = PROJECT_ROOT / "assets"
-ICON_MASTER_PNG = ASSETS_DIR / "audiodeck_icon_1024.png"
 DIST_DIR = PROJECT_ROOT / "dist"
 WORK_DIR = PROJECT_ROOT / "build"
 APP_BUNDLE = DIST_DIR / f"{APP_NAME}.app"
-DMG_PATH = DIST_DIR / f"audiodeck-macos-{platform.machine()}.dmg"
+# The DMG is the deliverable, so it lands at the repo root rather than inside
+# the build output that the next run wipes.
+DMG_PATH = PROJECT_ROOT / f"{APP_NAME}.dmg"
 
 # The Help menu reads these from the bundle at runtime, so a build that omits
 # one ships a menu entry that opens a "File Not Found" box.
@@ -220,6 +220,21 @@ def create_dmg(icns_path: Path) -> None:
             sys.exit(f"create-dmg failed with exit code {result.returncode}")
 
 
+def set_file_icon(icns_path: Path) -> None:
+    """Give the DMG file itself the app icon in Finder.
+
+    The icon is a Finder attribute on the file, so it is set after signing and
+    notarisation; neither reads it. A failure here leaves a generic disk-image
+    icon rather than a broken deliverable, so it warns instead of aborting.
+
+    Args:
+        icns_path: The multi-size .icns built for the app bundle.
+    """
+    result = run("fileicon", "set", str(DMG_PATH), str(icns_path), check=False)
+    if result.returncode != 0:
+        print(f"WARNING: could not set the DMG file icon ({result.returncode}).")
+
+
 def notarize_and_staple() -> None:
     """Notarize and staple the DMG; refuse to skip silently."""
     if not (APPLE_ID and APPLE_APP_PASSWORD):
@@ -256,6 +271,8 @@ def main() -> int:
     if DIST_DIR.exists():
         shutil.rmtree(DIST_DIR)
     DIST_DIR.mkdir(parents=True)
+    # create-dmg refuses to overwrite, so a previous deliverable is cleared.
+    DMG_PATH.unlink(missing_ok=True)
 
     entitlements = Path(tempfile.mkstemp(suffix=".plist")[1])
     icns_path = DIST_DIR / "audiodeck.icns"
@@ -272,7 +289,7 @@ def main() -> int:
         run("codesign", "--force", "--sign", DEVELOPER_ID, str(DMG_PATH))
         notarize_and_staple()
         run("codesign", "--verify", str(DMG_PATH))
-        run("fileicon", "set", str(DMG_PATH), str(ICON_MASTER_PNG), check=False)
+        set_file_icon(icns_path)
     finally:
         entitlements.unlink(missing_ok=True)
 

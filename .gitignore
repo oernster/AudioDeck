@@ -60,6 +60,7 @@ dist-installer.build/
 installer/payload/
 *.exe
 *.msi
+*.dmg
 
 # macOS
 .DS_Store

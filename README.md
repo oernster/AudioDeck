@@ -225,7 +225,7 @@ macOS (needs the Apple credentials in the environment for notarisation):
 python builddmg.py
 ```
 
-writes `dist/audiodeck-macos-arm64.dmg`, signed, notarised and stapled.
+writes `AudioDeck.dmg` in the repo root, signed, notarised and stapled.
 
 ## Documentation
 
