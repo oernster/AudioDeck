@@ -2,11 +2,10 @@
 
 Tab and the Right arrow step the ring forward; Shift+Tab and Left step it
 back; the ring wraps at both ends and is recomputed live on each move, so
-rebuilt pages and disabled controls are handled. The tab strip is one stop
-PER TAB (a NavTabBar), a data list is one stop whose items are walked with
-Up and Down, a closed combo box drops open on Down instead of silently
-changing value and Enter clicks the focused button. Text inputs keep their
-horizontal arrows for the caret.
+rebuilt pages and disabled controls are handled. A data list is one stop
+whose items are walked with Up and Down, a closed combo box drops open on
+Down instead of silently changing value and Enter clicks the focused
+button. Text inputs keep their horizontal arrows for the caret.
 
 Installed as one application-level event filter, inert while a modal dialog
 is up (the modal owns its own focus) or while the window is inactive.
@@ -28,12 +27,12 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMainWindow,
     QPushButton,
-    QTabWidget,
     QToolButton,
     QWidget,
 )
 
-from src.presentation.widgets.nav_tab_bar import NavTabBar
+# The green ring token, matching the application stylesheet's.
+RING_GREEN = "#a6e3a1"
 
 _FORWARD = 1
 _BACKWARD = -1
@@ -42,7 +41,6 @@ _BACKWARD = -1
 class _Kind(enum.Enum):
     """What a ring stop is, which decides its internal keys."""
 
-    STRIP = enum.auto()
     LIST = enum.auto()
     WIDGET = enum.auto()
 
@@ -87,18 +85,6 @@ class KeyboardNavigator(QObject):
     def _walk(self, widget: QWidget, out: List[_Stop]) -> None:
         """Walk one widget, appending its stops in reading order."""
         if not widget.isVisible():
-            return
-        if isinstance(widget, NavTabBar):
-            out.append((_Kind.STRIP, widget))
-            return
-        if isinstance(widget, QTabWidget):
-            self._walk(widget.tabBar(), out)
-            corner = widget.cornerWidget(Qt.Corner.TopRightCorner)
-            if corner is not None:
-                self._walk(corner, out)
-            current = widget.currentWidget()
-            if current is not None:
-                self._walk(current, out)
             return
         if isinstance(widget, QListWidget):
             if widget.isEnabled():
@@ -166,15 +152,6 @@ class KeyboardNavigator(QObject):
 
     def _handle_internal_key(self, key: int, focus: Optional[QWidget]) -> bool:
         """Keys that act INSIDE the focused stop rather than on the ring."""
-        if isinstance(focus, NavTabBar):
-            if key == Qt.Key.Key_Down:
-                focus.step_cursor_wrapping(_FORWARD)
-                return True
-            if key == Qt.Key.Key_Up:
-                focus.step_cursor_wrapping(_BACKWARD)
-                return True
-            return False
-
         if isinstance(focus, QComboBox) and not focus.view().isVisible():
             # A closed dropdown drops open on Down; Up must not silently
             # change the value either.
@@ -216,16 +193,10 @@ class KeyboardNavigator(QObject):
 
         current = self._index_of_focus(stops, self._window.focusWidget())
         if current is not None:
-            kind, widget = stops[current]
-            if kind is _Kind.STRIP and isinstance(widget, NavTabBar):
-                if widget.step_cursor(delta):
-                    return True
             target_index = (current + delta) % len(stops)
         else:
             target_index = 0 if delta > 0 else len(stops) - 1
 
-        kind, widget = stops[target_index]
-        if kind is _Kind.STRIP and isinstance(widget, NavTabBar):
-            widget.enter_cursor(delta)
+        _kind, widget = stops[target_index]
         widget.setFocus(Qt.FocusReason.TabFocusReason)
         return True

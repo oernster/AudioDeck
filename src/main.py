@@ -55,12 +55,12 @@ _DARK_ACCENT = "#7b5caa"
 _DARK_LINK = "#89b4fa"
 
 # The three-state ring tokens (no ring at rest, green on hover or focus while
-# enabled, permanent red while disabled) plus the calm slate tab fills that
-# replace the earlier purple gradients.
+# enabled, permanent red while disabled) plus the calm slate fills of the
+# view-switching buttons.
 _RING_GREEN = "#a6e3a1"
 _RING_RED = "#f38ba8"
-_TAB_SELECTED_FILL = "#585b70"
-_TAB_HOVER_FILL = "#45475a"
+_ACTIVE_VIEW_FILL = "#585b70"
+_VIEW_HOVER_FILL = "#45475a"
 
 
 def _apply_dark_theme(app: "QApplication") -> None:
@@ -259,30 +259,23 @@ def main() -> int:
             background-color: {_DARK_SURFACE};
             color: {_DARK_MUTED_TEXT};
         }}
-        QTabWidget::pane {{
-            font-size: 13.5pt;
-        }}
-        QTabBar::tab {{
-            font-size: 13.5pt;
-            padding: 8px 16px;
-            background: {_DARK_SURFACE};
+        QPushButton#ViewButton {{
+            background-color: {_DARK_SURFACE};
             color: {_DARK_TEXT};
-            border: 1px solid {_DARK_MUTED_TEXT};
-            border-bottom: none;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            margin-right: 2px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            padding: 8px 16px;
         }}
-        QTabBar::tab:selected {{
-            background: {_TAB_SELECTED_FILL};
+        QPushButton#ViewButton:enabled:hover,
+        QPushButton#ViewButton:enabled:focus {{
+            border-color: {_RING_GREEN};
+        }}
+        QPushButton#ViewButton:enabled:hover {{
+            background-color: {_VIEW_HOVER_FILL};
+        }}
+        QPushButton#ViewButton[activeView="true"] {{
+            background-color: {_ACTIVE_VIEW_FILL};
             font-weight: bold;
-        }}
-        QTabBar::tab:hover {{
-            border: 1px solid {_RING_GREEN};
-            border-bottom: none;
-        }}
-        QTabBar::tab:hover:!selected {{
-            background: {_TAB_HOVER_FILL};
         }}
         QGroupBox {{
             font-size: 13.5pt;

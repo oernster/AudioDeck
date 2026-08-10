@@ -10,35 +10,41 @@ from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
     QMainWindow,
     QPushButton,
-    QTabWidget,
+    QStackedWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
 from src.presentation.widgets.keyboard_nav import KeyboardNavigator
-from src.presentation.widgets.nav_tab_bar import NavTabBar
 
 
 def _window(qtbot):
-    """A miniature of the real window: tabs with a bar cursor, a corner
-    button, then a page with a list, a combo, a line edit and buttons."""
+    """A miniature of the real window: two view buttons and Help above a
+    stack, whose current page holds a list, a combo, a line edit and a
+    button."""
     window = QMainWindow()
     qtbot.addWidget(window)
     central = QWidget()
     window.setCentralWidget(central)
     layout = QVBoxLayout(central)
 
-    tabs = QTabWidget()
-    tabs.setTabBar(NavTabBar())
-    corner = QToolButton()
-    corner.setText("Help")
-    tabs.setCornerWidget(corner, Qt.Corner.TopRightCorner)
+    quick_button = QPushButton("Quick Switch")
+    config_button = QPushButton("Configuration")
+    help_button = QToolButton()
+    help_button.setText("Help")
+    header = QHBoxLayout()
+    header.addWidget(quick_button)
+    header.addWidget(config_button)
+    header.addStretch()
+    header.addWidget(help_button)
+    layout.addLayout(header)
 
     page = QWidget()
     page_layout = QVBoxLayout(page)
@@ -57,9 +63,10 @@ def _window(qtbot):
     other_page = QWidget()
     QVBoxLayout(other_page).addWidget(QPushButton("Other"))
 
-    tabs.addTab(page, "Quick Switch")
-    tabs.addTab(other_page, "Configuration")
-    layout.addWidget(tabs)
+    stack = QStackedWidget()
+    stack.addWidget(page)
+    stack.addWidget(other_page)
+    layout.addWidget(stack)
 
     window.show()
     navigator = KeyboardNavigator(
@@ -69,13 +76,14 @@ def _window(qtbot):
 
     widgets = {
         "window": window,
-        "bar": tabs.tabBar(),
-        "corner": corner,
+        "quick_button": quick_button,
+        "config_button": config_button,
+        "help": help_button,
         "list": profile_list,
         "combo": combo,
         "line_edit": line_edit,
         "button": button,
-        "tabs": tabs,
+        "stack": stack,
     }
     return navigator, widgets
 
@@ -105,11 +113,10 @@ def test_inert_while_the_window_is_inactive(qtbot):
     assert _press(navigator, Qt.Key.Key_Tab) is False
 
 
-def test_the_first_forward_press_enters_the_strip_at_its_left_edge(qtbot):
+def test_the_first_forward_press_enters_at_the_first_view_button(qtbot):
     navigator, widgets = _window(qtbot)
     assert _press(navigator, Qt.Key.Key_Tab) is True
-    assert widgets["window"].focusWidget() is widgets["bar"]
-    assert widgets["bar"].cursor_index() == 0
+    assert widgets["window"].focusWidget() is widgets["quick_button"]
 
 
 def test_the_first_backward_press_enters_at_the_ring_end(qtbot):
@@ -118,20 +125,21 @@ def test_the_first_backward_press_enters_at_the_ring_end(qtbot):
     assert widgets["window"].focusWidget() is widgets["button"]
 
 
-def test_tab_walks_the_strip_then_leaves_to_the_corner_button(qtbot):
+def test_forward_walks_buttons_then_help_then_the_page(qtbot):
     navigator, widgets = _window(qtbot)
     _press(navigator, Qt.Key.Key_Tab)
-    assert widgets["bar"].cursor_index() == 0
     _press(navigator, Qt.Key.Key_Tab)
-    assert widgets["bar"].cursor_index() == 1
+    assert widgets["window"].focusWidget() is widgets["config_button"]
     _press(navigator, Qt.Key.Key_Tab)
-    assert widgets["window"].focusWidget() is widgets["corner"]
+    assert widgets["window"].focusWidget() is widgets["help"]
+    _press(navigator, Qt.Key.Key_Tab)
+    assert widgets["window"].focusWidget() is widgets["list"]
 
 
 def test_right_is_an_alias_for_tab(qtbot):
     navigator, widgets = _window(qtbot)
     _press(navigator, Qt.Key.Key_Right)
-    assert widgets["window"].focusWidget() is widgets["bar"]
+    assert widgets["window"].focusWidget() is widgets["quick_button"]
 
 
 def test_shift_tab_and_backtab_step_backward(qtbot):
@@ -147,32 +155,7 @@ def test_the_ring_wraps_forward_from_the_last_stop(qtbot):
     navigator, widgets = _window(qtbot)
     widgets["button"].setFocus()
     _press(navigator, Qt.Key.Key_Tab)
-    assert widgets["window"].focusWidget() is widgets["bar"]
-
-
-def test_stepping_back_into_the_strip_enters_at_its_right_edge(qtbot):
-    navigator, widgets = _window(qtbot)
-    widgets["corner"].setFocus()
-    _press(navigator, Qt.Key.Key_Backtab)
-    assert widgets["window"].focusWidget() is widgets["bar"]
-    assert widgets["bar"].cursor_index() == 1
-
-
-def test_up_and_down_walk_the_strip_wrapping(qtbot):
-    navigator, widgets = _window(qtbot)
-    _press(navigator, Qt.Key.Key_Tab)
-    assert _press(navigator, Qt.Key.Key_Down) is True
-    assert widgets["bar"].cursor_index() == 1
-    assert _press(navigator, Qt.Key.Key_Down) is True
-    assert widgets["bar"].cursor_index() == 0
-    assert _press(navigator, Qt.Key.Key_Up) is True
-    assert widgets["bar"].cursor_index() == 1
-
-
-def test_other_keys_on_the_strip_pass_to_the_bar(qtbot):
-    navigator, widgets = _window(qtbot)
-    _press(navigator, Qt.Key.Key_Tab)
-    assert _press(navigator, Qt.Key.Key_Return) is False
+    assert widgets["window"].focusWidget() is widgets["quick_button"]
 
 
 def test_a_list_keeps_its_vertical_arrows(qtbot):
@@ -252,10 +235,8 @@ def test_a_window_without_a_central_widget_has_no_ring(qtbot):
 
 def test_walk_edge_cases_are_skipped_not_collected(qtbot):
     # A window exercising every skip in the collector: a hidden button, a
-    # tab widget with no corner and no pages, a disabled list, a container
-    # with no layout and a nested sub-layout.
-    from PySide6.QtWidgets import QHBoxLayout
-
+    # disabled list, a container with no layout, a non-widget child and a
+    # nested sub-layout with a spacer.
     window = QMainWindow()
     qtbot.addWidget(window)
     central = QWidget()
@@ -264,10 +245,6 @@ def test_walk_edge_cases_are_skipped_not_collected(qtbot):
 
     hidden_button = QPushButton("hidden")
     layout.addWidget(hidden_button)
-
-    bare_tabs = QTabWidget()
-    bare_tabs.setTabBar(NavTabBar())
-    layout.addWidget(bare_tabs)
 
     disabled_list = QListWidget()
     disabled_list.setEnabled(False)
@@ -306,14 +283,14 @@ def test_focus_outside_the_ring_steps_to_the_first_stop(qtbot):
     # The sink is not a ring stop, so the lookup reports "outside".
     assert navigator._index_of_focus(navigator._stops(), sink) is None
     assert _press(navigator, Qt.Key.Key_Tab) is True
-    assert widgets["window"].focusWidget() is widgets["bar"]
+    assert widgets["window"].focusWidget() is widgets["quick_button"]
 
 
-def test_switching_tabs_changes_the_collected_page(qtbot):
+def test_switching_views_changes_the_collected_page(qtbot):
     navigator, widgets = _window(qtbot)
-    widgets["tabs"].setCurrentIndex(1)
+    widgets["stack"].setCurrentIndex(1)
     QApplication.processEvents()
-    widgets["corner"].setFocus()
+    widgets["help"].setFocus()
     _press(navigator, Qt.Key.Key_Tab)
     focused = widgets["window"].focusWidget()
     assert isinstance(focused, QPushButton)

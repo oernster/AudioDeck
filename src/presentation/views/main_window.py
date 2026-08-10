@@ -9,10 +9,12 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QApplication,
+    QHBoxLayout,
     QMainWindow,
     QMenu,
     QMessageBox,
-    QTabWidget,
+    QPushButton,
+    QStackedWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -28,9 +30,8 @@ from src.presentation.views import help_dialogs, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.resource_paths import resource_path
+from src.presentation.widgets.keyboard_nav import RING_GREEN as NAV_RING_GREEN
 from src.presentation.widgets.keyboard_nav import KeyboardNavigator
-from src.presentation.widgets.nav_tab_bar import RING_GREEN as NAV_RING_GREEN
-from src.presentation.widgets.nav_tab_bar import NavTabBar
 
 # The main window's title. A second launch locates the running instance by
 # this exact string, so the two must never drift apart.
@@ -100,25 +101,61 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create tab widget; its bar carries the keyboard cursor, one ring
-        # stop per tab.
-        self._tab_widget = QTabWidget()
-        self._tab_widget.setTabBar(NavTabBar())
-        layout.addWidget(self._tab_widget)
+        # Two individual view buttons plus Help, above a stack of the views.
+        self._quick_switch_button = self._make_view_button("🔄 Quick Switch")
+        self._configuration_button = self._make_view_button("⚙️ Configuration")
 
-        # Create Help button and add to tab widget corner
-        self._create_help_button()
+        header = QHBoxLayout()
+        header.setContentsMargins(8, 8, 8, 0)
+        header.addWidget(self._quick_switch_button)
+        header.addWidget(self._configuration_button)
+        header.addStretch()
+        header.addWidget(self._create_help_button())
+        layout.addLayout(header)
 
         # Create views
         self._configuration_view = ConfigurationView(self._configuration_presenter)
         self._actuation_view = ActuationView(self._actuation_presenter)
 
-        # Add tabs
-        self._tab_widget.addTab(self._actuation_view, "🔄 Quick Switch")
-        self._tab_widget.addTab(self._configuration_view, "⚙️ Configuration")
+        self._view_stack = QStackedWidget()
+        self._view_stack.addWidget(self._actuation_view)
+        self._view_stack.addWidget(self._configuration_view)
+        layout.addWidget(self._view_stack)
+
+        self._quick_switch_button.clicked.connect(lambda: self._show_view(0))
+        self._configuration_button.clicked.connect(lambda: self._show_view(1))
+        self._mark_active_view_button(0)
 
         # React to device changes via the native notifier (debounced in the view)
         self._install_device_notifier()
+
+    @staticmethod
+    def _make_view_button(label: str) -> QPushButton:
+        """Build one view-switching button; styling comes from the app sheet."""
+        button = QPushButton(label)
+        button.setObjectName("ViewButton")
+        return button
+
+    def _show_view(self, index: int) -> None:
+        """Show a view and mark its button as the active one.
+
+        Args:
+            index: 0 for Quick Switch, 1 for Configuration
+        """
+        self._view_stack.setCurrentIndex(index)
+        self._mark_active_view_button(index)
+        # Only refresh configuration when switching to it; the actuation view
+        # refreshes when profiles are saved.
+        if index == 1:
+            self._configuration_view.refresh()
+
+    def _mark_active_view_button(self, index: int) -> None:
+        """Restyle the view buttons so the displayed view's reads active."""
+        buttons = (self._quick_switch_button, self._configuration_button)
+        for position, button in enumerate(buttons):
+            button.setProperty("activeView", position == index)
+            button.style().unpolish(button)
+            button.style().polish(button)
 
     def _install_device_notifier(self) -> None:
         """Install the native device-change notifier on the application."""
@@ -130,8 +167,8 @@ class MainWindow(QMainWindow):
         )
         self._device_notifier.install(app)
 
-    def _create_help_button(self) -> None:
-        """Create Help button in the tab widget corner."""
+    def _create_help_button(self) -> QToolButton:
+        """Create the Help button for the header row."""
         # Create Help button with menu
         help_button = QToolButton()
         help_button.setObjectName("HelpButton")
@@ -197,9 +234,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
         help_button.setMenu(help_menu)
-
-        # Add Help button to tab widget corner (top-right)
-        self._tab_widget.setCornerWidget(help_button, Qt.Corner.TopRightCorner)
+        return help_button
 
     # The Help actions are thin wrappers so the menu wiring above reads as
     # a menu, so a Qt signal always has a bound method to connect to.
@@ -220,9 +255,6 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         """Connect signals and slots."""
-        # Connect tab change to refresh views
-        self._tab_widget.currentChanged.connect(self._on_tab_changed)
-
         # Connect error signals
         self._configuration_presenter.error_occurred.connect(self._show_error)
         self._actuation_presenter.error_occurred.connect(self._show_error)
@@ -275,17 +307,6 @@ class MainWindow(QMainWindow):
     def _on_update_check_failed(self) -> None:
         """Report that the manual check could not reach GitHub."""
         update_dialogs.show_check_failed(self)
-
-    def _on_tab_changed(self, index: int) -> None:
-        """Handle tab change event.
-
-        Args:
-            index: Index of the new tab
-        """
-        # Only refresh configuration view when switching to it
-        # Actuation view will be refreshed only when profiles are saved
-        if index == 1:  # Configuration view
-            self._configuration_view.refresh()
 
     def _show_error(self, message: str) -> None:
         """Show error message dialog.

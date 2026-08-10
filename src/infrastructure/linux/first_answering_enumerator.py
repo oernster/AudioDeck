@@ -12,12 +12,13 @@ from __future__ import annotations
 from typing import List, Sequence
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.interfaces.device_enumerator import IDeviceEnumerator
 
 
 class FirstAnsweringEnumerator:
     """Returns the devices of the first source that finds any."""
 
-    def __init__(self, sources: Sequence[object]) -> None:
+    def __init__(self, sources: Sequence[IDeviceEnumerator]) -> None:
         """Initialize the enumerator.
 
         Args:
