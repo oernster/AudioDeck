@@ -3,6 +3,24 @@
 How to use the AudioDeck command-line interface for automation and Stream Deck
 integration.
 
+## The command on each platform
+
+The CLI is identical everywhere; only the command that launches it differs.
+The examples in this guide use the Windows form, so substitute your
+platform's command:
+
+```
+Windows  AudioDeck.exe
+Linux    flatpak run uk.codecrafter.AudioDeck
+macOS    /Applications/AudioDeck.app/Contents/MacOS/AudioDeck
+```
+
+For example, listing profiles on Linux is
+`flatpak run uk.codecrafter.AudioDeck --list` and on macOS
+`/Applications/AudioDeck.app/Contents/MacOS/AudioDeck --list`. The batch-file
+recipes below are Windows-specific; on Linux or macOS use an ordinary shell
+script with the same arguments.
+
 ## Quick reference
 
 ```bash

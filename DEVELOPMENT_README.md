@@ -48,7 +48,7 @@ python src/main.py --list
 python src/main.py --profile "Gaming Setup"
 ```
 
-Only one Audio Deck window may be open per Windows user. If an installed or
+Only one Audio Deck window may be open per user. If an installed or
 packaged copy is already running, launching from source raises that window and
 exits immediately rather than opening a second one, so close the other copy
 before testing GUI changes. Headless runs (`--list` and `--profile`) are exempt
@@ -72,6 +72,11 @@ when run with arguments), collects `comtypes`, declares the `pycaw` hidden
 imports and bundles the icon, the `VERSION` file, the licence and the
 documentation. Build identity and inputs live at the top of `buildexe.py`.
 
+The Linux and macOS deliverables have their own entry points:
+`./build_flatpak.sh` builds and installs the Flatpak (Linux) and
+`python builddmg.py` builds the signed, notarised DMG (macOS). See the
+README's building section for both.
+
 ## Project structure
 
 ```
@@ -79,7 +84,7 @@ AudioDeck/
   src/
     domain/          Pure business model
     application/     Use cases and DTOs
-    infrastructure/  Windows Core Audio and JSON storage
+    infrastructure/  Platform audio backends (Windows, Linux, macOS) and JSON storage
     presentation/    PySide6 GUI (views, presenters, notifiers, workers)
     cli/             Command-line interface
     main.py          Entry point and GUI composition root
@@ -111,21 +116,25 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `SwitchProfile` returns a `SwitchOutcome` so a profile applies its available
   devices and reports any that are skipped; `CheckForUpdates` decides whether a
   newer published release should be offered and with which download.
-- **Infrastructure**: `WindowsDeviceEnumerator`, `WindowsDeviceController` and
-  `WindowsDeviceRepository` (Core Audio via pycaw and comtypes),
-  `JsonProfileRepository`, `JsonUpdateSettingsRepository` (the skipped-version
-  store, best-effort by design), `GitHubReleaseSource` (stdlib urllib against
-  the GitHub releases endpoint, with the opener injected so tests never touch
-  the network) plus `SingleInstanceGuard` (a named mutex that keeps
-  the GUI to one instance per logon session, with the Win32 calls behind
-  Protocols so the logic is testable). The enumerator lists disconnected and
-  disabled devices too, so they can be selected.
+- **Infrastructure**: one audio backend per platform behind the shared
+  Protocols, chosen by `backend_factory` (Windows: Core Audio via pycaw and
+  comtypes; Linux: pactl over a subprocess seam; macOS: CoreAudio via ctypes,
+  devices keyed by stable UID), the platform-neutral
+  `CachingDeviceRepository`, `JsonProfileRepository`,
+  `JsonUpdateSettingsRepository` (the skipped-version store, best-effort by
+  design), `GitHubReleaseSource` (stdlib urllib against the GitHub releases
+  endpoint, with the opener injected so tests never touch the network) plus
+  the single-instance guards (a named mutex on Windows, a flocked lock file
+  on Linux and macOS, the platform calls behind Protocols so the logic is
+  testable). The Windows enumerator lists disconnected and disabled devices
+  too, so they can be selected.
 - **Presentation**: `MainWindow`, `ConfigurationView`, `ActuationView` and their
   presenters (MVP), `UpdatePresenter` (the update check's outcomes as signals,
   run through its own `BackgroundRunner`) with `update_dialogs` (the offer,
-  the all-clear and the failure), plus `WindowsDeviceChangeNotifier` (a
-  `WM_DEVICECHANGE` filter) that drives live updates and auto-apply on
-  reconnect, `BackgroundRunner`
+  the all-clear and the failure), plus the per-platform device-change
+  notifiers behind `notifier_factory` (`WM_DEVICECHANGE` on Windows,
+  `pactl subscribe` on Linux, a periodic poll on macOS) that drive live
+  updates and auto-apply on reconnect, `BackgroundRunner`
   (a serial worker thread keeping COM and settle sleeps off the GUI thread) and
   `icons` (the emoji button glyphs, defined once as named constants).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
@@ -210,8 +219,9 @@ project root is on the Python path.
 ### Running from source appears to do nothing
 
 Another Audio Deck window is already open, most likely an installed or packaged
-copy. Only one window is allowed per Windows user, so the second launch raises
-the first and exits. Close the running copy and try again.
+copy. Only one window is allowed per user, so the second launch defers to the
+first (raising its window on Windows) and exits. Close the running copy and
+try again.
 
 ### Build errors
 
@@ -220,8 +230,10 @@ Delete the `build/` and `dist/` folders, reinstall PyInstaller
 
 ### Audio API issues
 
-Ensure the Windows audio service is running, that devices are enabled in Windows
-and that pycaw is installed correctly.
+On Windows, ensure the audio service is running, that devices are enabled and
+that pycaw is installed correctly. On Linux, ensure PulseAudio or PipeWire is
+running and `pactl info` answers. On macOS, ensure the devices appear in the
+system sound settings.
 
 ## Contributing
 
@@ -239,5 +251,6 @@ Copyright (C) 2024-2026 Oliver Ernster.
 ## Credits
 
 - Built with PySide6 (Qt for Python).
-- Uses pycaw for the Windows Core Audio API.
-- Packaged with PyInstaller.
+- Uses pycaw for the Windows Core Audio API, pactl for PulseAudio/PipeWire on
+  Linux and CoreAudio via ctypes on macOS.
+- Packaged with PyInstaller and Flatpak.

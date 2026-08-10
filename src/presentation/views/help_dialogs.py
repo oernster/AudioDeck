@@ -8,6 +8,7 @@ because none of them needs anything from the window except somewhere to sit.
 Author: Oliver Ernster
 """
 
+import math
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, QUrl
@@ -25,6 +26,12 @@ from PySide6.QtWidgets import (
 
 from src import __version__
 from src.presentation.views.resource_paths import APP_ICON_PNG, resource_path
+from src.presentation.widgets.auto_scroller import AutoScroller
+
+# The licence text arrives hard-wrapped, so the dialog is sized to the text
+# rather than to a guessed minimum; the cap guards a pathological line.
+LICENCE_HEIGHT_PX = 600
+LICENCE_WIDTH_CAP_PX = 900
 
 # Icon size used by every dialog that shows the app icon.
 ICON_PX = 64
@@ -172,6 +179,7 @@ def show_documentation(parent: QWidget) -> None:
     text_browser.setStyleSheet(VIEWER_FONT_CSS)
     text_browser.setMarkdown(readme_content)
     layout.addWidget(text_browser)
+    AutoScroller(text_browser)
 
     _add_overlay_icon(dialog)
     _add_close_button(dialog, layout)
@@ -198,6 +206,7 @@ def _show_dev_doc_file(dialog: QDialog, file_name: str) -> None:
     file_browser.setStyleSheet(VIEWER_FONT_CSS)
     file_browser.setMarkdown(content)
     file_layout.addWidget(file_browser)
+    AutoScroller(file_browser)
 
     _add_close_button(file_dialog, file_layout)
 
@@ -247,8 +256,29 @@ def show_dev_documentation(parent: QWidget) -> None:
     dialog.exec()
 
 
+def _fit_dialog_width_to_text(
+    dialog: QDialog, browser: QTextBrowser, layout: QVBoxLayout
+) -> None:
+    """Size a dialog to its pre-wrapped plain text instead of a guessed width.
+
+    Must run after the text is set. The chrome is the scrollbar, the frame
+    and the layout margins; the height stays a constant.
+    """
+    chrome = (
+        browser.verticalScrollBar().sizeHint().width()
+        + 2 * browser.frameWidth()
+        + layout.contentsMargins().left()
+        + layout.contentsMargins().right()
+    )
+    width = min(
+        math.ceil(browser.document().idealWidth()) + chrome, LICENCE_WIDTH_CAP_PX
+    )
+    dialog.setMinimumSize(width, LICENCE_HEIGHT_PX)
+    dialog.resize(width, LICENCE_HEIGHT_PX)
+
+
 def show_license(parent: QWidget) -> None:
-    """Show the License dialog."""
+    """Show the License dialog, sized to the licence text."""
     license_content = _read_bundled_text(
         parent, resource_path("LICENSE"), "LICENSE", "License Not Found"
     )
@@ -257,13 +287,15 @@ def show_license(parent: QWidget) -> None:
 
     dialog = QDialog(parent)
     dialog.setWindowTitle("License - GNU LGPL v3.0")
-    dialog.setMinimumSize(800, 600)
 
     layout = QVBoxLayout(dialog)
 
     text_browser = QTextBrowser()
+    text_browser.setLineWrapMode(QTextBrowser.LineWrapMode.NoWrap)
     text_browser.setPlainText(license_content)
     layout.addWidget(text_browser)
+    _fit_dialog_width_to_text(dialog, text_browser, layout)
+    AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
 
@@ -299,8 +331,8 @@ def show_about(parent: QWidget) -> None:
     layout.addLayout(header_layout)
 
     subtitle_label = QLabel(
-        "<p>A professional audio device switcher for Windows with Stream Deck "
-        "integration.</p>"
+        "<p>A local-first audio device switcher for Windows, Linux and macOS, "
+        "with Stream Deck integration.</p>"
     )
     subtitle_label.setTextFormat(Qt.TextFormat.RichText)
     subtitle_label.setWordWrap(True)
