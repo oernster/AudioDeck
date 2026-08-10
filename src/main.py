@@ -233,7 +233,7 @@ def main() -> int:
             font-size: 13.5pt;
             padding: 6px 12px;
             border: 2px solid transparent;
-            border-radius: 6px;
+            border-radius: 0;
         }}
         QPushButton:enabled:hover, QPushButton:enabled:focus {{
             border-color: {_RING_GREEN};
@@ -247,7 +247,7 @@ def main() -> int:
             font-size: 13.5pt;
             padding: 4px;
             border: 2px solid transparent;
-            border-radius: 4px;
+            border-radius: 0;
         }}
         QLineEdit:enabled:hover, QLineEdit:enabled:focus,
         QComboBox:enabled:hover, QComboBox:enabled:focus,
@@ -263,7 +263,7 @@ def main() -> int:
             background-color: {_DARK_SURFACE};
             color: {_DARK_TEXT};
             border: 2px solid transparent;
-            border-radius: 6px;
+            border-radius: 0;
             padding: 8px 16px;
         }}
         QPushButton#ViewButton:enabled:hover,

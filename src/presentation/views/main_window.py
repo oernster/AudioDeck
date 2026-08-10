@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
                 background-color: #4A90E2;
                 color: white;
                 border: 2px solid transparent;
-                border-radius: 20px;
+                border-radius: 0;
                 padding: 8px 16px;
                 font-weight: bold;
                 font-size: 13.5pt;
