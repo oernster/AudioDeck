@@ -54,13 +54,10 @@ _DARK_MUTED_TEXT = "#6c7086"
 _DARK_ACCENT = "#7b5caa"
 _DARK_LINK = "#89b4fa"
 
-# The three-state ring tokens (no ring at rest, green on hover or focus while
-# enabled, permanent red while disabled) plus the calm slate fills of the
-# view-switching buttons.
+# The three-state ring tokens: no ring at rest, green on hover or focus
+# while enabled, permanent red while disabled.
 _RING_GREEN = "#a6e3a1"
 _RING_RED = "#f38ba8"
-_ACTIVE_VIEW_FILL = "#585b70"
-_VIEW_HOVER_FILL = "#45475a"
 
 
 def _apply_dark_theme(app: "QApplication") -> None:
@@ -260,22 +257,18 @@ def main() -> int:
             color: {_DARK_MUTED_TEXT};
         }}
         QPushButton#ViewButton {{
-            background-color: {_DARK_SURFACE};
-            color: {_DARK_TEXT};
+            background: transparent;
             border: 2px solid transparent;
             border-radius: 0;
-            padding: 8px 16px;
+            font-size: 26px;
+            padding: 2px 8px;
         }}
         QPushButton#ViewButton:enabled:hover,
         QPushButton#ViewButton:enabled:focus {{
             border-color: {_RING_GREEN};
         }}
-        QPushButton#ViewButton:enabled:hover {{
-            background-color: {_VIEW_HOVER_FILL};
-        }}
         QPushButton#ViewButton[activeView="true"] {{
-            background-color: {_ACTIVE_VIEW_FILL};
-            font-weight: bold;
+            border-bottom: 3px solid {_DARK_TEXT};
         }}
         QGroupBox {{
             font-size: 13.5pt;

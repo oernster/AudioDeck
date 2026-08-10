@@ -101,9 +101,10 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Two individual view buttons plus Help, above a stack of the views.
-        self._quick_switch_button = self._make_view_button("🔄 Quick Switch")
-        self._configuration_button = self._make_view_button("⚙️ Configuration")
+        # Two view icons plus Help, above a stack of the views. Icons only:
+        # no button chrome, the glyph is the control.
+        self._quick_switch_button = self._make_view_button("🔄", "Quick Switch")
+        self._configuration_button = self._make_view_button("⚙️", "Configuration")
 
         header = QHBoxLayout()
         header.setContentsMargins(8, 8, 8, 0)
@@ -130,10 +131,12 @@ class MainWindow(QMainWindow):
         self._install_device_notifier()
 
     @staticmethod
-    def _make_view_button(label: str) -> QPushButton:
-        """Build one view-switching button; styling comes from the app sheet."""
-        button = QPushButton(label)
+    def _make_view_button(glyph: str, name: str) -> QPushButton:
+        """Build one view-switching icon; styling comes from the app sheet."""
+        button = QPushButton(glyph)
         button.setObjectName("ViewButton")
+        button.setToolTip(name)
+        button.setFlat(True)
         return button
 
     def _show_view(self, index: int) -> None:
@@ -172,28 +175,22 @@ class MainWindow(QMainWindow):
         # Create Help button with menu
         help_button = QToolButton()
         help_button.setObjectName("HelpButton")
-        help_button.setText("ℹ️ Help")
+        help_button.setText("ℹ️")
+        help_button.setToolTip("Help")
         help_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        # Blue fill; the ring rules follow the app-wide three-state model
-        # (green on hover or focus while enabled), stated here because an
-        # object-name rule setting border would otherwise swallow them.
+        # Icon only, no chrome; the ring rules follow the app-wide
+        # three-state model (green on hover or focus while enabled), stated
+        # here because an object-name rule would otherwise swallow them.
         help_button.setStyleSheet(f"""
             QToolButton#HelpButton {{
-                background-color: #4A90E2;
-                color: white;
+                background: transparent;
                 border: 2px solid transparent;
-                border-radius: 0;
-                padding: 8px 16px;
-                font-weight: bold;
-                font-size: 13.5pt;
-                min-width: 60px;
+                font-size: 26px;
+                padding: 2px 8px;
             }}
             QToolButton#HelpButton:enabled:hover,
             QToolButton#HelpButton:enabled:focus {{
                 border-color: {NAV_RING_GREEN};
-            }}
-            QToolButton#HelpButton:pressed {{
-                background-color: #2868A8;
             }}
             QToolButton#HelpButton::menu-indicator {{
                 image: none;
