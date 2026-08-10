@@ -84,6 +84,24 @@ APPLE_ID = os.environ.get("APPLE_ID", "")
 APPLE_APP_PASSWORD = os.environ.get("APPLE_APP_PASSWORD", "")
 APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "W7K465GKFJ")
 
+# notarytool credentials stored once with:
+#     xcrun notarytool store-credentials AudioDeck --apple-id ... --team-id ...
+# This is the normal path on a development machine; the APPLE_ID and
+# APPLE_APP_PASSWORD variables above override it for a CI run that has no
+# keychain to read.
+NOTARY_KEYCHAIN_PROFILE = os.environ.get("NOTARY_KEYCHAIN_PROFILE", APP_NAME)
+
+# Set to opt out of notarisation deliberately, for a local test build only.
+SKIP_NOTARIZE = bool(os.environ.get("SKIP_NOTARIZE", ""))
+
+NOTARIZE_HELP = (
+    "Notarisation failed. Store the credentials once with:\n"
+    f"    xcrun notarytool store-credentials {NOTARY_KEYCHAIN_PROFILE}"
+    f" --apple-id <your-apple-id> --team-id {APPLE_TEAM_ID}\n"
+    "or set APPLE_ID and APPLE_APP_PASSWORD in the environment. To build an\n"
+    "unnotarised DMG for local testing only, set SKIP_NOTARIZE=1."
+)
+
 # Load our-identity-signed bundled Qt libraries under the hardened runtime.
 ENTITLEMENTS_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -235,29 +253,72 @@ def set_file_icon(icns_path: Path) -> None:
         print(f"WARNING: could not set the DMG file icon ({result.returncode}).")
 
 
+def notary_credential_args() -> tuple[str, ...]:
+    """Return the notarytool credential flags to submit with.
+
+    Explicit environment credentials win, so a CI run with no keychain works;
+    otherwise the stored keychain profile is used.
+    """
+    if APPLE_ID and APPLE_APP_PASSWORD:
+        return (
+            "--apple-id",
+            APPLE_ID,
+            "--password",
+            APPLE_APP_PASSWORD,
+            "--team-id",
+            APPLE_TEAM_ID,
+        )
+    return ("--keychain-profile", NOTARY_KEYCHAIN_PROFILE)
+
+
 def notarize_and_staple() -> None:
-    """Notarize and staple the DMG; refuse to skip silently."""
-    if not (APPLE_ID and APPLE_APP_PASSWORD):
+    """Notarize and staple the DMG; refuse to skip silently.
+
+    An unnotarised DMG is not a deliverable, so a failure here fails the
+    build. Skipping is possible but has to be asked for with SKIP_NOTARIZE.
+    """
+    if SKIP_NOTARIZE:
         print(
-            "WARNING: APPLE_ID / APPLE_APP_PASSWORD are not set, so the DMG"
-            " is NOT notarised. Gatekeeper will block it on first launch;"
-            " do not publish this file."
+            "WARNING: SKIP_NOTARIZE is set, so the DMG is NOT notarised."
+            " Gatekeeper will block it on first launch; do not publish"
+            " this file."
         )
         return
-    run(
+    submit = run(
         "xcrun",
         "notarytool",
         "submit",
         str(DMG_PATH),
-        "--apple-id",
-        APPLE_ID,
-        "--password",
-        APPLE_APP_PASSWORD,
-        "--team-id",
-        APPLE_TEAM_ID,
+        *notary_credential_args(),
         "--wait",
+        check=False,
     )
+    if submit.returncode != 0:
+        sys.exit(NOTARIZE_HELP)
     run("xcrun", "stapler", "staple", str(DMG_PATH))
+    verify_gatekeeper()
+
+
+def verify_gatekeeper() -> None:
+    """Assess the stapled DMG the way a user's Mac will on first open.
+
+    notarytool can report a submission it accepted while the ticket is not
+    usable, so the build ends on the assessment Gatekeeper itself makes
+    rather than on the submission result.
+    """
+    assessment = run(
+        "spctl",
+        "--assess",
+        "--type",
+        "open",
+        "--context",
+        "context:primary-signature",
+        "-v",
+        str(DMG_PATH),
+        check=False,
+    )
+    if assessment.returncode != 0:
+        sys.exit("Gatekeeper rejected the notarised DMG; it is not shippable.")
 
 
 def main() -> int:

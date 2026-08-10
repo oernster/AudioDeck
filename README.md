@@ -219,13 +219,17 @@ Linux (needs flatpak and flatpak-builder):
 writes `audiodeck.flatpak`; `./cleanup_flatpak.sh` removes the Flatpak build
 artefacts and nothing else.
 
-macOS (needs the Apple credentials in the environment for notarisation):
+macOS (notarisation reads the `AudioDeck` notarytool keychain profile, stored
+once with `xcrun notarytool store-credentials AudioDeck`; `APPLE_ID` and
+`APPLE_APP_PASSWORD` in the environment override it):
 
 ```
 python builddmg.py
 ```
 
-writes `AudioDeck.dmg` in the repo root, signed, notarised and stapled.
+writes `AudioDeck.dmg` in the repo root, signed, notarised and stapled. The
+build fails rather than emit an unnotarised image; `SKIP_NOTARIZE=1` opts out
+for a local test build.
 
 ## Documentation
 
