@@ -44,6 +44,57 @@ from src.presentation.views.splash_screen import create_splash_screen
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
 
+# Dark palette colours (Catppuccin Mocha, matching the project site). Keyed
+# by Qt palette role name so the applying loop stays data-driven.
+_DARK_WINDOW = "#1e1e2e"
+_DARK_SURFACE = "#313244"
+_DARK_FIELD = "#181825"
+_DARK_TEXT = "#cdd6f4"
+_DARK_MUTED_TEXT = "#6c7086"
+_DARK_ACCENT = "#7b5caa"
+_DARK_LINK = "#89b4fa"
+
+
+def _apply_dark_theme(app: "QApplication") -> None:
+    """Force the Fusion style with a dark palette.
+
+    Args:
+        app: The QApplication to restyle.
+    """
+    from PySide6.QtGui import QColor, QPalette
+
+    app.setStyle("Fusion")
+    palette = QPalette()
+    roles = {
+        QPalette.ColorRole.Window: _DARK_WINDOW,
+        QPalette.ColorRole.WindowText: _DARK_TEXT,
+        QPalette.ColorRole.Base: _DARK_FIELD,
+        QPalette.ColorRole.AlternateBase: _DARK_SURFACE,
+        QPalette.ColorRole.Text: _DARK_TEXT,
+        QPalette.ColorRole.Button: _DARK_SURFACE,
+        QPalette.ColorRole.ButtonText: _DARK_TEXT,
+        QPalette.ColorRole.ToolTipBase: _DARK_SURFACE,
+        QPalette.ColorRole.ToolTipText: _DARK_TEXT,
+        QPalette.ColorRole.PlaceholderText: _DARK_MUTED_TEXT,
+        QPalette.ColorRole.Highlight: _DARK_ACCENT,
+        QPalette.ColorRole.HighlightedText: _DARK_TEXT,
+        QPalette.ColorRole.BrightText: _DARK_TEXT,
+        QPalette.ColorRole.Link: _DARK_LINK,
+    }
+    for role, colour in roles.items():
+        palette.setColor(role, QColor(colour))
+    palette.setColor(
+        QPalette.ColorGroup.Disabled,
+        QPalette.ColorRole.Text,
+        QColor(_DARK_MUTED_TEXT),
+    )
+    palette.setColor(
+        QPalette.ColorGroup.Disabled,
+        QPalette.ColorRole.ButtonText,
+        QColor(_DARK_MUTED_TEXT),
+    )
+    app.setPalette(palette)
+
 
 def get_profiles_path() -> Path:
     """Get the path for storing profiles, in the platform's app-data home.
@@ -135,6 +186,12 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("Audio Deck")
     app.setOrganizationName("AudioDeck")
+
+    # On Linux (in particular inside the Flatpak sandbox) Qt has no desktop
+    # theme integration and falls back to a light palette. Windows and macOS
+    # follow the system theme, so only Linux gets the explicit dark palette.
+    if sys.platform.startswith("linux"):
+        _apply_dark_theme(app)
 
     # Set application icon for Windows taskbar
     icon_path = resource_path("assets/audiodeck.ico")

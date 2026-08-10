@@ -153,6 +153,9 @@ section "Bundling"
 flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
     "${REPO_DIR}" "${BUNDLE}" "${APP_ID}"
 
+section "Installing"
+flatpak install --user --reinstall --noninteractive "./${BUNDLE}"
+
 section "Done"
-echo "Bundle: ${BUNDLE}"
-echo "Install with: flatpak install --user ${BUNDLE}"
+echo "Installed ${APP_ID} and wrote ${BUNDLE} (attach this to the release)."
+echo "Run with: flatpak run ${APP_ID}"

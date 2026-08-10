@@ -92,14 +92,31 @@ class SwitchProfileUseCase:
         skipped: List[SkippedDevice],
     ) -> None:
         """Apply a single device slot, recording the outcome."""
-        device = self._device_repository.get_device_by_id(device_id)
-        if device is None or not device.is_available:
+        # Match on id AND direction: one hardware device can appear as both an
+        # output and an input under the same id (a duplex headset does on
+        # macOS), so an id-only lookup can land on the wrong direction.
+        device = next(
+            (
+                candidate
+                for candidate in self._device_repository.get_devices_by_type(
+                    device_type
+                )
+                if candidate.id == device_id
+            ),
+            None,
+        )
+        if device is None:
+            reason = (
+                SkipReason.WRONG_TYPE
+                if self._device_repository.get_device_by_id(device_id) is not None
+                else SkipReason.UNAVAILABLE
+            )
+            skipped.append(SkippedDevice(device_type, device_id, reason))
+            return
+        if not device.is_available:
             skipped.append(
                 SkippedDevice(device_type, device_id, SkipReason.UNAVAILABLE)
             )
-            return
-        if device.device_type != device_type:
-            skipped.append(SkippedDevice(device_type, device_id, SkipReason.WRONG_TYPE))
             return
         try:
             self._device_controller.set_default_device(device_id, device_type)

@@ -86,6 +86,21 @@ def test_control_failure_is_skipped(profile_repo, device_repository, no_sleep):
     assert outcome.skipped[0].reason is SkipReason.CONTROL_FAILED
 
 
+def test_duplex_device_applies_to_both_directions(profile_repo, no_sleep):
+    # One hardware device listed under the SAME id for both directions, as a
+    # duplex headset is on macOS. Both slots must resolve to their own
+    # direction rather than whichever entry was enumerated first.
+    devices = [
+        make_device("dev-duplex", "Headset", DeviceType.OUTPUT, True),
+        make_device("dev-duplex", "Headset", DeviceType.INPUT, True),
+    ]
+    repository = CachingDeviceRepository(FakeEnumerator(devices))
+    profile = save_profile(profile_repo, "Duplex", "dev-duplex", "dev-duplex")
+    outcome = use_case(profile_repo, repository).execute(profile.id)
+    assert outcome.fully_applied
+    assert set(outcome.applied) == {DeviceType.OUTPUT, DeviceType.INPUT}
+
+
 def test_partial_apply(profile_repo, device_repository, no_sleep):
     profile = save_profile(profile_repo, "Partial", "dev-out", "missing")
     outcome = use_case(profile_repo, device_repository).execute(profile.id)

@@ -154,6 +154,58 @@ def test_switch_partial_applies_and_notifies(qtbot):
     assert notices and "Switched" in notices[0]
 
 
+def test_switch_control_failure_names_the_refusal(qtbot):
+    dto = make_profile_dto("Desk")
+    outcome = SwitchOutcome(
+        applied=(),
+        skipped=(
+            SkippedDevice(DeviceType.OUTPUT, "dev-out", SkipReason.CONTROL_FAILED),
+        ),
+    )
+    presenter = presenter_with(
+        profiles_uc=FakeGetProfilesUseCase(by_id=dto),
+        switch_uc=FakeSwitchUseCase(outcome=outcome),
+    )
+    notices = collect(presenter.device_unavailable)
+    presenter.switch_profile(dto.id)
+    assert notices and "refused to set" in notices[0]
+    assert "not available" not in notices[0]
+
+
+def test_switch_wrong_type_points_at_the_profile(qtbot):
+    dto = make_profile_dto("Odd")
+    outcome = SwitchOutcome(
+        applied=(),
+        skipped=(SkippedDevice(DeviceType.INPUT, "dev-out", SkipReason.WRONG_TYPE),),
+    )
+    presenter = presenter_with(
+        profiles_uc=FakeGetProfilesUseCase(by_id=dto),
+        switch_uc=FakeSwitchUseCase(outcome=outcome),
+    )
+    notices = collect(presenter.device_unavailable)
+    presenter.switch_profile(dto.id)
+    assert notices and "not that kind of device" in notices[0]
+
+
+def test_switch_mixed_reasons_names_each(qtbot):
+    dto = make_profile_dto("Mixed")
+    outcome = SwitchOutcome(
+        applied=(),
+        skipped=(
+            SkippedDevice(DeviceType.OUTPUT, "dev-out", SkipReason.CONTROL_FAILED),
+            SkippedDevice(DeviceType.INPUT, "dev-in", SkipReason.UNAVAILABLE),
+        ),
+    )
+    presenter = presenter_with(
+        profiles_uc=FakeGetProfilesUseCase(by_id=dto),
+        switch_uc=FakeSwitchUseCase(outcome=outcome),
+    )
+    notices = collect(presenter.device_unavailable)
+    presenter.switch_profile(dto.id)
+    assert notices and "refused to set" in notices[0]
+    assert "not available right now" in notices[0]
+
+
 def test_switch_audiodeck_error(qtbot):
     dto = make_profile_dto("P")
     presenter = presenter_with(

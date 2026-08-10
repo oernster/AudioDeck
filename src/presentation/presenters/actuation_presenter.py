@@ -197,16 +197,36 @@ class ActuationPresenter(QObject):
 
     @staticmethod
     def _skip_message(profile: ProfileDTO, outcome: SwitchOutcome) -> str:
-        """Build a friendly notice describing skipped devices."""
-        directions = ", ".join(
-            skipped.device_type.display_name for skipped in outcome.skipped
-        )
-        if outcome.anything_applied:
-            return (
-                f"Switched '{profile.name}'. The {directions} device is not "
-                "available right now. It will need to be connected."
+        """Build a friendly notice naming each skipped device's real reason."""
+        problems = []
+        unavailable = [
+            skipped.device_type.display_name
+            for skipped in outcome.skipped
+            if skipped.reason == SkipReason.UNAVAILABLE
+        ]
+        failed = [
+            skipped.device_type.display_name
+            for skipped in outcome.skipped
+            if skipped.reason == SkipReason.CONTROL_FAILED
+        ]
+        wrong_type = [
+            skipped.device_type.display_name
+            for skipped in outcome.skipped
+            if skipped.reason == SkipReason.WRONG_TYPE
+        ]
+        if unavailable:
+            problems.append(
+                f"the {', '.join(unavailable)} device is not available right "
+                "now and will apply when it reconnects"
             )
-        return (
-            f"Could not switch '{profile.name}': the {directions} device is not "
-            "available. Connect it or edit the profile in the Configuration tab."
-        )
+        if failed:
+            problems.append(f"the system refused to set the {', '.join(failed)} device")
+        if wrong_type:
+            problems.append(
+                f"the {', '.join(wrong_type)} device in this profile is not "
+                "that kind of device; edit the profile in the Configuration tab"
+            )
+        detail = "; ".join(problems)
+        if outcome.anything_applied:
+            return f"Switched '{profile.name}', but {detail}."
+        return f"Could not switch '{profile.name}': {detail}."
