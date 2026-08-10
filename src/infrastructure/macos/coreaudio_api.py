@@ -21,8 +21,11 @@ from typing import Any, List, Optional, Protocol
 # list and the default-device properties.
 _SYSTEM_OBJECT_ID = 1
 
-# Property selectors are big-endian four-character codes.
-_SELECTOR_DEVICES = int.from_bytes(b"dev ", "big")
+# Property selectors are big-endian four-character codes. The list selector
+# ends in "#" (the HAL's convention for a count-bearing list property), and
+# "dev " is a different, non-existent property that the HAL answers with
+# kAudioHardwareUnknownPropertyError ("who?").
+_SELECTOR_DEVICES = int.from_bytes(b"dev#", "big")
 _SELECTOR_DEFAULT_INPUT = int.from_bytes(b"dIn ", "big")
 _SELECTOR_DEFAULT_OUTPUT = int.from_bytes(b"dOut", "big")
 _SELECTOR_DEVICE_UID = int.from_bytes(b"uid ", "big")
