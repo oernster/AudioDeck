@@ -277,6 +277,10 @@ def main() -> int:
             background: {_TAB_SELECTED_FILL};
             font-weight: bold;
         }}
+        QTabBar::tab:hover {{
+            border: 1px solid {_RING_GREEN};
+            border-bottom: none;
+        }}
         QTabBar::tab:hover:!selected {{
             background: {_TAB_HOVER_FILL};
         }}
