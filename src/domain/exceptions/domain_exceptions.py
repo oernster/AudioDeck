@@ -29,3 +29,9 @@ class ProfileStorageException(AudioDeckException):
     """Raised when profile storage operation fails."""
 
     pass
+
+
+class UnsupportedPlatformException(AudioDeckException):
+    """Raised when no audio backend exists for the running platform."""
+
+    pass

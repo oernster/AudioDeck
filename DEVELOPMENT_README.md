@@ -13,7 +13,7 @@ documentation see [README.md](README.md); for the design and its invariants see
 
 ### Prerequisites
 
-- Windows 10 or Windows 11.
+- Windows 10 or 11; a Linux desktop with PulseAudio or PipeWire; or macOS.
 - Python 3.10 or higher.
 - Git.
 

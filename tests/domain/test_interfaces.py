@@ -12,6 +12,9 @@ from src.domain.interfaces import (
     IReleaseSource,
     IUpdateSettingsRepository,
 )
+from src.infrastructure.caching_device_repository import (
+    CachingDeviceRepository,
+)
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
 )
@@ -19,9 +22,6 @@ from src.infrastructure.persistence.json_update_settings_repository import (
     JsonUpdateSettingsRepository,
 )
 from src.infrastructure.updates.github_release_source import GitHubReleaseSource
-from src.infrastructure.windows.windows_device_repository import (
-    WindowsDeviceRepository,
-)
 from tests.conftest import FakeDeviceController
 
 
@@ -39,7 +39,7 @@ def test_device_repository_protocol_declares_methods():
 
 
 def test_windows_repository_satisfies_device_repository():
-    missing = _protocol_methods(IDeviceRepository) - set(dir(WindowsDeviceRepository))
+    missing = _protocol_methods(IDeviceRepository) - set(dir(CachingDeviceRepository))
     assert missing == set()
 
 

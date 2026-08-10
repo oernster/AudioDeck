@@ -1,22 +1,27 @@
-"""Windows device repository implementation."""
+"""Platform-neutral caching device repository.
+
+Holds the last device list read from a platform enumerator and answers all
+repository queries from that cache. The enumerator is the only platform-aware
+piece; this repository is shared by the Windows, Linux and macOS backends.
+"""
 
 from typing import List, Optional
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.interfaces.device_enumerator import IDeviceEnumerator
 from src.domain.value_objects.device_type import DeviceType
-from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
 
 
-class WindowsDeviceRepository:
-    """Repository for Windows audio devices."""
+class CachingDeviceRepository:
+    """Repository answering device queries from a cached enumeration."""
 
     def __init__(
-        self, enumerator: WindowsDeviceEnumerator, auto_refresh: bool = True
+        self, enumerator: IDeviceEnumerator, auto_refresh: bool = True
     ) -> None:
         """Initialize repository.
 
         Args:
-            enumerator: Device enumerator instance
+            enumerator: Platform device enumerator instance
             auto_refresh: Whether to automatically refresh on initialization
         """
         self._enumerator = enumerator

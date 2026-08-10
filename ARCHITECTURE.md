@@ -3,7 +3,8 @@
 Audio Deck follows a clean, layered architecture:
 `UI -> Application -> Domain <- Infrastructure`. The domain is pure and depends
 on nothing; the application orchestrates use cases over domain interfaces;
-infrastructure implements those interfaces against Windows and the filesystem;
+infrastructure implements those interfaces against each platform's audio stack
+(Windows Core Audio, PulseAudio/PipeWire, macOS CoreAudio) and the filesystem;
 the UI and the CLI are clients of the application layer only.
 
 ## Invariants
@@ -15,22 +16,23 @@ suite rather than left to convention.
 | --- | --- | --- |
 | The domain layer imports no framework, no I/O and no platform code | Keeps business rules portable and unit-testable in isolation | Structural import-scan test (`tests/structural/test_architecture.py`) |
 | The application layer depends only on the domain and the standard library | Use cases stay decoupled from Qt, COM and storage details | Structural import-scan test |
-| Infrastructure implements domain interfaces and is never imported by the domain or application | Dependency direction stays inward; Windows and JSON stay swappable | Structural import-scan test |
+| Infrastructure implements domain interfaces and is never imported by the domain or application | Dependency direction stays inward; the platform backends and JSON stay swappable | Structural import-scan test |
 | The presentation layer never imports infrastructure | Views and presenters receive their use cases rather than building them | Structural import-scan test |
 | Only a composition root names an infrastructure concrete | Everything else is constructor-injected and stays swappable | Composition-root whitelist test (`main.py` and `cli_handler.py`) |
 | No module-level service singletons | No hidden global state or service locators | Structural AST scan for module-level service construction |
 | The version string exists only in the root `VERSION` file | Single source of truth; no drift across code and packaging | `version.py` reads `VERSION`; `pyproject.toml` reads the same file |
 | Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually |
-| Only one GUI instance runs per logon session | Two windows would race over the same profiles file | Named-mutex guard, covered by `tests/infrastructure/test_single_instance.py` |
+| Only one GUI instance runs per user session | Two windows would race over the same profiles file | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py` |
 | Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 
 The test suite targets 100% coverage measured with `pytest -v --cov`, using real
-implementations where safe and small hand-written fakes at the Windows boundary,
-with no mock libraries. Fragile PySide6 UI views and the raw-COM enumerator and
-controller are excluded from coverage via the `[tool.coverage.run]` omit list in
-`pyproject.toml`, so the meaningful
-surface (domain, application, repository logic, CLI and presenters) stays at
-100%.
+implementations where safe and small hand-written fakes at each platform
+boundary, with no mock libraries. Fragile PySide6 UI views and the raw-COM
+enumerator and controller are excluded from coverage via the
+`[tool.coverage.run]` omit list in `pyproject.toml`; the real pactl, CoreAudio,
+flock and Win32 call wrappers carry `# pragma: no cover` for the same reason,
+so the meaningful surface (domain, application, all backend logic over its
+seam, repository logic, CLI and presenters) stays at 100%.
 
 There are two composition roots, not one, because the GUI and the CLI are
 separate entry points: `main.py` wires the GUI and `CLIHandler.from_profiles_path`
@@ -49,8 +51,9 @@ src/
   domain/              Pure business model
     entities/          AudioDevice, AudioProfile
     value_objects/     DeviceType, DeviceState, ReleaseInfo/ReleaseAsset
-    interfaces/        IDeviceRepository, IDeviceController, IProfileRepository,
-                       IReleaseSource, IUpdateSettingsRepository (Protocols)
+    interfaces/        IDeviceRepository, IDeviceController, IDeviceEnumerator,
+                       IProfileRepository, IReleaseSource,
+                       IUpdateSettingsRepository (Protocols)
     exceptions/        AudioDeckException hierarchy
   application/          Use cases and data transfer objects
     use_cases/         Get/Create/Update/Delete/GetProfiles, GetDevices,
@@ -58,8 +61,19 @@ src/
                        and platform asset selection beside it)
     dtos/              DeviceDTO, ProfileDTO, SwitchOutcome, UpdateStatus
   infrastructure/       External integrations
+    backend_factory.py Platform dispatch: builds the enumerator, controller and
+                       single-instance guard for sys.platform
+    caching_device_repository.py
+                       Platform-neutral repository answering queries from the
+                       last enumeration, shared by all three backends
     windows/           Core Audio enumeration and control (pycaw, comtypes),
                        SingleInstanceGuard (named mutex, Win32 behind Protocols)
+    linux/             PulseAudio/PipeWire enumeration and control over the
+                       pactl command (subprocess behind a Protocol)
+    macos/             CoreAudio enumeration and control over ctypes (behind a
+                       Protocol; devices identified by stable UID)
+    posix/             Lock-file single instance (flock behind a Protocol),
+                       shared by Linux and macOS
     persistence/       JSON profile storage; JSON update-settings storage
     updates/           GitHubReleaseSource (stdlib urllib against the GitHub
                        releases/latest endpoint, opener injected for tests)
@@ -68,7 +82,9 @@ src/
                        the update dialogs (offer / up to date / failed)
     presenters/        ConfigurationPresenter, ActuationPresenter,
                        UpdatePresenter (MVP)
-    notifiers/         WindowsDeviceChangeNotifier (WM_DEVICECHANGE)
+    notifiers/         Device-change notifiers per platform behind one factory:
+                       WM_DEVICECHANGE (Windows), pactl subscribe (Linux),
+                       periodic polling (macOS)
     workers/           BackgroundRunner (keeps device work off the GUI thread)
   cli/                  Headless command-line interface
   main.py              Composition root and entry point
@@ -96,20 +112,24 @@ at by it.
 ### GUI
 
 1. `main.py` parses arguments. With no CLI arguments it builds the GUI.
-2. A `SingleInstanceGuard` takes a named mutex scoped to the logon session. If
-   another instance already holds it, this process raises that instance's window
-   and exits 0 without constructing anything.
-3. It constructs the infrastructure (device enumerator, device controller, device
-   repository, JSON profile repository), then the application use cases, then the
+2. The single-instance guard from `create_single_instance(sys.platform)` takes
+   its per-user lock (a named mutex on Windows, a flocked lock file on Linux
+   and macOS). If another instance already holds it, this process exits 0
+   without constructing anything, first raising the other window where the
+   platform allows it (Windows only).
+3. It constructs the infrastructure (the platform backend from
+   `create_device_backend(sys.platform)`, the caching device repository, the
+   JSON profile repository), then the application use cases, then the
    presenters, then `MainWindow`.
 4. Views call presenter methods; presenters call use cases; use cases act through
    domain interfaces implemented by infrastructure.
 5. Presenters report outcomes back to views with Qt signals
    (`error_occurred`, `profile_saved`, `profile_switched`, `device_unavailable`,
    `current_devices_changed`, `auto_applied`).
-6. Device changes are delivered two ways: a `WindowsDeviceChangeNotifier`
-   (native `WM_DEVICECHANGE`) and a periodic timer fallback both call the
-   actuation presenter's `on_devices_changed`, which refreshes the current
+6. Device changes are delivered by the platform's notifier (native
+   `WM_DEVICECHANGE` on Windows, a long-lived `pactl subscribe` process on
+   Linux, a periodic poll on macOS) plus a periodic timer fallback; both call
+   the actuation presenter's `on_devices_changed`, which refreshes the current
    defaults and re-applies any profile device that has just reconnected.
 7. The update check runs a few seconds after launch, once a day and on demand
    from Help > Check for Updates. The `UpdatePresenter` runs the
@@ -134,8 +154,9 @@ and the presentation differ.
 
 A profile is an `AudioProfile` that holds an id, a name, an optional output
 device id, an optional input device id and timestamps. Switching a profile sets
-the Windows default endpoint for each configured device across the Console,
-Multimedia and Communications roles.
+the system default for each configured device: on Windows across the Console,
+Multimedia and Communications roles, on Linux the default sink and source, on
+macOS the default output and input device.
 
 Devices carry a `DeviceState` (available, disconnected, disabled or not present)
 so disconnected hardware can be listed and selected. A switch returns a
@@ -143,11 +164,12 @@ so disconnected hardware can be listed and selected. A switch returns a
 why), which drives partial application and the auto-apply-on-reconnect flow.
 
 The update check keeps its one setting (the skipped version) in
-`%LOCALAPPDATA%\AudioDeck\update_settings.json`, beside the profiles but in its
-own file so neither store's failure rules leak into the other.
+`update_settings.json`, beside the profiles but in its own file so neither
+store's failure rules leak into the other.
 
-Profiles are persisted as a JSON array under
-`%LOCALAPPDATA%\AudioDeck\profiles.json`:
+Profiles are persisted as a JSON array in the platform's per-user app-data
+directory (`%LOCALAPPDATA%\AudioDeck` on Windows, `$XDG_DATA_HOME/audiodeck`
+on Linux, `~/Library/Application Support/AudioDeck` on macOS):
 
 ```json
 [
@@ -166,17 +188,20 @@ Profiles are persisted as a JSON array under
 
 | Decision | Rationale |
 | --- | --- |
-| Clean layered architecture with Protocol interfaces | Lets the Windows audio backend and the JSON store be replaced or faked without touching business rules |
+| Clean layered architecture with Protocol interfaces | Lets each platform's audio backend and the JSON store be replaced or faked without touching business rules |
 | MVP for the GUI | Keeps logic in testable presenters and views passive |
 | Local JSON persistence | Local-first, no service or account; the file is portable and easy to back up |
 | Shared application core for GUI and CLI | One set of use cases, two front ends; no duplicated switching logic |
 | Single `VERSION` file as source of truth | Runtime and packaging read the same value; nothing else hardcodes a version |
-| Windows-only Core Audio via pycaw | Direct, dependency-light access to the platform default-endpoint policy |
+| One platform backend per operating system behind shared Protocols | Windows Core Audio via pycaw, PulseAudio/PipeWire via pactl, macOS CoreAudio via ctypes; the domain, application, presenters and CLI are identical on all three |
+| pactl subprocess on Linux rather than a Python PulseAudio library | pactl ships with every PulseAudio and PipeWire desktop, so the port adds no Python dependency; JSON output keeps the parsing testable |
+| ctypes CoreAudio on macOS rather than pyobjc | The needed HAL surface is a handful of stable C calls; pyobjc would be a heavyweight dependency for that sliver |
+| macOS devices identified by UID, not AudioDeviceID | The AudioDeviceID is transient across reboots and unplugs; the UID is stable, so profiles survive |
 | Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |
-| Event-driven device changes (WM_DEVICECHANGE) plus a timer fallback | Reconnected devices apply promptly without polling, while the timer guarantees recovery if no event arrives |
+| Event-driven device changes where the platform provides events, polling where it does not | WM_DEVICECHANGE (Windows) and pactl subscribe (Linux) are push; macOS polls on a slow timer because a CoreAudio listener's C callback lifetime rules are a crash risk from Python |
 | Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it |
-| Named mutex rather than a lock file or port | Creating a named mutex is one atomic Win32 call, so two simultaneous launches cannot both win; it also cannot be left stale by a crash |
-| The guard fails open | If Windows refuses the mutex the application still starts; a guard that cannot be established must never be the reason it will not run |
+| Named mutex on Windows, flocked lock file on POSIX | Each is one atomic kernel operation that cannot be left stale by a crash |
+| The guard fails open | If the lock cannot be created at all the application still starts; a guard that cannot be established must never be the reason it will not run |
 | The update check reads only GitHub's `releases/latest` endpoint | That endpoint returns only a published, non-draft, non-prerelease release, so a tag pushed mid-development can never prompt; nothing re-checks those flags client-side |
 | Unparseable versions compare as not-newer | A malformed tag can never raise a spurious prompt and a `0.0.0-dev` source run stays silent |
 | The update settings store is best-effort where the profile store raises | Profiles are user content; losing a skipped-version note costs one extra prompt, so a failed write is swallowed rather than surfaced |

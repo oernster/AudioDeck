@@ -12,8 +12,8 @@ from src.domain.exceptions.domain_exceptions import (
 )
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
-from src.infrastructure.windows.windows_device_repository import (
-    WindowsDeviceRepository,
+from src.infrastructure.caching_device_repository import (
+    CachingDeviceRepository,
 )
 from tests.conftest import (
     FakeDeviceController,
@@ -36,7 +36,7 @@ def repo_devices():
 
 @pytest.fixture
 def device_repository(repo_devices):
-    return WindowsDeviceRepository(FakeEnumerator(repo_devices))
+    return CachingDeviceRepository(FakeEnumerator(repo_devices))
 
 
 def use_case(profile_repo, device_repository, controller=None):

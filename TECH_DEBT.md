@@ -2,7 +2,7 @@
 
 A standing reference to the project's outstanding technical debt. It records what is still open, weighs whether each item is worth doing and gives the rationale. Every item is a behaviour-preserving internal concern: nothing here proposes reverting a feature or changing any UI or UX behaviour. Scope is the whole repository (the `src` package, the CLI, the bespoke installer, the delivery scripts and the GitHub Pages site under `docs/`) read against `ARCHITECTURE.md`, `TESTING.md` and `tests/structural/test_architecture.py`.
 
-This is a small, tidy repository: roughly 8,000 lines, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist and the module size rule in two tiers. One file exceeds 330 lines (`configuration_view.py` at 341, comfortably under the cap and clear of the danger band).
+This is a small, tidy repository: roughly 9,400 lines, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist and the module size rule in two tiers. One file exceeds 330 lines (`configuration_view.py` at 341, comfortably under the cap and clear of the danger band).
 
 **Nothing is currently open.** What follows is the standing set of judgements about what looks like debt here and is not, so the same questions do not get reopened. A new item is added above this line when one is found.
 
@@ -14,7 +14,7 @@ This is a small, tidy repository: roughly 8,000 lines, a 100% gate with a short 
 - The `I`-prefixed interface naming (`IDeviceRepository`, `IDeviceController`, `IProfileRepository`). Unconventional for Python and entirely consistent throughout.
 - The `examples/streamdeck_profiles/*.bat` files and `launch_audio_deck.bat`. These are the Stream Deck integration surface: the whole point of the CLI is that a Stream Deck button runs a `.bat`. They are examples for users, not code.
 - `src/presentation/workers/background_runner.py` at 23 lines with a single broad handler. A thread wrapper whose job is to not let a worker exception kill the app.
-- The broad handlers in `src/infrastructure/windows/`. COM surfaces failure in many shapes; an endpoint that vanishes mid-enumeration during a device change is ordinary rather than exceptional, so narrowing them would mean naming every shape `comtypes` can raise and would take the application down when it missed one. Each now states what it degrades to, in the house style of `installer/worker.py:49`. If a `BLE` rule is ever added to `[tool.ruff.lint]`, these want `# noqa: BLE001` rather than rewriting.
+- The broad handlers in `src/infrastructure/windows/`, `src/infrastructure/linux/` and `src/infrastructure/macos/`. Each platform's audio surface fails in many shapes; a device that vanishes mid-enumeration during a change is ordinary rather than exceptional, so narrowing them would mean naming every shape COM, a subprocess or ctypes can raise and would take the application down when it missed one. Each states what it degrades to, in the house style of `installer/worker.py:49`. If a `BLE` rule is ever added to `[tool.ruff.lint]`, these want `# noqa: BLE001` rather than rewriting.
 - The `docs/` site being two hand-written pages (`index.html`, `why.html`) with no generator. At that size a generator would cost more than it saves.
 - `AudioDeck.spec` at root is a PyInstaller artefact and is untracked.
 

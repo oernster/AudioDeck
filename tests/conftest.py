@@ -25,11 +25,11 @@ from src.domain.entities.audio_device import AudioDevice
 from src.domain.entities.audio_profile import AudioProfile
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
+from src.infrastructure.caching_device_repository import (
+    CachingDeviceRepository,
+)
 from src.infrastructure.persistence.json_profile_repository import (
     JsonProfileRepository,
-)
-from src.infrastructure.windows.windows_device_repository import (
-    WindowsDeviceRepository,
 )
 
 # --- Hand-written test doubles ------------------------------------------------
@@ -226,8 +226,8 @@ def profile_repo(tmp_path) -> JsonProfileRepository:
 
 
 @pytest.fixture
-def device_repo(devices) -> WindowsDeviceRepository:
-    return WindowsDeviceRepository(FakeEnumerator(devices))
+def device_repo(devices) -> CachingDeviceRepository:
+    return CachingDeviceRepository(FakeEnumerator(devices))
 
 
 @pytest.fixture

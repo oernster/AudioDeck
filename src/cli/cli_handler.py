@@ -7,10 +7,9 @@ from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.cli.argument_parser import CLIArguments
 from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
+from src.infrastructure.backend_factory import create_device_backend
+from src.infrastructure.caching_device_repository import CachingDeviceRepository
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
-from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
-from src.infrastructure.windows.windows_device_controller import WindowsDeviceController
-from src.infrastructure.windows.windows_device_repository import WindowsDeviceRepository
 
 
 class CLIHandler:
@@ -34,10 +33,10 @@ class CLIHandler:
     def from_profiles_path(
         cls, profiles_path: Path
     ) -> "CLIHandler":  # pragma: no cover
-        """Build a CLI handler wired to the real Windows infrastructure.
+        """Build a CLI handler wired to the real platform infrastructure.
 
         This is the CLI composition root; it is excluded from coverage because
-        it constructs platform COM objects.
+        it constructs the platform's real audio backend.
 
         Args:
             profiles_path: Path to profiles JSON file
@@ -45,14 +44,13 @@ class CLIHandler:
         Returns:
             A CLIHandler wired to real infrastructure.
         """
-        device_enumerator = WindowsDeviceEnumerator()
-        device_controller = WindowsDeviceController()
-        device_repository = WindowsDeviceRepository(device_enumerator)
+        backend = create_device_backend(sys.platform)
+        device_repository = CachingDeviceRepository(backend.enumerator)
         profile_repository = JsonProfileRepository(profiles_path)
         return cls(
             GetProfilesUseCase(profile_repository),
             SwitchProfileUseCase(
-                profile_repository, device_repository, device_controller
+                profile_repository, device_repository, backend.controller
             ),
         )
 

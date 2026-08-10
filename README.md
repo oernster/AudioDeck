@@ -1,7 +1,7 @@
 # <img width="64" height="64" alt="Audio Deck icon" src="https://github.com/user-attachments/assets/0ee08d6a-0311-414b-8188-cf09a58c46b5" /> Audio Deck
 
-A local-first audio device switcher for Windows, with a GUI, a command-line
-interface and Stream Deck integration.
+A local-first audio device switcher for Windows, Linux and macOS, with a GUI,
+a command-line interface and Stream Deck integration.
 
 **Author:** Oliver Ernster
 
@@ -10,7 +10,7 @@ If you find it useful, you can [buy me a coffee](https://www.paypal.com/ncp/paym
 ## What it is
 
 Audio Deck saves named profiles that each pin a default output device and a
-default input device, then switches the Windows default devices to a profile in
+default input device, then switches the system default devices to a profile in
 one click or one command. Profiles are stored locally as JSON; there is no
 account, no cloud and no background service.
 
@@ -21,21 +21,23 @@ profiles; a failed check is silent.
 
 ## Who it is for
 
-- Windows users who regularly move between audio setups (speakers for music,
-  a headset for calls, an interface for recording) and want fast switching.
+- Anyone who regularly moves between audio setups (speakers for music,
+  a headset for calls, an interface for recording) and wants fast switching.
 - Streamers and gamers who own an Elgato Stream Deck and want a physical button
   per setup.
 - Remote workers who switch between a meeting headset and desk speakers.
 
 ## Who it is not for
 
-- macOS or Linux users. Audio Deck uses the Windows Core Audio API and is
-  Windows only.
 - Anyone needing per-application audio routing. Audio Deck sets the system
   default input and output devices; it does not route individual apps to
   different devices.
 - Anyone needing mixing, effects or virtual audio cables. Audio Deck only
-  selects existing physical or virtual endpoints that Windows already exposes.
+  selects existing physical or virtual endpoints the operating system already
+  exposes.
+- Linux users on bare ALSA. The Linux backend speaks the PulseAudio protocol,
+  which covers PulseAudio and PipeWire desktops; a system with neither is not
+  supported.
 
 ## Capabilities
 
@@ -47,9 +49,12 @@ profiles; a failed check is silent.
 - Partial switching: the available devices in a profile are applied even if one
   is currently missing; the missing one is reported.
 - Automatic and on-demand rescanning of devices, with offline devices marked.
-- A single window per user: launching Audio Deck again brings the open window to
-  the front instead of starting a second copy. Command-line switching is not
-  restricted, so Stream Deck buttons keep working while the window is open.
+- A single window per user: launching Audio Deck again while the window is open
+  starts no second copy. On Windows the existing window is brought to the
+  front; on Linux and macOS the second launch simply exits, because neither
+  platform lets one process reliably raise another's window. Command-line
+  switching is not restricted, so Stream Deck buttons keep working while the
+  window is open.
 - An update check against GitHub's releases API: shortly after launch, daily
   while running and on demand from the Help menu, prompting with Download,
   Skip This Version and Later. Only a published release can prompt, a skipped
@@ -63,21 +68,24 @@ profiles; a failed check is silent.
 | --- | --- |
 | Language | Python 3.10+ |
 | GUI | PySide6 (Qt for Python) |
-| Audio API | pycaw with comtypes (Windows Core Audio) |
-| Persistence | JSON file under `%LOCALAPPDATA%` |
-| Packaging | PyInstaller |
+| Audio API (Windows) | pycaw with comtypes (Windows Core Audio) |
+| Audio API (Linux) | pactl (PulseAudio/PipeWire), no extra Python dependency |
+| Audio API (macOS) | CoreAudio via ctypes, no extra Python dependency |
+| Persistence | JSON file in the platform's per-user app-data directory |
+| Packaging | PyInstaller (Windows, macOS), Flatpak (Linux) |
 | Tests | pytest with coverage |
 
 ## Requirements
 
-- Windows 10 or Windows 11.
+- Windows 10 or Windows 11; a Linux desktop running PulseAudio or PipeWire
+  (Ubuntu and every mainstream distribution); or macOS on Apple Silicon.
 - An Elgato Stream Deck is optional.
 
 ## Installation
 
-Two options, both per user and neither needing admin rights.
+On Windows, two options, both per user and neither needing admin rights.
 
-### Installer (recommended)
+### Installer (recommended, Windows)
 
 1. Download `AudioDeckSetup.exe` from the releases page.
 2. Run it and choose Install.
@@ -87,13 +95,30 @@ Two options, both per user and neither needing admin rights.
 Running the same setup again on an installed copy offers Update, Reinstall,
 Repair and Uninstall, chosen from the version it finds.
 
-### Portable
+### Portable (Windows)
 
 1. Download the standalone `AudioDeck.exe` from the releases page.
 2. Place it in any folder.
 3. Run it. Nothing is installed and no registry entry is written.
 
 Both builds read and write the same profiles file, so you can move between them.
+
+### Linux (Flatpak)
+
+1. Download `audiodeck.flatpak` from the releases page.
+2. Install it:
+   ```
+   flatpak install --user audiodeck.flatpak
+   ```
+3. Launch Audio Deck from your desktop's app grid or run
+   `flatpak run uk.codecrafter.AudioDeck`.
+
+### macOS (DMG)
+
+1. Download `audiodeck-macos-arm64.dmg` from the releases page.
+2. Open it and drag Audio Deck into Applications.
+
+The DMG is signed and notarised, so Gatekeeper opens it without warnings.
 
 ## Quick start
 
@@ -157,10 +182,12 @@ Profile names are case sensitive.
 
 ## Configuration file
 
-Profiles are stored at:
+Profiles are stored per platform at:
 
 ```
-%LOCALAPPDATA%\AudioDeck\profiles.json
+Windows  %LOCALAPPDATA%\AudioDeck\profiles.json
+Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
+macOS    ~/Library/Application Support/AudioDeck/profiles.json
 ```
 
 Back up this file to keep your profiles.
@@ -171,6 +198,8 @@ extra prompt after the next release.
 
 ## Building from source
 
+Windows:
+
 ```powershell
 pip install -r requirements.txt
 python buildexe.py
@@ -180,6 +209,23 @@ python buildinstaller.py
 `buildexe.py` writes the portable executable to `dist/AudioDeck.exe`.
 `buildinstaller.py` wraps that build into `dist-installer/AudioDeckSetup.exe`,
 so run it after `buildexe.py`.
+
+Linux (needs flatpak and flatpak-builder):
+
+```
+./build_flatpak.sh
+```
+
+writes `audiodeck.flatpak`; `./cleanup_flatpak.sh` removes the Flatpak build
+artefacts and nothing else.
+
+macOS (needs the Apple credentials in the environment for notarisation):
+
+```
+python builddmg.py
+```
+
+writes `dist/audiodeck-macos-arm64.dmg`, signed, notarised and stapled.
 
 ## Documentation
 
@@ -217,10 +263,11 @@ works.
 
 ### Audio Deck will not open a second window
 
-This is deliberate. Only one window may be open per Windows user, because two
-windows editing the same profiles file would conflict. Launching it again brings
-the window you already have to the front. Command-line switching is exempt, so
-`--profile` and `--list` still run as often as you like.
+This is deliberate. Only one window may be open per user, because two windows
+editing the same profiles file would conflict. On Windows, launching it again
+brings the window you already have to the front; on Linux and macOS the second
+launch exits quietly. Command-line switching is exempt, so `--profile` and
+`--list` still run as often as you like.
 
 ### A Stream Deck button does nothing
 
@@ -236,5 +283,6 @@ Copyright (C) 2024-2026 Oliver Ernster.
 ## Credits
 
 - Built with PySide6 (Qt for Python).
-- Uses pycaw for the Windows Core Audio API.
-- Packaged with PyInstaller.
+- Uses pycaw for the Windows Core Audio API, pactl for PulseAudio/PipeWire on
+  Linux and CoreAudio on macOS.
+- Packaged with PyInstaller and Flatpak.

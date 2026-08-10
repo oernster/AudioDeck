@@ -3,6 +3,8 @@
 Author: Oliver Ernster
 """
 
+import sys
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
@@ -16,8 +18,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.presentation.notifiers.device_change_notifier import (
-    WindowsDeviceChangeNotifier,
+from src.presentation.notifiers.notifier_factory import (
+    create_device_change_notifier,
 )
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
@@ -102,8 +104,8 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app is None:
             return
-        self._device_notifier = WindowsDeviceChangeNotifier(
-            self._actuation_view.handle_device_change
+        self._device_notifier = create_device_change_notifier(
+            sys.platform, self._actuation_view.handle_device_change
         )
         self._device_notifier.install(app)
 

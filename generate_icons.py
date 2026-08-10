@@ -6,10 +6,9 @@ Reads the repo-root master PNG (``audiodeck.png``) and emits the icon set into
 the in-app icon resolver) points at this generated set, so it is the single
 source for all icon assets.
 
-No macOS ``.icns`` is emitted. AudioDeck is Windows only and cannot be
-otherwise: the device layer is raw COM against Windows audio endpoints. An
-icon for a platform the application will never run on is a claim the rest of
-the repository does not make.
+No macOS ``.icns`` is emitted here: ``builddmg.py`` converts the 1024px PNG
+to ``.icns`` at build time on macOS; the Flatpak build installs the
+per-size PNGs directly as the hicolor set.
 
 Author: Oliver Ernster
 """

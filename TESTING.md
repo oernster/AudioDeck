@@ -106,7 +106,7 @@ tests/
 
 ## Testing patterns worth knowing
 
-**Windows APIs go behind a Protocol.** `SingleInstanceGuard` takes a `MutexApi`,
+**Platform APIs go behind a Protocol.** `SingleInstanceGuard` takes a `MutexApi`,
 so its logic is tested against a fake while the real `Win32MutexApi` stays a thin
 `pragma: no cover` shim. Anything needing a Win32 call should follow this shape.
 

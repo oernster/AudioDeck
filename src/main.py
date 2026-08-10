@@ -3,6 +3,7 @@
 Author: Oliver Ernster
 """
 
+import os
 import sys
 from pathlib import Path
 import ctypes
@@ -12,9 +13,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from PySide6.QtWidgets import QApplication, QMainWindow
 
-from src.infrastructure.windows.device_enumerator import WindowsDeviceEnumerator
-from src.infrastructure.windows.windows_device_controller import WindowsDeviceController
-from src.infrastructure.windows.windows_device_repository import WindowsDeviceRepository
+from src.infrastructure.backend_factory import (
+    create_device_backend,
+    create_single_instance,
+)
+from src.infrastructure.caching_device_repository import CachingDeviceRepository
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
 from src.application.use_cases.get_devices_use_case import GetDevicesUseCase
 from src.application.use_cases.check_for_updates_use_case import (
@@ -38,29 +41,25 @@ from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
 from src.presentation.views.resource_paths import resource_path
 from src.presentation.views.splash_screen import create_splash_screen
-from src.infrastructure.windows.single_instance import (
-    SingleInstanceGuard,
-    Win32MutexApi,
-    Win32WindowApi,
-    activate_existing_window,
-)
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
 
-# Mutex name for the single-instance guard. The "Local\" namespace scopes it
-# to the current logon session, matching the per-user profiles store: two
-# different Windows users may each run their own copy.
-SINGLE_INSTANCE_MUTEX_NAME = "Local\\OliverErnster.AudioDeck.SingleInstance"
-
 
 def get_profiles_path() -> Path:
-    """Get the path for storing profiles.
+    """Get the path for storing profiles, in the platform's app-data home.
 
     Returns:
-        Path to profiles directory
+        Path to profiles file
     """
-    # Store profiles in user's AppData/Local directory
-    app_data = Path.home() / "AppData" / "Local" / "AudioDeck"
+    if sys.platform == "win32":
+        app_data = Path.home() / "AppData" / "Local" / "AudioDeck"
+    elif sys.platform == "darwin":
+        app_data = Path.home() / "Library" / "Application Support" / "AudioDeck"
+    else:
+        xdg_data_home = os.environ.get(
+            "XDG_DATA_HOME", str(Path.home() / ".local" / "share")
+        )
+        app_data = Path(xdg_data_home) / "audiodeck"
     app_data.mkdir(parents=True, exist_ok=True)
     return app_data / "profiles.json"
 
@@ -118,11 +117,12 @@ def main() -> int:
     # Run in GUI mode. Only one GUI instance may run per logon session; the
     # CLI path above is deliberately left unguarded so a Stream Deck button
     # can switch profiles while the window is open.
-    guard = SingleInstanceGuard(SINGLE_INSTANCE_MUTEX_NAME, Win32MutexApi())
-    if not guard.acquire():
-        # Another instance owns the mutex. Raise its window rather than
-        # exiting silently, which would look like a failed launch.
-        activate_existing_window(WINDOW_TITLE, Win32WindowApi())
+    single = create_single_instance(sys.platform)
+    if not single.guard.acquire():
+        # Another instance owns the lock. Raise its window where the platform
+        # allows it, rather than exiting silently, which would look like a
+        # failed launch.
+        single.activate(WINDOW_TITLE)
         return 0
 
     # Set Windows taskbar icon (must be done before creating QApplication)
@@ -199,9 +199,8 @@ def main() -> int:
     """)
 
     # Infrastructure layer - dependency injection
-    device_enumerator = WindowsDeviceEnumerator()
-    device_controller = WindowsDeviceController()
-    device_repository = WindowsDeviceRepository(device_enumerator)
+    backend = create_device_backend(sys.platform)
+    device_repository = CachingDeviceRepository(backend.enumerator)
     profile_repository = JsonProfileRepository(get_profiles_path())
 
     # Application layer - use cases
@@ -211,7 +210,7 @@ def main() -> int:
     delete_profile_use_case = DeleteProfileUseCase(profile_repository)
     get_profiles_use_case = GetProfilesUseCase(profile_repository)
     switch_profile_use_case = SwitchProfileUseCase(
-        profile_repository, device_repository, device_controller
+        profile_repository, device_repository, backend.controller
     )
 
     # Presentation layer - presenters
@@ -257,7 +256,7 @@ def main() -> int:
         return app.exec()
     finally:
         update_runner.stop()
-        guard.release()
+        single.guard.release()
 
 
 if __name__ == "__main__":

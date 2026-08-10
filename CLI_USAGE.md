@@ -207,7 +207,7 @@ Make sure the batch file passes the `--profile` argument.
 
 ### Changes do not take effect
 
-- Check the Windows Sound settings to verify the change.
+- Check your system's sound settings to verify the change.
 - Some applications need to be restarted to pick up the new default.
 - Try reconnecting the device.
 
