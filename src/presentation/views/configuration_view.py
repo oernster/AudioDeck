@@ -26,7 +26,6 @@ from src.presentation.views.icons import (
     ICON_NEW,
     ICON_REFRESH,
     ICON_SAVE,
-    labelled,
 )
 
 
@@ -60,24 +59,17 @@ class ConfigurationView(QWidget):
         self._profile_list = QListWidget()
         self._profile_list.setMinimumHeight(350)
         profile_layout.addWidget(self._profile_list)
+        layout.addWidget(profile_group)
 
-        profile_buttons_layout = QHBoxLayout()
-        self._new_button = QPushButton(labelled(ICON_NEW, "New Profile"))
-        self._new_button.setToolTip("Start a new, empty profile in the editor below")
-        self._edit_button = QPushButton(labelled(ICON_EDIT, "Edit Selected"))
-        self._edit_button.setToolTip("Load the selected profile into the editor below")
-        self._delete_button = QPushButton(labelled(ICON_DELETE, "Delete Selected"))
-        self._delete_button.setToolTip("Permanently delete the selected profile")
+        # Action buttons: created here so the enabled logic stays with the
+        # view, but placed in the main window's header tray, not this layout.
+        self._new_button = QPushButton()
+        self._edit_button = QPushButton()
+        self._delete_button = QPushButton()
         self._edit_button.setEnabled(False)
         self._delete_button.setEnabled(False)
-
-        profile_buttons_layout.addWidget(self._new_button)
-        profile_buttons_layout.addWidget(self._edit_button)
-        profile_buttons_layout.addWidget(self._delete_button)
-        profile_buttons_layout.addStretch()
-
-        profile_layout.addLayout(profile_buttons_layout)
-        layout.addWidget(profile_group)
+        self._save_button = QPushButton()
+        self._cancel_button = QPushButton()
 
         # Profile editor section
         editor_group = QGroupBox("Profile Editor")
@@ -130,20 +122,21 @@ class ConfigurationView(QWidget):
         input_layout.addWidget(self._refresh_input_button)
         editor_layout.addLayout(input_layout)
 
-        # Save/Cancel buttons
-        button_layout = QHBoxLayout()
-        self._save_button = QPushButton(labelled(ICON_SAVE, "Save Profile"))
-        self._cancel_button = QPushButton(labelled(ICON_CANCEL, "Cancel"))
-        button_layout.addWidget(self._save_button)
-        button_layout.addWidget(self._cancel_button)
-        button_layout.addStretch()
-        editor_layout.addLayout(button_layout)
-
         layout.addWidget(editor_group)
         layout.addStretch()
 
         # Initially disable editor
         self._set_editor_enabled(False)
+
+    def tray_actions(self) -> tuple[tuple[QPushButton, str, str], ...]:
+        """Return (button, glyph, name) triples for the header tray."""
+        return (
+            (self._new_button, ICON_NEW, "New profile"),
+            (self._edit_button, ICON_EDIT, "Edit the selected profile"),
+            (self._delete_button, ICON_DELETE, "Delete the selected profile"),
+            (self._save_button, ICON_SAVE, "Save the profile being edited"),
+            (self._cancel_button, ICON_CANCEL, "Cancel the edit"),
+        )
 
     def _connect_signals(self) -> None:
         """Connect signals and slots."""

@@ -4,6 +4,7 @@ Author: Oliver Ernster
 """
 
 import sys
+from typing import Callable
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon, QShowEvent
@@ -25,12 +26,11 @@ from src.presentation.notifiers.notifier_factory import (
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.update_presenter import UpdatePresenter
-from src.presentation.views import help_dialogs, update_dialogs
+from src.presentation.views import help_dialogs, tray, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.help_button import build_help_button
 from src.presentation.views.resource_paths import resource_path
-from src.presentation.widgets.glyph_metrics import glyph_font_px_for_height
 from src.presentation.widgets.keyboard_nav import KeyboardNavigator
 
 # The main window's title. A second launch locates the running instance by
@@ -42,13 +42,6 @@ WINDOW_TITLE = "Audio Deck"
 UPDATE_LAUNCH_DELAY_MS = 3000
 UPDATE_RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 
-# The emoji tray, in the ClearBudget style: each glyph is measured and sized
-# to paint at this height, and its button is a fixed square of the glyph
-# plus the ring chrome (without which Qt's default push-button minimum makes
-# an icon-sized control 80-odd pixels wide).
-ICON_GLYPH_HEIGHT_PX = 32
-ICON_BTN_CHROME_PX = 8
-
 
 class MainWindow(QMainWindow):
     """Main application window with tabbed interface."""
@@ -58,6 +51,7 @@ class MainWindow(QMainWindow):
         configuration_presenter: ConfigurationPresenter,
         actuation_presenter: ActuationPresenter,
         update_presenter: UpdatePresenter,
+        on_toggle_theme: Callable[[], None],
     ) -> None:
         """Initialize main window.
 
@@ -65,11 +59,13 @@ class MainWindow(QMainWindow):
             configuration_presenter: Presenter for configuration view
             actuation_presenter: Presenter for actuation view
             update_presenter: Presenter for the update check
+            on_toggle_theme: Switches the app between dark and light
         """
         super().__init__()
         self._configuration_presenter = configuration_presenter
         self._actuation_presenter = actuation_presenter
         self._update_presenter = update_presenter
+        self._on_toggle_theme = on_toggle_theme
         self._started = False
 
         self._setup_ui()
@@ -108,22 +104,31 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Two view icons plus Help, above a stack of the views. Icons only:
-        # no button chrome, the glyph is the control.
+        # Two view icons, a separator, then the ACTIVE view's action icons,
+        # then the theme toggle and Help on the right. Icons only: no button
+        # chrome, the glyph is the control.
         self._quick_switch_button = self._make_view_button("🔄", "Quick Switch")
         self._configuration_button = self._make_view_button("⚙️", "Configuration")
+
+        # Create views (their action buttons live in the header, below)
+        self._configuration_view = ConfigurationView(self._configuration_presenter)
+        self._actuation_view = ActuationView(self._actuation_presenter)
 
         header = QHBoxLayout()
         header.setContentsMargins(8, 8, 8, 0)
         header.addWidget(self._quick_switch_button)
         header.addWidget(self._configuration_button)
+        header.addWidget(tray.make_separator())
+        self._view_action_buttons = (
+            self._adopt_tray_actions(header, self._actuation_view.tray_actions()),
+            self._adopt_tray_actions(header, self._configuration_view.tray_actions()),
+        )
         header.addStretch()
+        self._theme_toggle = tray.ThemeToggleButton()
+        self._theme_toggle.clicked.connect(self._on_toggle_theme)
+        header.addWidget(self._theme_toggle)
         header.addWidget(self._create_help_button())
         layout.addLayout(header)
-
-        # Create views
-        self._configuration_view = ConfigurationView(self._configuration_presenter)
-        self._actuation_view = ActuationView(self._actuation_presenter)
 
         self._view_stack = QStackedWidget()
         self._view_stack.addWidget(self._actuation_view)
@@ -132,38 +137,41 @@ class MainWindow(QMainWindow):
 
         self._quick_switch_button.clicked.connect(lambda: self._show_view(0))
         self._configuration_button.clicked.connect(lambda: self._show_view(1))
-        self._mark_active_view_button(0)
+        self._show_view(0)
 
         # React to device changes via the native notifier (debounced in the view)
         self._install_device_notifier()
 
     @staticmethod
     def _make_view_button(glyph: str, name: str) -> QPushButton:
-        """Build one view-switching icon, in the ClearBudget tray style.
-
-        The glyph is measured and scaled to paint at ICON_GLYPH_HEIGHT_PX so
-        different emoji read as one matched family. The font goes on as a
-        widget-level stylesheet WITH a selector: a stylesheet rule beats
-        setFont, and a bare font-size would cascade to the tooltip.
-        """
-        button = QPushButton(glyph)
-        button.setObjectName("ViewButton")
-        button.setToolTip(name)
-        button.setCursor(Qt.CursorShape.PointingHandCursor)
-        glyph_px = glyph_font_px_for_height(glyph, ICON_GLYPH_HEIGHT_PX)
-        button.setStyleSheet(f"QPushButton#ViewButton {{ font-size: {glyph_px}px; }}")
-        side = ICON_GLYPH_HEIGHT_PX + ICON_BTN_CHROME_PX
-        button.setFixedSize(side, side)
+        """Build one view-switching icon, in the ClearBudget tray style."""
+        button = QPushButton()
+        tray.style_tray_button(button, glyph, name, "ViewButton")
         return button
 
+    @staticmethod
+    def _adopt_tray_actions(
+        header: QHBoxLayout, actions: tuple[tuple[QPushButton, str, str], ...]
+    ) -> tuple[QPushButton, ...]:
+        """Restyle one view's action buttons as tray icons and add them."""
+        buttons = []
+        for button, glyph, name in actions:
+            tray.style_tray_button(button, glyph, name, "TrayAction")
+            header.addWidget(button)
+            buttons.append(button)
+        return tuple(buttons)
+
     def _show_view(self, index: int) -> None:
-        """Show a view and mark its button as the active one.
+        """Show a view, mark its button active and swap the tray actions.
 
         Args:
             index: 0 for Quick Switch, 1 for Configuration
         """
         self._view_stack.setCurrentIndex(index)
         self._mark_active_view_button(index)
+        for position, buttons in enumerate(self._view_action_buttons):
+            for button in buttons:
+                button.setVisible(position == index)
         # Only refresh configuration when switching to it; the actuation view
         # refreshes when profiles are saved.
         if index == 1:

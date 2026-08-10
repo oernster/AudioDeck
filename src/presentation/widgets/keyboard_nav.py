@@ -31,9 +31,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# The green ring token, matching the application stylesheet's.
-RING_GREEN = "#a6e3a1"
-
 _FORWARD = 1
 _BACKWARD = -1
 

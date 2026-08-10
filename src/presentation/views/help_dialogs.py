@@ -338,10 +338,14 @@ def show_about(parent: QWidget) -> None:
     subtitle_label.setWordWrap(True)
     layout.addWidget(subtitle_label)
 
-    text_label = QLabel(ABOUT_HTML)
-    text_label.setTextFormat(Qt.TextFormat.RichText)
-    text_label.setWordWrap(True)
-    layout.addWidget(text_label)
+    # A browser rather than a label so the body can auto-scroll when the
+    # dialog is sized smaller than the content; attaching the scroller to a
+    # body that fits is free, since it only acts on overflow.
+    text_browser = QTextBrowser()
+    text_browser.setOpenExternalLinks(True)
+    text_browser.setHtml(ABOUT_HTML)
+    layout.addWidget(text_browser)
+    AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
 

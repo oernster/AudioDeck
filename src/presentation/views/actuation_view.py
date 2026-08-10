@@ -7,7 +7,6 @@ from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QApplication,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -18,7 +17,7 @@ from PySide6.QtWidgets import (
 
 from src.application.dtos.device_dto import DeviceDTO
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
-from src.presentation.views.icons import ICON_REFRESH, ICON_SWITCH, labelled
+from src.presentation.views.icons import ICON_RESCAN, ICON_SWITCH
 from src.presentation.workers.background_runner import BackgroundRunner
 
 # Colour for a profile whose configured device is currently offline.
@@ -89,28 +88,13 @@ class ActuationView(QWidget):
         self._profile_list = QListWidget()
         self._profile_list.setMinimumHeight(350)
         profile_layout.addWidget(self._profile_list)
-
-        # Action buttons
-        button_layout = QHBoxLayout()
-        self._switch_button = QPushButton(
-            labelled(ICON_SWITCH, "Switch to Selected Profile")
-        )
-        self._switch_button.setEnabled(False)
-        self._switch_button.setMinimumHeight(40)
-        self._switch_button.setToolTip(
-            "Make the selected profile's devices the Windows defaults"
-        )
-        button_layout.addWidget(self._switch_button)
-
-        self._refresh_button = QPushButton(labelled(ICON_REFRESH, "Refresh Devices"))
-        self._refresh_button.setMinimumWidth(160)
-        self._refresh_button.setToolTip(
-            "Rescan audio devices and update the current defaults"
-        )
-        button_layout.addWidget(self._refresh_button)
-
-        profile_layout.addLayout(button_layout)
         layout.addWidget(profile_group)
+
+        # Action buttons: created here so the enabled logic stays with the
+        # view, but placed in the main window's header tray, not this layout.
+        self._switch_button = QPushButton()
+        self._switch_button.setEnabled(False)
+        self._refresh_button = QPushButton()
 
         # Current devices section
         current_group = QGroupBox("Current Default Devices")
@@ -124,6 +108,13 @@ class ActuationView(QWidget):
 
         layout.addWidget(current_group)
         layout.addStretch()
+
+    def tray_actions(self) -> tuple[tuple[QPushButton, str, str], ...]:
+        """Return (button, glyph, name) triples for the header tray."""
+        return (
+            (self._switch_button, ICON_SWITCH, "Switch to the selected profile"),
+            (self._refresh_button, ICON_RESCAN, "Rescan audio devices"),
+        )
 
     def _connect_signals(self) -> None:
         """Connect signals and slots."""

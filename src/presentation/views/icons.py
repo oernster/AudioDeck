@@ -14,8 +14,11 @@ variation selector becomes visible in source.
 # than the monochrome text form some glyphs default to on Windows.
 _VS16 = "️"
 
-# Device actions.
-ICON_SWITCH = "\U0001f500"  # twisted rightwards arrows
+# Device actions. The tray's view switcher already wears the twisted
+# arrows, so the switch action is a play glyph and the tray rescan is an
+# antenna; the small in-form combo refreshes keep the anticlockwise arrows.
+ICON_SWITCH = "▶" + _VS16  # black right-pointing triangle
+ICON_RESCAN = "\U0001f4e1"  # satellite antenna
 ICON_REFRESH = "\U0001f504"  # anticlockwise arrows
 
 # Profile actions.
@@ -25,17 +28,4 @@ ICON_DELETE = "\U0001f5d1" + _VS16  # wastebasket
 
 # Editor actions.
 ICON_SAVE = "\U0001f4be"  # floppy disk
-ICON_CANCEL = "✖" + _VS16  # heavy multiplication x
-
-
-def labelled(icon: str, text: str) -> str:
-    """Return a button label combining an icon glyph and its text.
-
-    Args:
-        icon: One of the ICON_* constants in this module
-        text: The button's visible text
-
-    Returns:
-        The icon and text separated by a single space
-    """
-    return f"{icon} {text}"
+ICON_CANCEL = "❌"  # cross mark

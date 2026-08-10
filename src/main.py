@@ -38,67 +38,12 @@ from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
+from src.presentation.views import theme
 from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
 from src.presentation.views.resource_paths import resource_path
 from src.presentation.views.splash_screen import create_splash_screen
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
-
-# Dark palette colours (Catppuccin Mocha, matching the project site). Keyed
-# by Qt palette role name so the applying loop stays data-driven.
-_DARK_WINDOW = "#1e1e2e"
-_DARK_SURFACE = "#313244"
-_DARK_FIELD = "#181825"
-_DARK_TEXT = "#cdd6f4"
-_DARK_MUTED_TEXT = "#6c7086"
-_DARK_ACCENT = "#7b5caa"
-_DARK_LINK = "#89b4fa"
-
-# The three-state ring tokens: no ring at rest, green on hover or focus
-# while enabled, permanent red while disabled.
-_RING_GREEN = "#a6e3a1"
-_RING_RED = "#f38ba8"
-
-
-def _apply_dark_theme(app: "QApplication") -> None:
-    """Force the Fusion style with a dark palette.
-
-    Args:
-        app: The QApplication to restyle.
-    """
-    from PySide6.QtGui import QColor, QPalette
-
-    app.setStyle("Fusion")
-    palette = QPalette()
-    roles = {
-        QPalette.ColorRole.Window: _DARK_WINDOW,
-        QPalette.ColorRole.WindowText: _DARK_TEXT,
-        QPalette.ColorRole.Base: _DARK_FIELD,
-        QPalette.ColorRole.AlternateBase: _DARK_SURFACE,
-        QPalette.ColorRole.Text: _DARK_TEXT,
-        QPalette.ColorRole.Button: _DARK_SURFACE,
-        QPalette.ColorRole.ButtonText: _DARK_TEXT,
-        QPalette.ColorRole.ToolTipBase: _DARK_SURFACE,
-        QPalette.ColorRole.ToolTipText: _DARK_TEXT,
-        QPalette.ColorRole.PlaceholderText: _DARK_MUTED_TEXT,
-        QPalette.ColorRole.Highlight: _DARK_ACCENT,
-        QPalette.ColorRole.HighlightedText: _DARK_TEXT,
-        QPalette.ColorRole.BrightText: _DARK_TEXT,
-        QPalette.ColorRole.Link: _DARK_LINK,
-    }
-    for role, colour in roles.items():
-        palette.setColor(role, QColor(colour))
-    palette.setColor(
-        QPalette.ColorGroup.Disabled,
-        QPalette.ColorRole.Text,
-        QColor(_DARK_MUTED_TEXT),
-    )
-    palette.setColor(
-        QPalette.ColorGroup.Disabled,
-        QPalette.ColorRole.ButtonText,
-        QColor(_DARK_MUTED_TEXT),
-    )
-    app.setPalette(palette)
 
 
 def get_profiles_path() -> Path:
@@ -127,6 +72,15 @@ def get_update_settings_path() -> Path:
         Path to the update settings JSON file
     """
     return get_profiles_path().parent / "update_settings.json"
+
+
+def get_ui_settings_path() -> Path:
+    """Get the path for the UI settings (the theme choice), beside the profiles.
+
+    Returns:
+        Path to the UI settings JSON file
+    """
+    return get_profiles_path().parent / "ui_settings.json"
 
 
 def _set_windows_taskbar_icon(window: QMainWindow, ico_path: Path) -> None:
@@ -192,11 +146,12 @@ def main() -> int:
     app.setApplicationName("Audio Deck")
     app.setOrganizationName("AudioDeck")
 
-    # On Linux (in particular inside the Flatpak sandbox) Qt has no desktop
-    # theme integration and falls back to a light palette. Windows and macOS
-    # follow the system theme, so only Linux gets the explicit dark palette.
-    if sys.platform.startswith("linux"):
-        _apply_dark_theme(app)
+    # The theme facility owns the style, the palette and the stylesheet on
+    # every platform (dark by default, persisted beside the profiles), so
+    # the app looks the same inside the Flatpak sandbox, where Qt has no
+    # desktop theme integration, as it does anywhere else.
+    ui_settings_path = get_ui_settings_path()
+    theme.apply_theme(app, theme.load_saved_theme(ui_settings_path), ui_settings_path)
 
     # Set application icon for Windows taskbar
     icon_path = resource_path("assets/audiodeck.ico")
@@ -209,75 +164,6 @@ def main() -> int:
     splash = create_splash_screen()
     splash.show()
     app.processEvents()  # Process events to show splash immediately
-
-    # Global stylesheet: the 13.5pt base size, calm slate tab pills instead
-    # of the earlier purple gradients and the three-state ring model (no ring
-    # at rest, green ring on hover or focus while enabled, permanent red ring
-    # while disabled; the ring is the ONLY focus indicator, so the native
-    # dotted focus rectangle is suppressed with outline: none).
-    app.setStyleSheet(f"""
-        * {{
-            font-size: 13.5pt;
-            outline: none;
-        }}
-        QToolTip {{
-            font-size: 10.5pt;
-            color: {_DARK_TEXT};
-            background-color: {_DARK_SURFACE};
-            border: 1px solid {_DARK_MUTED_TEXT};
-        }}
-        QPushButton {{
-            font-size: 13.5pt;
-            padding: 6px 12px;
-            border: 2px solid transparent;
-            border-radius: 0;
-        }}
-        QPushButton:enabled:hover, QPushButton:enabled:focus {{
-            border-color: {_RING_GREEN};
-        }}
-        QPushButton:disabled {{
-            border: 2px solid {_RING_RED};
-            background-color: {_DARK_SURFACE};
-            color: {_DARK_MUTED_TEXT};
-        }}
-        QLineEdit, QComboBox, QListWidget {{
-            font-size: 13.5pt;
-            padding: 4px;
-            border: 2px solid transparent;
-            border-radius: 0;
-        }}
-        QLineEdit:enabled:hover, QLineEdit:enabled:focus,
-        QComboBox:enabled:hover, QComboBox:enabled:focus,
-        QListWidget:enabled:hover, QListWidget:enabled:focus {{
-            border-color: {_RING_GREEN};
-        }}
-        QLineEdit:disabled, QComboBox:disabled, QListWidget:disabled {{
-            border: 2px solid {_RING_RED};
-            background-color: {_DARK_SURFACE};
-            color: {_DARK_MUTED_TEXT};
-        }}
-        QPushButton#ViewButton {{
-            background-color: transparent;
-            border: 2px solid transparent;
-            border-radius: 4px;
-            padding: 0px;
-        }}
-        QPushButton#ViewButton:enabled:hover,
-        QPushButton#ViewButton:enabled:focus {{
-            background-color: {_DARK_SURFACE};
-            border: 2px solid {_RING_GREEN};
-        }}
-        QPushButton#ViewButton[activeView="true"] {{
-            border-bottom: 3px solid {_DARK_TEXT};
-        }}
-        QGroupBox {{
-            font-size: 13.5pt;
-            font-weight: bold;
-        }}
-        QMessageBox {{
-            font-size: 13.5pt;
-        }}
-    """)
 
     # Infrastructure layer - dependency injection
     backend = create_device_backend(sys.platform)
@@ -319,7 +205,10 @@ def main() -> int:
 
     # Create and show main window (it installs the native device-change notifier)
     main_window = MainWindow(
-        configuration_presenter, actuation_presenter, update_presenter
+        configuration_presenter,
+        actuation_presenter,
+        update_presenter,
+        lambda: theme.toggle_theme(app, ui_settings_path),
     )
     main_window.show_and_raise()
 
