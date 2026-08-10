@@ -6,12 +6,11 @@ Author: Oliver Ernster
 import sys
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QIcon, QShowEvent
+from PySide6.QtGui import QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QMainWindow,
-    QMenu,
     QMessageBox,
     QPushButton,
     QStackedWidget,
@@ -29,8 +28,9 @@ from src.presentation.presenters.update_presenter import UpdatePresenter
 from src.presentation.views import help_dialogs, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
+from src.presentation.views.help_button import build_help_button
 from src.presentation.views.resource_paths import resource_path
-from src.presentation.widgets.keyboard_nav import RING_GREEN as NAV_RING_GREEN
+from src.presentation.widgets.glyph_metrics import glyph_font_px_for_height
 from src.presentation.widgets.keyboard_nav import KeyboardNavigator
 
 # The main window's title. A second launch locates the running instance by
@@ -41,6 +41,13 @@ WINDOW_TITLE = "Audio Deck"
 # periodic re-check covers sessions that stay open for days.
 UPDATE_LAUNCH_DELAY_MS = 3000
 UPDATE_RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
+
+# The emoji tray, in the ClearBudget style: each glyph is measured and sized
+# to paint at this height, and its button is a fixed square of the glyph
+# plus the ring chrome (without which Qt's default push-button minimum makes
+# an icon-sized control 80-odd pixels wide).
+ICON_GLYPH_HEIGHT_PX = 32
+ICON_BTN_CHROME_PX = 8
 
 
 class MainWindow(QMainWindow):
@@ -132,11 +139,21 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _make_view_button(glyph: str, name: str) -> QPushButton:
-        """Build one view-switching icon; styling comes from the app sheet."""
+        """Build one view-switching icon, in the ClearBudget tray style.
+
+        The glyph is measured and scaled to paint at ICON_GLYPH_HEIGHT_PX so
+        different emoji read as one matched family. The font goes on as a
+        widget-level stylesheet WITH a selector: a stylesheet rule beats
+        setFont, and a bare font-size would cascade to the tooltip.
+        """
         button = QPushButton(glyph)
         button.setObjectName("ViewButton")
         button.setToolTip(name)
-        button.setFlat(True)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        glyph_px = glyph_font_px_for_height(glyph, ICON_GLYPH_HEIGHT_PX)
+        button.setStyleSheet(f"QPushButton#ViewButton {{ font-size: {glyph_px}px; }}")
+        side = ICON_GLYPH_HEIGHT_PX + ICON_BTN_CHROME_PX
+        button.setFixedSize(side, side)
         return button
 
     def _show_view(self, index: int) -> None:
@@ -171,67 +188,14 @@ class MainWindow(QMainWindow):
         self._device_notifier.install(app)
 
     def _create_help_button(self) -> QToolButton:
-        """Create the Help button for the header row."""
-        # Create Help button with menu
-        help_button = QToolButton()
-        help_button.setObjectName("HelpButton")
-        help_button.setText("ℹ️")
-        help_button.setToolTip("Help")
-        help_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        # Icon only, no chrome; the ring rules follow the app-wide
-        # three-state model (green on hover or focus while enabled), stated
-        # here because an object-name rule would otherwise swallow them.
-        help_button.setStyleSheet(f"""
-            QToolButton#HelpButton {{
-                background: transparent;
-                border: 2px solid transparent;
-                font-size: 26px;
-                padding: 2px 8px;
-            }}
-            QToolButton#HelpButton:enabled:hover,
-            QToolButton#HelpButton:enabled:focus {{
-                border-color: {NAV_RING_GREEN};
-            }}
-            QToolButton#HelpButton::menu-indicator {{
-                image: none;
-            }}
-        """)
-        help_button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-
-        # Create Help menu
-        help_menu = QMenu(help_button)
-
-        # Documentation action
-        docs_action = QAction("View Documentation", self)
-        docs_action.triggered.connect(self._show_documentation)
-        help_menu.addAction(docs_action)
-
-        # Development Documentation action
-        dev_docs_action = QAction("Development Documentation", self)
-        dev_docs_action.triggered.connect(self._show_dev_documentation)
-        help_menu.addAction(dev_docs_action)
-
-        # License action
-        license_action = QAction("View License (LGPL-3.0)", self)
-        license_action.triggered.connect(self._show_license)
-        help_menu.addAction(license_action)
-
-        help_menu.addSeparator()
-
-        # Check for Updates action
-        updates_action = QAction("Check for Updates", self)
-        updates_action.triggered.connect(self._check_for_updates)
-        help_menu.addAction(updates_action)
-
-        help_menu.addSeparator()
-
-        # About action
-        about_action = QAction("About Audio Deck", self)
-        about_action.triggered.connect(self._show_about)
-        help_menu.addAction(about_action)
-
-        help_button.setMenu(help_menu)
-        return help_button
+        """Create the Help icon for the header row, menu wired to this window."""
+        return build_help_button(
+            self._show_documentation,
+            self._show_dev_documentation,
+            self._show_license,
+            self._check_for_updates,
+            self._show_about,
+        )
 
     # The Help actions are thin wrappers so the menu wiring above reads as
     # a menu, so a Qt signal always has a bound method to connect to.

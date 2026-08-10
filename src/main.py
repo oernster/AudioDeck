@@ -257,15 +257,15 @@ def main() -> int:
             color: {_DARK_MUTED_TEXT};
         }}
         QPushButton#ViewButton {{
-            background: transparent;
+            background-color: transparent;
             border: 2px solid transparent;
-            border-radius: 0;
-            font-size: 26px;
-            padding: 2px 8px;
+            border-radius: 4px;
+            padding: 0px;
         }}
         QPushButton#ViewButton:enabled:hover,
         QPushButton#ViewButton:enabled:focus {{
-            border-color: {_RING_GREEN};
+            background-color: {_DARK_SURFACE};
+            border: 2px solid {_RING_GREEN};
         }}
         QPushButton#ViewButton[activeView="true"] {{
             border-bottom: 3px solid {_DARK_TEXT};
