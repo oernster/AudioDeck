@@ -105,10 +105,54 @@ class CtypesCoreAudioApi:  # pragma: no cover
         self._core_foundation: Any = None
 
     def _load(self) -> None:
-        """Load the frameworks on first use."""
-        if self._core_audio is None:
-            self._core_audio = ctypes.CDLL(_CORE_AUDIO_FRAMEWORK)
-            self._core_foundation = ctypes.CDLL(_CORE_FOUNDATION_FRAMEWORK)
+        """Load the frameworks and declare every call's exact C signature.
+
+        Explicit argtypes and restype matter on Apple Silicon: relying on
+        ctypes' default int marshalling is undefined for these signatures.
+        """
+        if self._core_audio is not None:
+            return
+        core_audio = ctypes.CDLL(_CORE_AUDIO_FRAMEWORK)
+        core_foundation = ctypes.CDLL(_CORE_FOUNDATION_FRAMEWORK)
+
+        core_audio.AudioObjectGetPropertyDataSize.restype = ctypes.c_int32
+        core_audio.AudioObjectGetPropertyDataSize.argtypes = [
+            ctypes.c_uint32,
+            ctypes.POINTER(_PropertyAddress),
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_uint32),
+        ]
+        core_audio.AudioObjectGetPropertyData.restype = ctypes.c_int32
+        core_audio.AudioObjectGetPropertyData.argtypes = [
+            ctypes.c_uint32,
+            ctypes.POINTER(_PropertyAddress),
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_uint32),
+            ctypes.c_void_p,
+        ]
+        core_audio.AudioObjectSetPropertyData.restype = ctypes.c_int32
+        core_audio.AudioObjectSetPropertyData.argtypes = [
+            ctypes.c_uint32,
+            ctypes.POINTER(_PropertyAddress),
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+            ctypes.c_uint32,
+            ctypes.c_void_p,
+        ]
+        core_foundation.CFStringGetCString.restype = ctypes.c_bool
+        core_foundation.CFStringGetCString.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_long,
+            ctypes.c_uint32,
+        ]
+        core_foundation.CFRelease.restype = None
+        core_foundation.CFRelease.argtypes = [ctypes.c_void_p]
+
+        self._core_audio = core_audio
+        self._core_foundation = core_foundation
 
     def _property_size(self, object_id: int, address: _PropertyAddress) -> int:
         """Return the byte size of a property, 0 on failure."""
