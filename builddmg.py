@@ -1,11 +1,11 @@
 """Build the signed, notarised AudioDeck DMG (macOS only).
 
-Flow: platform guard, clean, entitlements, PNG to icns, PyInstaller .app,
-strip stray Mach-O objects, codesign, staged DMG via create-dmg, sign the
-DMG, notarize and staple (gated on the Apple credentials being set in the
-environment), verify. An unnotarised DMG is not a deliverable: Gatekeeper
-blocks it on first launch, so the notarisation step is part of the build,
-not an optional extra.
+Flow: platform guard, clean, entitlements, icns from the generated PNG set,
+PyInstaller .app, missing-module check, strip stray Mach-O objects, codesign,
+staged DMG via create-dmg, sign the DMG, notarize and staple (gated on the
+Apple credentials being set in the environment), verify. An unnotarised DMG is
+not a deliverable: Gatekeeper blocks it on first launch, so the notarisation
+step is part of the build, not an optional extra.
 
 Author: Oliver Ernster
 """
@@ -13,11 +13,14 @@ Author: Oliver Ernster
 from __future__ import annotations
 
 import os
+import platform
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from buildexe import fail_on_missing, warn_file_for
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
@@ -29,8 +32,49 @@ LICENSE_FILE = PROJECT_ROOT / "LICENSE"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 ICON_MASTER_PNG = ASSETS_DIR / "audiodeck_icon_1024.png"
 DIST_DIR = PROJECT_ROOT / "dist"
+WORK_DIR = PROJECT_ROOT / "build"
 APP_BUNDLE = DIST_DIR / f"{APP_NAME}.app"
-DMG_PATH = DIST_DIR / "audiodeck-macos-arm64.dmg"
+DMG_PATH = DIST_DIR / f"audiodeck-macos-{platform.machine()}.dmg"
+
+# The Help menu reads these from the bundle at runtime, so a build that omits
+# one ships a menu entry that opens a "File Not Found" box.
+DOC_FILES = (
+    PROJECT_ROOT / "README.md",
+    PROJECT_ROOT / "ARCHITECTURE.md",
+    PROJECT_ROOT / "CLI_USAGE.md",
+    PROJECT_ROOT / "DEVELOPMENT_README.md",
+)
+
+# Modules the application cannot start without. PyInstaller downgrades an
+# import it cannot resolve to a line in its warn file and writes the bundle
+# anyway, so a build run by an interpreter that lacks one reports success and
+# then dies on launch. Reading the warn file back makes that loud.
+REQUIRED_MODULES = ("PySide6",)
+
+# iconutil builds the .icns from a directory of exactly these names. Every
+# size is already generated into assets/ by generate_icons.py, so the set is
+# assembled by copying rather than by resampling here.
+ICONSET_DIR_NAME = f"{APP_NAME}.iconset"
+ICONSET_ENTRIES = (
+    ("icon_16x16.png", 16),
+    ("icon_16x16@2x.png", 32),
+    ("icon_32x32.png", 32),
+    ("icon_32x32@2x.png", 64),
+    ("icon_128x128.png", 128),
+    ("icon_128x128@2x.png", 256),
+    ("icon_256x256.png", 256),
+    ("icon_256x256@2x.png", 512),
+    ("icon_512x512.png", 512),
+    ("icon_512x512@2x.png", 1024),
+)
+
+# create-dmg window geometry, in points. The drop-link and app icon positions
+# have to sit inside the window, so they are stated together with its size.
+DMG_WINDOW_POS = ("200", "200")
+DMG_WINDOW_SIZE = ("600", "360")
+DMG_ICON_SIZE = "128"
+DMG_APP_ICON_POS = ("150", "180")
+DMG_DROP_LINK_POS = ("450", "180")
 
 DEVELOPER_ID = os.environ.get(
     "DEVELOPER_ID_APPLICATION",
@@ -72,11 +116,24 @@ def require(tool: str) -> None:
         sys.exit(f"Required tool is not available: {tool}")
 
 
-def png_to_icns(png_path: Path, icns_path: Path) -> None:
-    """Convert the 1024px master PNG to a .icns via Pillow."""
-    from PIL import Image
+def build_icns(icns_path: Path, staging_dir: Path) -> None:
+    """Build the .icns from the generated PNG set with iconutil.
 
-    Image.open(png_path).convert("RGBA").save(icns_path, format="ICNS")
+    iconutil ships with macOS, so the icon step needs no third-party imaging
+    library; the sizes it wants are already in assets/.
+
+    Args:
+        icns_path: Where to write the .icns.
+        staging_dir: Directory to assemble the .iconset in.
+    """
+    iconset = staging_dir / ICONSET_DIR_NAME
+    iconset.mkdir(parents=True, exist_ok=True)
+    for iconset_name, size in ICONSET_ENTRIES:
+        source = ASSETS_DIR / f"audiodeck_icon_{size}.png"
+        if not source.exists():
+            sys.exit(f"Missing icon asset: {source}. Run generate_icons.py first.")
+        shutil.copyfile(source, iconset / iconset_name)
+    run("iconutil", "--convert", "icns", str(iconset), "--output", str(icns_path))
 
 
 def strip_object_files(bundle: Path) -> None:
@@ -90,6 +147,7 @@ def strip_object_files(bundle: Path) -> None:
 
 def build_app(entitlements: Path, icns_path: Path) -> None:
     """Build the .app with PyInstaller."""
+    data_files = (VERSION_FILE, LICENSE_FILE) + DOC_FILES
     run(
         sys.executable,
         "-m",
@@ -100,15 +158,17 @@ def build_app(entitlements: Path, icns_path: Path) -> None:
         "--windowed",
         f"--name={APP_NAME}",
         f"--distpath={DIST_DIR}",
+        f"--workpath={WORK_DIR}",
+        f"--specpath={PROJECT_ROOT}",
+        f"--paths={PROJECT_ROOT}",
         f"--icon={icns_path}",
         f"--osx-bundle-identifier={BUNDLE_ID}",
-        f"--codesign-identity={DEVELOPER_ID}",
         f"--osx-entitlements-file={entitlements}",
         f"--add-data={ASSETS_DIR}:assets",
-        f"--add-data={VERSION_FILE}:.",
-        f"--add-data={LICENSE_FILE}:.",
+        *(f"--add-data={data_file}:." for data_file in data_files),
         str(ENTRY_SCRIPT),
     )
+    fail_on_missing(warn_file_for(WORK_DIR, APP_NAME), REQUIRED_MODULES)
 
 
 def sign_bundle(entitlements: Path) -> None:
@@ -128,7 +188,7 @@ def sign_bundle(entitlements: Path) -> None:
     run("codesign", "--verify", "--deep", "--strict", str(APP_BUNDLE))
 
 
-def create_dmg() -> None:
+def create_dmg(icns_path: Path) -> None:
     """Stage the app with ditto (symlinks intact) and build the DMG."""
     with tempfile.TemporaryDirectory() as staging_name:
         staging = Path(staging_name) / APP_NAME
@@ -137,9 +197,21 @@ def create_dmg() -> None:
             "create-dmg",
             "--volname",
             APP_NAME,
+            "--volicon",
+            str(icns_path),
+            "--window-pos",
+            *DMG_WINDOW_POS,
+            "--window-size",
+            *DMG_WINDOW_SIZE,
+            "--icon-size",
+            DMG_ICON_SIZE,
+            "--icon",
+            f"{APP_NAME}.app",
+            *DMG_APP_ICON_POS,
             "--app-drop-link",
-            "450",
-            "170",
+            *DMG_DROP_LINK_POS,
+            "--hide-extension",
+            f"{APP_NAME}.app",
             str(DMG_PATH),
             str(staging),
             check=False,
@@ -189,13 +261,14 @@ def main() -> int:
     icns_path = DIST_DIR / "audiodeck.icns"
     try:
         entitlements.write_text(ENTITLEMENTS_XML, encoding="utf-8")
-        png_to_icns(ICON_MASTER_PNG, icns_path)
+        with tempfile.TemporaryDirectory() as icon_staging:
+            build_icns(icns_path, Path(icon_staging))
 
         build_app(entitlements, icns_path)
         strip_object_files(APP_BUNDLE)
         sign_bundle(entitlements)
 
-        create_dmg()
+        create_dmg(icns_path)
         run("codesign", "--force", "--sign", DEVELOPER_ID, str(DMG_PATH))
         notarize_and_staple()
         run("codesign", "--verify", str(DMG_PATH))
