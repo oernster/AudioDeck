@@ -69,8 +69,10 @@ detects. It has to run after `buildexe.py`.
 The executable is written to `dist/AudioDeck.exe`. The build uses PyInstaller in
 `--onefile --windowed` mode (a single windowed binary that still serves the CLI
 when run with arguments), collects `comtypes`, declares the `pycaw` hidden
-imports and bundles the icon, the `VERSION` file, the licence and the
-documentation. Build identity and inputs live at the top of `buildexe.py`.
+imports and bundles the icon, the `VERSION` file, the in-app user guide
+(`DOCUMENTATION.md`) and the three licence files (the overview plus the full
+GPL-3.0 and LGPL-3.0 texts, all read by the Help menu at runtime). Build
+identity and inputs live at the top of `buildexe.py`.
 
 The Linux and macOS deliverables have their own entry points:
 `./build_flatpak.sh` builds and installs the Flatpak (Linux) and
@@ -135,8 +137,14 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   notifiers behind `notifier_factory` (`WM_DEVICECHANGE` on Windows,
   `pactl subscribe` on Linux, a periodic poll on macOS) that drive live
   updates and auto-apply on reconnect, `BackgroundRunner`
-  (a serial worker thread keeping COM and settle sleeps off the GUI thread) and
-  `icons` (the emoji button glyphs, defined once as named constants).
+  (a serial worker thread keeping COM and settle sleeps off the GUI thread),
+  `icons` (the emoji button glyphs, defined once as named constants), the
+  header tray recipes (`tray.py`: measured-glyph icon buttons, the separator,
+  the sun/moon theme toggle), the theme facility (`theme.py`: dark and light
+  token dicts feeding one stylesheet and palette, persisted beside the
+  profiles), the Help button with its menu and dialogs (`help_button.py`,
+  `help_dialogs.py`) and the covered widgets (`KeyboardNavigator`,
+  `AutoScroller`, glyph metrics).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
 
 ## Development workflow
@@ -207,7 +215,8 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
    the first window), `--list`, `--profile` and a Stream Deck button.
 7. Refresh `docs/screenshots/` if the interface changed.
 8. Assemble the release with `AudioDeckSetup.exe`, the portable `AudioDeck.exe`,
-   `README.md`, `CLI_USAGE.md`, `examples/streamdeck_profiles/` and `LICENSE`.
+   `README.md`, `CLI_USAGE.md`, `examples/streamdeck_profiles/` and the licence
+   files (`LICENSE`, `LICENSE-GPL-3.0.txt`, `LICENSE-LGPL-3.0.txt`).
 
 ## Troubleshooting development issues
 
@@ -244,7 +253,10 @@ system sound settings.
 
 ## License
 
-GNU Lesser General Public License v3.0 (LGPL-3.0). See [LICENSE](LICENSE).
+Distributed under two licences, split by component: the backend under
+[GPL-3.0](LICENSE-GPL-3.0.txt) and the PySide6 user interface
+(`src/presentation`) under [LGPL-3.0](LICENSE-LGPL-3.0.txt). See
+[LICENSE](LICENSE) for the map.
 
 Copyright (C) 2024-2026 Oliver Ernster.
 

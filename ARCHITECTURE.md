@@ -78,10 +78,17 @@ src/
     updates/           GitHubReleaseSource (stdlib urllib against the GitHub
                        releases/latest endpoint, opener injected for tests)
   presentation/         GUI layer (PySide6)
-    views/             MainWindow, ConfigurationView, ActuationView, icons,
-                       the update dialogs (offer / up to date / failed)
+    views/             MainWindow, ConfigurationView, ActuationView, the
+                       header tray recipes (tray.py) and theme facility
+                       (theme.py: dark and light token dicts, stylesheet and
+                       palette builders, persistence), the Help button and
+                       its dialogs, icons, the update dialogs
+                       (offer / up to date / failed)
     presenters/        ConfigurationPresenter, ActuationPresenter,
                        UpdatePresenter (MVP)
+    widgets/           KeyboardNavigator (the explicit focus ring),
+                       AutoScroller (self-reading help surfaces),
+                       glyph metrics (measured emoji sizing)
     notifiers/         Device-change notifiers per platform behind one factory:
                        WM_DEVICECHANGE (Windows), pactl subscribe (Linux),
                        periodic polling (macOS)
@@ -125,7 +132,7 @@ at by it.
    domain interfaces implemented by infrastructure.
 5. Presenters report outcomes back to views with Qt signals
    (`error_occurred`, `profile_saved`, `profile_switched`, `device_unavailable`,
-   `current_devices_changed`, `auto_applied`).
+   `status_ready`, `auto_applied`).
 6. Device changes are delivered by the platform's notifier (native
    `WM_DEVICECHANGE` on Windows, a long-lived `pactl subscribe` process on
    Linux, a periodic poll on macOS) plus a periodic timer fallback; both call

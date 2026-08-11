@@ -98,7 +98,8 @@ tests/
   domain/           Entities, value objects, exceptions, Protocol conformance
   application/      Use cases and DTOs
   infrastructure/   JSON repository, device repository, single-instance guard
-  presentation/     Presenters, background worker, device-change notifier
+  presentation/     Presenters, background worker, device-change notifiers,
+                    the keyboard navigator, the auto-scroller and glyph metrics
   cli/              Argument parsing and the CLI handler
   structural/       AST scans enforcing the layer boundaries
   test_version.py   The VERSION file reader

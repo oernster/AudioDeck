@@ -2,7 +2,7 @@
 
 A standing reference to the project's outstanding technical debt. It records what is still open, weighs whether each item is worth doing and gives the rationale. Every item is a behaviour-preserving internal concern: nothing here proposes reverting a feature or changing any UI or UX behaviour. Scope is the whole repository (the `src` package, the CLI, the bespoke installer, the delivery scripts and the GitHub Pages site under `docs/`) read against `ARCHITECTURE.md`, `TESTING.md` and `tests/structural/test_architecture.py`.
 
-This is a small, tidy repository: roughly 9,400 lines, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist and the module size rule in two tiers. One file exceeds 330 lines (`configuration_view.py` at 341, comfortably under the cap and clear of the danger band).
+This is a small, tidy repository: roughly 14,000 lines of Python across the package, the tests, the installer and the delivery scripts, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist and the module size rule in two tiers. The largest in-scope module is `installer/ui.py` at 373 lines, comfortably under the cap and clear of the danger band.
 
 **Nothing is currently open.** What follows is the standing set of judgements about what looks like debt here and is not, so the same questions do not get reopened. A new item is added above this line when one is found.
 

@@ -264,7 +264,7 @@ Settings > Voice & Video to "Default"; in Spotify set the output device to
 
 ### A device is missing
 
-Disconnected devices still appear in the Configuration tab marked as offline, so
+Disconnected devices still appear in the Configuration view marked as offline, so
 you can build profiles around them. To use one now, connect and enable it; Audio
 Deck picks it up automatically, though **Refresh Devices** forces it.
 
