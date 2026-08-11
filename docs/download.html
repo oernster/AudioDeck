@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Audio Deck for Windows, Linux and macOS</title>
+  <meta name="description" content="Download Audio Deck: a per-user Windows setup program, a Linux Flatpak bundle and a signed, notarised macOS disk image. Free and open source, no account, no cloud.">
+  <link rel="canonical" href="https://ernster.dev/AudioDeck/download.html">
+  <meta name="theme-color" content="#1e1e2e">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Audio Deck">
+  <meta property="og:url" content="https://ernster.dev/AudioDeck/download.html">
+  <meta property="og:title" content="Download Audio Deck for Windows, Linux and macOS">
+  <meta property="og:description" content="A per-user Windows setup program, a Linux Flatpak bundle and a signed, notarised macOS disk image. Free and open source, no account, no cloud.">
+  <meta property="og:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Audio Deck app icon">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Download Audio Deck for Windows, Linux and macOS">
+  <meta name="twitter:description" content="A per-user Windows setup program, a Linux Flatpak bundle and a signed, notarised macOS disk image.">
+  <meta name="twitter:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="./">
+    <img src="audiodeck-512.png" alt="Audio Deck icon">
+    <span>Audio Deck</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="features.html">Features</a>
+    <a class="nav-link" href="why.html">Why</a>
+    <a class="nav-link" href="download.html" aria-current="page">Download</a>
+    <a class="btn-primary" href="download.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<!-- Download -->
+<div class="install-band">
+  <section class="section" id="download">
+    <div class="section-label">Get AudioDeck</div>
+    <h2 class="section-title">Download AudioDeck</h2>
+    <p class="section-sub">Download the newest release with one click. Free and open source (the backend under GPL-3.0, the user interface under LGPL-3.0) with no account and no cloud; your profiles live in a local JSON file on your machine.</p>
+    <span class="dl-version" id="dl-version">Latest release</span>
+    <div class="downloads">
+      <div class="dl-card">
+        <div class="ico">🪟</div>
+        <h3>Windows</h3>
+        <p class="req">Windows 10 or 11, 64-bit</p>
+        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases/latest/download/AudioDeckSetup.exe">
+          Download for Windows</a>
+        <p class="meta" data-asset="AudioDeckSetup.exe">Setup program (.exe)</p>
+        <p class="meta">Windows may show a SmartScreen warning when you run this: <a href="/windows-smartscreen.html">here's why</a>.</p>
+        <p class="how">Run the setup: it installs per-user, so no administrator rights are needed.</p>
+      </div>
+      <div class="dl-card">
+        <div class="ico">🐧</div>
+        <h3>Linux</h3>
+        <p class="req">PulseAudio or PipeWire desktop, 64-bit</p>
+        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases/latest/download/audiodeck.flatpak">
+          Download for Linux</a>
+        <p class="meta" data-asset="audiodeck.flatpak">Flatpak bundle (.flatpak)</p>
+        <p class="how">Install with <code>flatpak install --user audiodeck.flatpak</code>.</p>
+      </div>
+      <div class="dl-card">
+        <div class="ico">🍎</div>
+        <h3>macOS</h3>
+        <p class="req">macOS on Apple Silicon</p>
+        <a class="btn-primary" href="https://github.com/oernster/AudioDeck/releases/latest/download/audiodeck-macos-arm64.dmg">
+          Download for macOS</a>
+        <p class="meta" data-asset="audiodeck-macos-arm64.dmg">Disk image (.dmg), signed and notarised</p>
+        <p class="how">Open the DMG and drag Audio Deck into Applications.</p>
+      </div>
+    </div>
+    <p class="dl-links">
+      <a id="dl-whats-new" href="https://github.com/oernster/AudioDeck/releases/latest">What's new in this release</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck/releases">All releases</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck">Source on GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/oernster/AudioDeck/blob/main/DEVELOPMENT_README.md">Build from source</a>
+    </p>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a class="footer-brand" href="./">
+        <img src="audiodeck-512.png" alt="Audio Deck">
+        <span>Audio Deck</span>
+      </a>
+      <nav class="footer-links">
+        <a href="features.html">Features</a>
+        <a href="https://github.com/oernster/AudioDeck">GitHub</a>
+        <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/CLI_USAGE.md">CLI Usage</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/ARCHITECTURE.md">Architecture</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/TESTING.md">Testing</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/LICENSE">Licence</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p>A local-first audio device switcher for Windows, Linux and macOS. Open source, no cloud.</p>
+      <div class="chips">
+        <span class="chip">Python</span>
+        <span class="chip">PySide6</span>
+        <span class="chip">pycaw</span>
+        <span class="chip">pactl</span>
+        <span class="chip">CoreAudio</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+    // The download buttons never go stale: each points at GitHub's releases/latest/download
+    // redirect, which always serves the newest release's asset (the asset names are version-free
+    // by design). This script only decorates the page with live details: the version chip and
+    // each installer's size, fetched from the GitHub API. If the call fails (offline,
+    // rate-limited), the static text above stands on its own.
+    (function () {
+        var api = 'https://api.github.com/repos/oernster/AudioDeck/releases/latest';
+        fetch(api).then(function (r) {
+            if (!r.ok) { throw new Error('release lookup failed'); }
+            return r.json();
+        }).then(function (rel) {
+            var version = (rel.tag_name || '').replace(/^v/, '');
+            if (version) {
+                document.getElementById('dl-version').textContent = 'Version ' + version;
+            }
+            if (rel.html_url) {
+                document.getElementById('dl-whats-new').href = rel.html_url;
+            }
+            (rel.assets || []).forEach(function (asset) {
+                var meta = document.querySelector('[data-asset="' + asset.name + '"]');
+                if (meta && asset.size) {
+                    var mb = (asset.size / (1024 * 1024)).toFixed(1);
+                    meta.textContent = meta.textContent + ' · ' + mb + ' MB';
+                }
+            });
+        }).catch(function () { /* The static page already says everything essential. */ });
+    })();
+</script>
+</body>
+</html>

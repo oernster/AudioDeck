@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Deck features: profiles, automation and architecture</title>
+  <meta name="description" content="Everything Audio Deck does: named output and input profiles, one-click switching, offline device handling, dark and light themes, full keyboard reachability, the CLI and Stream Deck automation and the clean architecture underneath.">
+  <link rel="canonical" href="https://ernster.dev/AudioDeck/features.html">
+  <meta name="theme-color" content="#1e1e2e">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Audio Deck">
+  <meta property="og:url" content="https://ernster.dev/AudioDeck/features.html">
+  <meta property="og:title" content="Audio Deck features: profiles, automation and architecture">
+  <meta property="og:description" content="Named output and input profiles, one-click switching, offline device handling, themes, keyboard reachability, CLI and Stream Deck automation.">
+  <meta property="og:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Audio Deck app icon">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Audio Deck features: profiles, automation and architecture">
+  <meta name="twitter:description" content="Named output and input profiles, one-click switching, offline device handling, themes, keyboard reachability, CLI and Stream Deck automation.">
+  <meta name="twitter:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="./">
+    <img src="audiodeck-512.png" alt="Audio Deck icon">
+    <span>Audio Deck</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="features.html" aria-current="page">Features</a>
+    <a class="nav-link" href="why.html">Why</a>
+    <a class="nav-link" href="download.html">Download</a>
+    <a class="btn-primary" href="download.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Built for people who<br>keep changing their setup.</h2>
+  <p class="section-sub">Speakers for music, a headset for calls, an interface for recording. Save each as a profile and move between them without touching your system's sound settings.</p>
+
+  <div class="features-grid">
+
+    <div class="feat">
+      <div class="feat-icon ic-green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </div>
+      <h3>Named profiles</h3>
+      <p>Each profile pins one default output device and one default input device. Switch to a profile and both change at once.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </div>
+      <h3>One-click switching</h3>
+      <p>The Quick Switch view lists every profile. Press ▶️ in the header tray or just double-click a profile to apply it.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      </div>
+      <h3>Command line</h3>
+      <p><code class="inline">--list</code> and <code class="inline">--profile&nbsp;NAME</code> run headless with a process exit code, so any script or launcher can drive it.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-mauve">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>Stream Deck ready</h3>
+      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin on Windows; any macro deck or macro buttons that can run a command work on every OS. One press, one setup.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-peach">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11v11h-11z" opacity="0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      </div>
+      <h3>Offline devices</h3>
+      <p>Pin a device that is currently off, like a Bluetooth headset. The moment it reconnects, the pending switch is applied automatically.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-yellow">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      </div>
+      <h3>Partial switching</h3>
+      <p>If one device in a profile is missing, the rest are still applied and the missing one is reported, so a switch never silently half-fails.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-sapp">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
+      <h3>Live device rescan</h3>
+      <p>The device list refreshes on system device changes and periodically. The 📡 tray button forces an immediate rescan on demand.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-red">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <h3>Local-first</h3>
+      <p>Profiles are stored as JSON in your platform's per-user app-data folder. Runs per user, no admin rights; nothing about you or your profiles ever leaves your machine.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-lav">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      </div>
+      <h3>Update check</h3>
+      <p>A quiet check against GitHub's releases shortly after launch, daily and on demand from the Help menu: Download the installer, Skip This Version for good or Later. Anonymous; silent when GitHub is unreachable.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-yellow">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </div>
+      <h3>Dark and light themes</h3>
+      <p>A sun and moon toggle in the header tray restyles the whole app at a click, on every platform. Dark is the default and the choice persists between launches.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>
+      </div>
+      <h3>Keyboard first</h3>
+      <p>Everything is reachable without the mouse: Tab and the arrow keys walk one explicit focus ring, lists walk with Up and Down and a green ring always shows exactly where you are.</p>
+    </div>
+    <div class="feat feat-wide">
+      <div class="feat-icon ic-pink">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M9 10l2 2 4-4"/></svg>
+      </div>
+      <div class="feat-wide-body">
+        <h3>One window</h3>
+        <p>Launch it twice and the window you already have comes to the front, rather than a second copy competing over the same profiles. Command-line switching is exempt, so Stream Deck keys keep working while the window is open.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CLI / Stream Deck -->
+<section class="section" id="cli">
+  <div class="section-label">Automation</div>
+  <h2 class="section-title">Drive it from a key,<br>a script or the shell.</h2>
+  <p class="section-sub">With no arguments Audio Deck opens the GUI. With <code class="inline">--list</code> or <code class="inline">--profile</code> it runs headless and returns an exit code, which is exactly what a Stream Deck button or a batch file needs. Headless switches are never blocked by the running window, so a key still works while the app is open.</p>
+
+  <div class="cli-grid">
+    <div class="code-block">
+      <div class="code-block-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Command line
+      </div>
+<pre><span class="tc"># List all profiles</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--list</span>
+
+<span class="tc"># Switch to a profile by name</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--profile</span> <span class="ts">"Gaming Setup"</span>
+
+<span class="tc"># Version, help or launch the GUI</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--version</span>
+<span class="tk">AudioDeck.exe</span> <span class="tf">--help</span>
+<span class="tk">AudioDeck.exe</span>           <span class="tc"># no args = GUI</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Stream Deck button (Advanced Launcher)
+      </div>
+<pre><span class="tc"># Application</span>
+AudioDeck.exe
+
+<span class="tc"># Arguments</span>
+<span class="tf">--profile</span> <span class="ts">"Gaming Setup"</span>
+
+<span class="tc"># One key per setup. Press it,</span>
+<span class="tc"># the default output and input</span>
+<span class="tc"># devices switch instantly.</span></pre>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Architecture -->
+<section class="section" id="architecture">
+  <div class="section-label">Architecture</div>
+  <h2 class="section-title">Clean by construction</h2>
+  <p class="section-sub">Audio Deck follows a four-layer clean architecture: UI and CLI are clients of the application layer, which orchestrates a pure domain, while infrastructure implements the domain's interfaces against each platform's audio stack (Windows Core Audio, PulseAudio/PipeWire, macOS CoreAudio) and the filesystem. Dependencies point inward and are wired by constructor injection in an explicit composition root, one for the GUI and one for the CLI. Structural tests parse the source on every run, so a layering violation fails the build rather than being caught in review.</p>
+
+  <figure class="arch-figure">
+    <svg viewBox="0 0 860 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Audio Deck clean architecture: UI and CLI depend on Application, Application depends on Domain, Infrastructure implements Domain interfaces. All dependencies point inward to a pure Domain.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7f849c"/>
+        </marker>
+      </defs>
+      <style>
+        .box { rx: 12; stroke-width: 1.5; }
+        .lbl { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 16px; fill: #cdd6f4; }
+        .sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #a6adc8; }
+        .dep { stroke: #7f849c; stroke-width: 1.6; fill: none; }
+        .deplbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #7f849c; }
+      </style>
+
+      <!-- UI -->
+      <rect class="box" x="20" y="30" width="170" height="78" fill="rgba(166,227,161,0.10)" stroke="#a6e3a1"/>
+      <text class="lbl" x="105" y="62" text-anchor="middle">UI &middot; CLI</text>
+      <text class="sub" x="105" y="84" text-anchor="middle">PySide6 + argv</text>
+
+      <!-- Application -->
+      <rect class="box" x="250" y="30" width="170" height="78" fill="rgba(137,180,250,0.10)" stroke="#89b4fa"/>
+      <text class="lbl" x="335" y="62" text-anchor="middle">Application</text>
+      <text class="sub" x="335" y="84" text-anchor="middle">use cases</text>
+
+      <!-- Domain -->
+      <rect class="box" x="480" y="30" width="170" height="78" fill="rgba(203,166,247,0.12)" stroke="#cba6f7"/>
+      <text class="lbl" x="565" y="62" text-anchor="middle">Domain</text>
+      <text class="sub" x="565" y="84" text-anchor="middle">pure, no I/O</text>
+
+      <!-- Infrastructure -->
+      <rect class="box" x="480" y="150" width="350" height="72" fill="rgba(250,179,135,0.10)" stroke="#fab387"/>
+      <text class="lbl" x="655" y="182" text-anchor="middle">Infrastructure</text>
+      <text class="sub" x="655" y="204" text-anchor="middle">pycaw &middot; pactl &middot; CoreAudio &middot; JSON store</text>
+
+      <!-- deps -->
+      <line class="dep" x1="250" y1="69" x2="190" y2="69" marker-end="url(#arr)"/>
+      <line class="dep" x1="480" y1="69" x2="420" y2="69" marker-end="url(#arr)"/>
+      <line class="dep" x1="565" y1="150" x2="565" y2="108" marker-end="url(#arr)"/>
+      <text class="deplbl" x="565" y="138" text-anchor="middle">implements</text>
+      <text class="deplbl" x="430" y="250" text-anchor="start">dependencies point inward &rarr; a pure Domain</text>
+    </svg>
+  </figure>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a class="footer-brand" href="./">
+        <img src="audiodeck-512.png" alt="Audio Deck">
+        <span>Audio Deck</span>
+      </a>
+      <nav class="footer-links">
+        <a href="download.html">Download</a>
+        <a href="https://github.com/oernster/AudioDeck">GitHub</a>
+        <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/CLI_USAGE.md">CLI Usage</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/ARCHITECTURE.md">Architecture</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/TESTING.md">Testing</a>
+        <a href="https://github.com/oernster/AudioDeck/blob/main/LICENSE">Licence</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p>A local-first audio device switcher for Windows, Linux and macOS. Open source, no cloud.</p>
+      <div class="chips">
+        <span class="chip">Python</span>
+        <span class="chip">PySide6</span>
+        <span class="chip">pycaw</span>
+        <span class="chip">pactl</span>
+        <span class="chip">CoreAudio</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
