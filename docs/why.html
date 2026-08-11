@@ -179,11 +179,12 @@
         Bluetooth headset) applies the moment it reconnects and a partial switch reports what is
         missing rather than silently half-failing.</p>
       <p>Under the surface it is a four-layer clean architecture in Python: a pure domain, an
-        application layer of use cases, infrastructure speaking to each platform's audio stack through
-        pycaw and comtypes and two thin clients (the PySide6 GUI and the CLI) wired in separate
+        application layer of use cases, infrastructure speaking to each platform's audio stack
+        (Windows Core Audio through pycaw, PulseAudio and PipeWire through pactl, macOS CoreAudio)
+        and two thin clients (the PySide6 GUI and the CLI) wired in separate
         composition roots. Structural tests parse the source on every run, so a layering
         violation fails the build instead of surviving into review.</p>
-      <p>What works now is a two-tab app that installs per-user with no administrator rights and
+      <p>What works now is a two-view app that installs per-user with no administrator rights and
         stores profiles in a local JSON file under your own AppData: no account, no cloud, no
         background service. The one thing it asks the network is whether a newer release exists,
         an anonymous daily call to GitHub's releases API that carries nothing about you or your

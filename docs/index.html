@@ -36,7 +36,7 @@
     "url": "https://ernster.dev/AudioDeck/",
     "downloadUrl": "https://github.com/oernster/AudioDeck/releases",
     "softwareHelp": "https://github.com/oernster/AudioDeck",
-    "license": "https://www.gnu.org/licenses/lgpl-3.0.html",
+    "license": ["https://www.gnu.org/licenses/gpl-3.0.html", "https://www.gnu.org/licenses/lgpl-3.0.html"],
     "image": "https://ernster.dev/AudioDeck/audiodeck-512.png",
     "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
     "author": {"@type": "Person", "name": "Oliver Ernster", "url": "https://github.com/oernster"}
@@ -513,9 +513,9 @@
 
   <div class="hero-shot fade d4">
     <div class="shot">
-      <img src="screenshots/audiodeck1.png" width="772" height="766" alt="Audio Deck Quick Switch tab: a list of saved profiles with offline devices marked, above the current default output and input devices.">
+      <img src="screenshots/audiodeck1.png" width="766" height="710" alt="Audio Deck Quick Switch view: the header tray of icon buttons above a list of saved profiles with offline devices marked, above the current default output and input devices.">
     </div>
-    <p class="shot-caption">Quick Switch: pick a profile and switch. Offline devices are marked and applied automatically when they reconnect.</p>
+    <p class="shot-caption">Quick Switch: pick a profile and press ▶️ in the header tray. Offline devices are marked and applied automatically when they reconnect.</p>
   </div>
 </section>
 
@@ -526,7 +526,7 @@
     <div class="stat"><div class="stat-value">GUI + CLI</div><div class="stat-label">Two interfaces</div></div>
     <div class="stat"><div class="stat-value">Stream Deck</div><div class="stat-label">One button per setup</div></div>
     <div class="stat"><div class="stat-value">0</div><div class="stat-label">Accounts or cloud</div></div>
-    <div class="stat"><div class="stat-value">LGPL-3.0</div><div class="stat-label">Open source</div></div>
+    <div class="stat"><div class="stat-value">GPL + LGPL</div><div class="stat-label">Open source</div></div>
   </div>
 </div>
 
@@ -551,7 +551,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       </div>
       <h3>One-click switching</h3>
-      <p>The Quick Switch tab lists every profile. Click <em>Switch to Selected Profile</em> or just double-click a profile to apply it.</p>
+      <p>The Quick Switch view lists every profile. Press ▶️ in the header tray or just double-click a profile to apply it.</p>
     </div>
 
     <div class="feat">
@@ -567,7 +567,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       </div>
       <h3>Stream Deck ready</h3>
-      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin or a one-line batch file. One press, one setup.</p>
+      <p>Map a profile to a physical key with BarRaider's Advanced Launcher plugin on Windows, and any macro deck or macro buttons that can run a command work on every OS. One press, one setup.</p>
     </div>
 
     <div class="feat">
@@ -591,7 +591,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </div>
       <h3>Live device rescan</h3>
-      <p>The device list refreshes on system device changes and periodically. <em>Refresh Devices</em> forces an immediate rescan on demand.</p>
+      <p>The device list refreshes on system device changes and periodically. The 📡 tray button forces an immediate rescan on demand.</p>
     </div>
 
     <div class="feat">
@@ -599,7 +599,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       </div>
       <h3>Local-first</h3>
-      <p>Profiles are stored as JSON under <code class="inline">%LOCALAPPDATA%</code>. Runs per user, no admin rights; nothing about you or your profiles ever leaves your machine.</p>
+      <p>Profiles are stored as JSON in your platform's per-user app-data folder. Runs per user, no admin rights; nothing about you or your profiles ever leaves your machine.</p>
     </div>
 
     <div class="feat">
@@ -608,6 +608,22 @@
       </div>
       <h3>Update check</h3>
       <p>A quiet check against GitHub's releases shortly after launch, daily and on demand from the Help menu: Download the installer, Skip This Version for good or Later. Anonymous; silent when GitHub is unreachable.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-yellow">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </div>
+      <h3>Dark and light themes</h3>
+      <p>A sun and moon toggle in the header tray restyles the whole app at a click, on every platform. Dark is the default and the choice persists between launches.</p>
+    </div>
+
+    <div class="feat">
+      <div class="feat-icon ic-teal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>
+      </div>
+      <h3>Keyboard first</h3>
+      <p>Everything is reachable without the mouse: Tab and the arrow keys walk one explicit focus ring, lists walk with Up and Down and a green ring always shows exactly where you are.</p>
     </div>
     <div class="feat feat-wide">
       <div class="feat-icon ic-pink">
@@ -628,10 +644,10 @@
     <div class="split-grid">
       <div class="split-text">
         <div class="section-label">Configuration</div>
-        <h2 class="section-title" style="margin-bottom:1.25rem;">Two tabs, that's<br>the whole app.</h2>
-        <p>Create and edit profiles on the Configuration tab. Name the profile, pick an output device and an input device from the live dropdowns, then save.</p>
+        <h2 class="section-title" style="margin-bottom:1.25rem;">Two views, one tray,<br>that's the whole app.</h2>
+        <p>Create and edit profiles on the Configuration view. The actions live as icons in the header tray and swap with the active view: new, edit, delete, save and cancel. Name the profile, pick an output device and an input device from the live dropdowns, then save.</p>
         <ul>
-          <li>New, edit and delete from the saved-profiles list.</li>
+          <li>New, edit and delete from the header tray; unavailable actions wear a red ring.</li>
           <li>Output and input chosen independently per profile.</li>
           <li>Deletions are confirmed before anything is removed.</li>
           <li>Switch over to Quick Switch and you are one click from any setup.</li>
@@ -639,9 +655,9 @@
       </div>
       <div>
         <div class="shot">
-          <img src="screenshots/audiodeck2.png" width="771" height="766" alt="Audio Deck Configuration tab: the saved-profiles list with New, Edit and Delete buttons above a profile editor showing profile name, output device and input device dropdowns.">
+          <img src="screenshots/audiodeck2.png" width="766" height="712" alt="Audio Deck Configuration view: the header tray action icons above the saved-profiles list and a profile editor showing profile name, output device and input device dropdowns.">
         </div>
-        <p class="shot-caption">Configuration: the profile editor with live output and input device dropdowns.</p>
+        <p class="shot-caption">Configuration: the tray action icons above the saved profiles and the profile editor.</p>
       </div>
     </div>
   </section>
@@ -730,7 +746,7 @@ AudioDeck.exe
       <!-- Infrastructure -->
       <rect class="box" x="480" y="150" width="350" height="72" fill="rgba(250,179,135,0.10)" stroke="#fab387"/>
       <text class="lbl" x="655" y="182" text-anchor="middle">Infrastructure</text>
-      <text class="sub" x="655" y="204" text-anchor="middle">pycaw / comtypes (Core Audio) &middot; JSON store</text>
+      <text class="sub" x="655" y="204" text-anchor="middle">pycaw &middot; pactl &middot; CoreAudio &middot; JSON store</text>
 
       <!-- deps -->
       <line class="dep" x1="250" y1="69" x2="190" y2="69" marker-end="url(#arr)"/>
@@ -747,7 +763,7 @@ AudioDeck.exe
   <section class="section" id="download">
     <div class="section-label">Get AudioDeck</div>
     <h2 class="section-title">Download AudioDeck</h2>
-    <p class="section-sub">Download the newest release with one click. Free and LGPL-3.0 with no account and no cloud; your profiles live in a local JSON file on your machine.</p>
+    <p class="section-sub">Download the newest release with one click. Free and open source (the backend under GPL-3.0, the user interface under LGPL-3.0) with no account and no cloud; your profiles live in a local JSON file on your machine.</p>
     <span class="dl-version" id="dl-version">Latest release</span>
     <div class="downloads">
       <div class="dl-card">
