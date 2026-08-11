@@ -171,9 +171,12 @@ class MainWindow(QMainWindow):
         for position, buttons in enumerate(self._view_action_buttons):
             for button in buttons:
                 button.setVisible(position == index)
-        # Only refresh configuration when switching to it; the actuation view
-        # refreshes when profiles are saved.
-        if index == 1:
+        # Refresh whichever view is being entered: the profile store can
+        # have changed in the OTHER view (a save, an edit, a delete) and
+        # a stale list would show a deleted profile as switchable.
+        if index == 0:
+            self._actuation_view.refresh()
+        else:
             self._configuration_view.refresh()
 
     def _mark_active_view_button(self, index: int) -> None:
