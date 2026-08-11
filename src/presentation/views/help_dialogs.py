@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QFontMetricsF, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -160,27 +160,57 @@ def show_documentation(parent: QWidget) -> None:
     dialog.exec()
 
 
-def _fit_dialog_width_to_text(
-    dialog: QDialog, browser: QTextBrowser, layout: QVBoxLayout
-) -> None:
-    """Size a dialog to its pre-wrapped plain text instead of a guessed width.
+def _reflow_hard_wrapped(text: str) -> str:
+    """Join a hard-wrapped text's continuation lines so paragraphs can wrap.
 
-    Must run after the text is set, and the browser must be POLISHED first:
-    the app stylesheet's font only lands on the widget at polish time, so an
-    unpolished document measures its ideal width in the default font and
-    undersizes the dialog by the difference. The chrome is the scrollbar,
-    the frame and the layout margins; the height stays a constant.
+    The GNU licence texts arrive wrapped for a 78-column page: a paragraph
+    opens with an indented line and continues at column 0. Shown as-is in a
+    dialog fitted to the WIDEST line, the shorter lines leave a ragged
+    blank right edge. Joining each column-0 continuation onto its
+    paragraph lets the browser word-wrap the prose to the dialog's own
+    width, while any line that starts with whitespace (a centred heading,
+    a clause label, the copyright block) keeps its own line and layout.
+    The text content is unchanged; only line breaks inside paragraphs go.
+    """
+    out: list[str] = []
+    for line in text.splitlines():
+        if line and not line[0].isspace() and out and out[-1]:
+            out[-1] = out[-1] + " " + line
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
+def _fit_dialog_width_to_text(
+    dialog: QDialog, browser: QTextBrowser, layout: QVBoxLayout, original: str
+) -> None:
+    """Size a dialog to the widest line of the ORIGINAL hard-wrapped text.
+
+    The browser shows the reflowed text, but the width comes from the
+    original 78-column layout: that keeps the centred headings (centred by
+    leading spaces for that page width) visually centred, and the reflowed
+    paragraphs then fill the same width edge to edge. The browser must be
+    POLISHED before measuring: the app stylesheet's font only lands on the
+    widget at polish time, so an unpolished measurement uses the default
+    font and undersizes the dialog. The cap keeps the dialog on the screen;
+    the height stays a constant.
     """
     browser.ensurePolished()
     browser.document().setDefaultFont(browser.font())
+    metrics = QFontMetricsF(browser.font())
+    widest = max(
+        (metrics.horizontalAdvance(line) for line in original.splitlines()),
+        default=0.0,
+    )
     chrome = (
         browser.verticalScrollBar().sizeHint().width()
         + 2 * browser.frameWidth()
+        + 2 * math.ceil(browser.document().documentMargin())
         + layout.contentsMargins().left()
         + layout.contentsMargins().right()
     )
     cap = dialog.screen().availableGeometry().width() - LICENCE_SCREEN_MARGIN_PX
-    width = min(math.ceil(browser.document().idealWidth()) + chrome, cap)
+    width = min(math.ceil(widest) + chrome, cap)
     dialog.setMinimumSize(width, LICENCE_HEIGHT_PX)
     dialog.resize(width, LICENCE_HEIGHT_PX)
 
@@ -199,10 +229,9 @@ def _show_licence_file(parent: QWidget, file_name: str, title: str) -> None:
     layout = QVBoxLayout(dialog)
 
     text_browser = QTextBrowser()
-    text_browser.setLineWrapMode(QTextBrowser.LineWrapMode.NoWrap)
-    text_browser.setPlainText(licence_content)
+    text_browser.setPlainText(_reflow_hard_wrapped(licence_content))
     layout.addWidget(text_browser)
-    _fit_dialog_width_to_text(dialog, text_browser, layout)
+    _fit_dialog_width_to_text(dialog, text_browser, layout, licence_content)
     AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
