@@ -93,6 +93,7 @@ class InstallerWindow(QWidget):
         """
         super().__init__()
         self._dark = True
+        self._started = False
         self._preselect = preselect
         self._worker: Optional[InstallerWorker] = None
         self._state = InstallerState(
@@ -135,8 +136,23 @@ class InstallerWindow(QWidget):
         ]
 
     def showEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        """Trigger any preselected operation once the window is shown."""
+        """Focus the natural action, then trigger any preselected operation.
+
+        Qt's default hands focus to the first widget in tab order, which is
+        the Licence button in the header; the natural first choice is the
+        primary operation (Install, Update, Repair), so the ring starts
+        there instead.
+        """
         super().showEvent(event)
+        if not self._started:
+            self._started = True
+            primary = self._left_button or self._right_button
+            if (
+                primary is not None
+                and primary.isEnabled()
+                and primary.isVisibleTo(self)
+            ):
+                primary.setFocus(Qt.FocusReason.TabFocusReason)
         if self._preselect is not None:
             preselect, self._preselect = self._preselect, None
             if preselect in self._state.allowed_operations():
