@@ -162,12 +162,14 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
     outline: none) and the tray icon rules, all parameterised so both
     themes are the same sheet with different colours.
 
-    One refinement on the three-state model: a REGION rings on focus only,
-    never on hover. A control is pointed AT, so a ring under the pointer
-    marks the thing about to be pressed; a region is pointed INTO, so the
-    pointer rests inside it for as long as the view is open and the ring
-    reports the mouse position rather than a target. The profile list is
-    the region here; its items still respond to selection as before.
+    One refinement on the three-state model: a REGION gets no ring at all.
+    A control is pointed AT, so a ring round it marks the thing about to be
+    pressed; a region is pointed INTO, so a ring round the whole of it
+    reports where the pointer or the caret happens to be rather than a
+    target. Clicking the empty space below the profiles is the clearest
+    case: it rang the entire list while selecting nothing. The profile list
+    is the region here, so it draws no ring on hover, on click or on
+    keyboard focus; its items respond to selection exactly as before.
     """
     return f"""
         * {{
@@ -204,10 +206,9 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
         QComboBox:enabled:hover, QComboBox:enabled:focus {{
             border-color: {tokens["ring"]};
         }}
-        /* A region rings on FOCUS only, never on hover: see the docstring. */
-        QListWidget:enabled:focus {{
-            border-color: {tokens["ring"]};
-        }}
+        /* The profile list draws NO ring, in any state: see the docstring.
+           It keeps the transparent border above so its geometry matches the
+           other controls and the native sunken frame stays suppressed. */
         QLineEdit:disabled, QComboBox:disabled, QListWidget:disabled {{
             border: 2px solid {tokens["danger"]};
             background-color: {tokens["surface"]};

@@ -1,6 +1,6 @@
 """Structural tests keeping the focus ring on controls, never on regions.
 
-Two faults are scanned for, both in the stylesheet sources.
+Three faults are scanned for, all in the stylesheet sources.
 
 A ring selector that names a CONTAINER (or the universal selector) reaches
 every pane in the app, because a Qt QSS class selector matches every
@@ -10,12 +10,17 @@ and label there is.
 A `:hover` ring on a REGION follows the mouse rather than marking a target.
 A control is pointed AT, so a ring under the pointer says what is about to
 be pressed; a region is pointed INTO, so the pointer rests inside it for as
-long as the view is open. That was a real defect: hovering anywhere over the
-profile list drew a ring round the whole list.
+long as the view is open.
+
+ANY ring on an ITEM VIEW, hovered or focused, is wrong. Both were a real
+defect: pointing at the profile list ringed the whole list. So did
+clicking the empty space below the last profile, which ringed everything
+while selecting nothing. An item view needs no ring, because its current
+item already shows where the user is.
 
 An object name excuses the first fault, because it proves the rule was aimed
-at one widget on purpose. It never excuses the second, since scoping a hover
-rule to one named list changes nothing about where the pointer sits.
+at one widget on purpose. It excuses neither of the others, since scoping a
+rule to one named list changes nothing about how that list behaves.
 
 The scan is static on purpose. An offscreen pixel diff cannot settle what a
 focus ring paints: a focused QPushButton diffs to zero changed pixels under
@@ -43,9 +48,28 @@ CONTAINER_SELECTORS = frozenset(
     }
 )
 
-# Widgets the pointer rests INSIDE. Each may ring on focus, since each is one
-# stop on the keyboard ring; none of them may ring on hover.
-REGION_SELECTORS = frozenset(
+# An ITEM VIEW draws no ring in ANY state. Its current item already carries
+# the indication: focusing a list paints the current row without a single
+# stylesheet rule, then moving with the arrows selects. A rectangle round the
+# whole view adds nothing and fires on a click into the empty space below the
+# items, ringing everything while selecting nothing.
+ITEM_VIEW_SELECTORS = frozenset(
+    {
+        "QAbstractItemView",
+        "QListView",
+        "QListWidget",
+        "QTableView",
+        "QTableWidget",
+        "QTreeView",
+        "QTreeWidget",
+        "QColumnView",
+    }
+)
+
+# Any other widget the pointer rests INSIDE. A scrolling region with no items
+# has nothing but a ring to show focus with, so it keeps the focus half and
+# loses only hover.
+REGION_SELECTORS = ITEM_VIEW_SELECTORS | frozenset(
     {
         "*",
         "QWidget",
@@ -54,13 +78,6 @@ REGION_SELECTORS = frozenset(
         "QStackedWidget",
         "QScrollArea",
         "QAbstractScrollArea",
-        "QAbstractItemView",
-        "QListView",
-        "QListWidget",
-        "QTableView",
-        "QTableWidget",
-        "QTreeView",
-        "QTreeWidget",
         "QTextBrowser",
         "QTextEdit",
         "QPlainTextEdit",
@@ -127,8 +144,17 @@ def _selector_parts(selector: str, state: str):
 
 
 def _base_names(part: str):
+    """Yield (class, token) for each element of a selector.
+
+    A subcontrol (``::indicator``, ``::item``) is skipped: it is a control
+    drawn inside the view rather than the view itself, so it rings like any
+    other control.
+    """
     for token in re.split(r"[\s>]+", part):
-        yield re.split(r"[:#\[]", token.strip())[0], token.strip()
+        token = token.strip()
+        if "::" in token:
+            continue
+        yield re.split(r"[:#\[]", token)[0], token
 
 
 def container_ring_offences(text: str, where: str) -> list[str]:
@@ -164,6 +190,22 @@ def region_hover_offences(text: str, where: str) -> list[str]:
     return found
 
 
+def item_view_ring_offences(text: str, where: str) -> list[str]:
+    """Any ring on an item view, hovered or focused, in one source."""
+    found = []
+    normalised = _normalise(text)
+    for match in _BLOCK.finditer(normalised):
+        if not _paints_a_ring(match.group(2)):
+            continue
+        line = normalised.count("\n", 0, match.start(2)) + 1
+        for state in (":hover", ":focus"):
+            for part in _selector_parts(match.group(1), state):
+                for base, _token in _base_names(part):
+                    if base in ITEM_VIEW_SELECTORS:
+                        found.append(f"{where}:{line}: {part}")
+    return found
+
+
 def _stylesheet_sources():
     for root in STYLESHEET_ROOTS:
         for path in sorted(root.rglob("*.py")):
@@ -190,6 +232,26 @@ def test_no_region_rings_on_hover() -> None:
             region_hover_offences(text, str(path.relative_to(PROJECT_ROOT)))
         )
     assert not offences, "regions ringing on hover:\n" + "\n".join(offences)
+
+
+def test_no_item_view_rings_in_any_state() -> None:
+    """No list, table or tree draws a rectangle round itself, ever."""
+    offences = []
+    for path, text in _stylesheet_sources():
+        offences.extend(
+            item_view_ring_offences(text, str(path.relative_to(PROJECT_ROOT)))
+        )
+    assert not offences, "item views drawing a ring:\n" + "\n".join(offences)
+
+
+def test_the_item_view_guard_bites() -> None:
+    """A planted item-view ring is reported on hover and on focus alike."""
+    hovered = 'S = f"""\nQListWidget:enabled:hover {{ border-color: {ring}; }}\n"""'
+    assert item_view_ring_offences(hovered, "hovered")
+    focused = 'S = f"""\nQListWidget:enabled:focus {{ border-color: {ring}; }}\n"""'
+    assert item_view_ring_offences(focused, "focused")
+    other = 'S = f"""\nQPushButton:enabled:focus {{ border-color: {ring}; }}\n"""'
+    assert not item_view_ring_offences(other, "other")
 
 
 def test_the_container_guard_bites() -> None:
