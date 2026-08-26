@@ -161,6 +161,13 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
     focus indicator, so the native dotted rectangle is suppressed with
     outline: none) and the tray icon rules, all parameterised so both
     themes are the same sheet with different colours.
+
+    One refinement on the three-state model: a REGION rings on focus only,
+    never on hover. A control is pointed AT, so a ring under the pointer
+    marks the thing about to be pressed; a region is pointed INTO, so the
+    pointer rests inside it for as long as the view is open and the ring
+    reports the mouse position rather than a target. The profile list is
+    the region here; its items still respond to selection as before.
     """
     return f"""
         * {{
@@ -194,8 +201,11 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
             border-radius: 0;
         }}
         QLineEdit:enabled:hover, QLineEdit:enabled:focus,
-        QComboBox:enabled:hover, QComboBox:enabled:focus,
-        QListWidget:enabled:hover, QListWidget:enabled:focus {{
+        QComboBox:enabled:hover, QComboBox:enabled:focus {{
+            border-color: {tokens["ring"]};
+        }}
+        /* A region rings on FOCUS only, never on hover: see the docstring. */
+        QListWidget:enabled:focus {{
             border-color: {tokens["ring"]};
         }}
         QLineEdit:disabled, QComboBox:disabled, QListWidget:disabled {{
