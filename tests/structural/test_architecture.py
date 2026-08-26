@@ -15,6 +15,11 @@ DOMAIN = SRC / "domain"
 APPLICATION = SRC / "application"
 PRESENTATION = SRC / "presentation"
 CLI = SRC / "cli"
+INSTALLER = PROJECT_ROOT / "installer"
+
+# Delivery scripts are exempt from the size rule wherever they live: they are
+# linear recipes read top to bottom, so splitting them costs more than it buys.
+DELIVERY_SCRIPTS = frozenset({"build_payload.py"})
 
 # The only modules permitted to name infrastructure concretes. Everything else
 # receives its dependencies through a constructor. Two entries because the GUI
@@ -164,11 +169,22 @@ def test_no_module_level_service_singletons():
 def _measured_modules() -> list[Path]:
     """Return every module the size rule applies to.
 
-    The application package and the tests. Delivery scripts at the repo root
-    are deliberately out of scope: they are linear recipes of flags and steps,
-    where splitting a sequence across modules costs more than it saves.
+    The application package, the bespoke installer and the tests. Delivery
+    scripts are deliberately out of scope: they are linear recipes of flags
+    and steps, where splitting a sequence across modules costs more than it
+    saves. That covers the scripts at the repo root and the installer's own
+    payload builder, which is one of them by nature rather than by location.
+
+    The installer was omitted here until its window reached 422 lines with
+    nothing reporting it, while TECH_DEBT.md described it as in scope. A rule
+    that names a file and never measures it is not a rule.
     """
-    return sorted(SRC.rglob("*.py")) + sorted(TESTS.rglob("*.py"))
+    installer_modules = [
+        path
+        for path in sorted(INSTALLER.rglob("*.py"))
+        if path.name not in DELIVERY_SCRIPTS
+    ]
+    return sorted(SRC.rglob("*.py")) + installer_modules + sorted(TESTS.rglob("*.py"))
 
 
 def test_no_module_exceeds_the_line_limit():
