@@ -24,6 +24,8 @@ suite rather than left to convention.
 | Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually |
 | Only one GUI instance runs per user session | Two windows would race over the same profiles file | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py` |
 | Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
+| No module exceeds 400 lines; none sits in the band just beneath it | Size is a structural property: unmeasured, a view reaches 600 lines and nothing reports it | `tests/structural/test_architecture.py`, measuring `src`, `installer` and `tests`; the delivery scripts are exempt by nature |
+| A focus ring marks a control, never the container holding it or an item view | A ring says "this is what you are about to act on"; drawn round a pane it reports where the pointer is instead, while a click into the empty space below a list outlines everything and selects nothing | `tests/structural/test_focus_rings.py`, scanning the stylesheet sources |
 
 The test suite targets 100% coverage measured with `pytest -v --cov`, using real
 implementations where safe and small hand-written fakes at each platform

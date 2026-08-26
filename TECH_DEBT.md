@@ -2,7 +2,7 @@
 
 A standing reference to the project's outstanding technical debt. It records what is still open, weighs whether each item is worth doing and gives the rationale. Every item is a behaviour-preserving internal concern: nothing here proposes reverting a feature or changing any UI or UX behaviour. Scope is the whole repository (the `src` package, the CLI, the bespoke installer, the delivery scripts and the GitHub Pages site under `docs/`) read against `ARCHITECTURE.md`, `TESTING.md` and `tests/structural/test_architecture.py`.
 
-This is a small, tidy repository: roughly 14,000 lines of Python across the package, the tests, the installer and the delivery scripts, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist and the module size rule in two tiers. The largest in-scope module is `installer/ui.py` at 373 lines, comfortably under the cap and clear of the danger band.
+This is a small, tidy repository: roughly 14,700 lines of Python across the package, the tests, the installer and the delivery scripts, a 100% gate with a short and well-argued omit list, plus a structural suite covering all four layer directions, a two-entry composition-root whitelist, the module size rule in two tiers and the focus-ring rules. The largest in-scope module is `tests/presentation/test_actuation_presenter.py` at 359 lines; the largest source module is `installer/ui.py` at 344, both clear of the cap and of the danger band.
 
 **Nothing is currently open.** What follows is the standing set of judgements about what looks like debt here and is not, so the same questions do not get reopened. A new item is added above this line when one is found.
 
@@ -15,7 +15,7 @@ This is a small, tidy repository: roughly 14,000 lines of Python across the pack
 - The `examples/streamdeck_profiles/*.bat` files and `launch_audio_deck.bat`. These are the Stream Deck integration surface: the whole point of the CLI is that a Stream Deck button runs a `.bat`. They are examples for users, not code.
 - `src/presentation/workers/background_runner.py` at 23 lines with a single broad handler. A thread wrapper whose job is to not let a worker exception kill the app.
 - The broad handlers in `src/infrastructure/windows/`, `src/infrastructure/linux/` and `src/infrastructure/macos/`. Each platform's audio surface fails in many shapes; a device that vanishes mid-enumeration during a change is ordinary rather than exceptional, so narrowing them would mean naming every shape COM, a subprocess or ctypes can raise and would take the application down when it missed one. Each states what it degrades to, in the house style of `installer/worker.py:49`. If a `BLE` rule is ever added to `[tool.ruff.lint]`, these want `# noqa: BLE001` rather than rewriting.
-- The `docs/` site being two hand-written pages (`index.html`, `why.html`) with no generator. At that size a generator would cost more than it saves.
+- The `docs/` site being four hand-written pages (`index.html`, `features.html`, `download.html`, `why.html`) over one shared stylesheet, with no generator. At that size a generator would cost more than it saves.
 - `AudioDeck.spec` at root is a PyInstaller artefact and is untracked.
 
 ## Not debt (do not "fix" these)
@@ -27,4 +27,6 @@ These look like candidates but are correct as they stand; changing them would re
 - **`test_cli_infrastructure_imports_stay_in_its_composition_root()` and `test_presentation_never_imports_the_cli()`.** Two application entry points (GUI and CLI) sharing one core, with the boundary between them held by AST scan rather than by convention. Exactly right, plus unusual enough to be worth naming.
 - **The two-entry `COMPOSITION_ROOTS` whitelist** (`main.py`, `cli_handler.py`). A dual-entry-point application legitimately has two roots; naming both explicitly is what keeps the exemption honest.
 - **`VERSION` at root.** Single source of truth, with no hardcoded version string anywhere else in the tree.
+- **The size rule measuring the installer.** It did not, until `installer/ui.py` reached 422 lines with nothing reporting it while this document described the installer as in scope. A rule that names a file and never measures it is not a rule, so the scope is now stated in the test itself and the exemption is by nature (delivery scripts) rather than by directory.
+- **The focus-ring rules living in a structural test rather than in review.** A ring drawn round a pane or a list reads as a defect only once someone notices it on screen, which is how both instances were found. A stylesheet scan settles it before the build finishes; two of its six checks plant a violation so the guard is known to bite.
 - **The domain being pure entities, value objects, interfaces and exceptions with no I/O.** Small, correct and enforced.

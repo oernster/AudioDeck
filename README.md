@@ -100,6 +100,10 @@ On Windows, two options, both per user and neither needing admin rights.
 Running the same setup again on an installed copy offers Update, Reinstall,
 Repair and Uninstall, chosen from the version it finds.
 
+Windows locks the files of a running program, so if Audio Deck is open the
+setup program says so and offers to close it before continuing. Declining
+leaves the installation untouched.
+
 ### Portable (Windows)
 
 1. Download the standalone `AudioDeck.exe` from the releases page.
@@ -282,6 +286,13 @@ editing the same profiles file would conflict. On Windows, launching it again
 brings the window you already have to the front; on Linux and macOS the second
 launch exits quietly. Command-line switching is exempt, so `--profile` and
 `--list` still run as often as you like.
+
+### The installer says Audio Deck is running
+
+Windows will not let the setup program replace the files of a program that is
+open. Let it close Audio Deck for you, else close it yourself and run the setup
+again. Remember the tray icon: closing the window minimises Audio Deck there
+rather than exiting it.
 
 ### A Stream Deck button does nothing
 

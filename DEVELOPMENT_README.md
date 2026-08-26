@@ -90,7 +90,7 @@ AudioDeck/
     presentation/    PySide6 GUI (views, presenters, notifiers, workers)
     cli/             Command-line interface
     main.py          Entry point and GUI composition root
-  tests/             Mirrors src/, plus structural boundary tests
+  tests/             Mirrors src/, plus the installer tests and the structural scans
   installer/         The bespoke themed setup application
   assets/            Generated icon set (one master image)
   docs/              GitHub Pages site and screenshots
@@ -213,8 +213,12 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
 5. Build with `python buildexe.py` then `python buildinstaller.py`.
 6. Smoke-test both artefacts: GUI mode, launching twice (the second should raise
    the first window), `--list`, `--profile` and a Stream Deck button.
-7. Refresh `docs/screenshots/` if the interface changed.
-8. Assemble the release with `AudioDeckSetup.exe`, the portable `AudioDeck.exe`,
+7. Run the setup program over a copy that is already running. It should offer to
+   close Audio Deck, wait for it to go and then install. This path has no
+   automated coverage, because it needs a real running program and a real user;
+   it is also the path that fails on locked files when it is wrong.
+8. Refresh `docs/screenshots/` if the interface changed.
+9. Assemble the release with `AudioDeckSetup.exe`, the portable `AudioDeck.exe`,
    `README.md`, `CLI_USAGE.md`, `examples/streamdeck_profiles/` and the licence
    files (`LICENSE`, `LICENSE-GPL-3.0.txt`, `LICENSE-LGPL-3.0.txt`).
 

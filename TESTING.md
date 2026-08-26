@@ -46,6 +46,11 @@ earlier. The fix was to remove the dead branch, not to write a test for it.
 
 ## What is measured
 
+The coverage gate measures `src/` only. The installer has its own tests under
+`tests/installer/` and is held to the structural rules; it sits outside the
+percentage gate: most of it is Qt window construction, judged by running the
+setup program rather than by brittle tests.
+
 Everything under `src/` except the exclusions below, which is the domain, the
 application layer, the repositories (profiles, devices and the update
 settings), the update check's GitHub adapter, the CLI, the presenters, the
@@ -101,7 +106,10 @@ tests/
   presentation/     Presenters, background worker, device-change notifiers,
                     the keyboard navigator, the auto-scroller and glyph metrics
   cli/              Argument parsing and the CLI handler
-  structural/       AST scans enforcing the layer boundaries
+  installer/        The setup program's running-app detection and its
+                    locked-file reporting
+  structural/       Source scans enforcing the layer boundaries, the module
+                    size rule and the focus-ring rules
   test_version.py   The VERSION file reader
 ```
 
@@ -121,19 +129,35 @@ separate tests cover the cross-thread wiring. If a new module runs work on a
 QThread, expect the same split.
 
 **Structural tests guard the architecture.** `tests/structural/` parses the
-source with `ast` so a layering violation fails the build rather than being
-caught in review. Nine checks currently run: the domain and application
-boundaries, presentation not importing infrastructure or the CLI, CLI
-infrastructure imports staying inside its composition root, the composition-root
-whitelist, a scan for module-level service singletons, the 400-line module cap
-and the danger band beneath it.
+source so a violation fails the build rather than being caught in review.
+Fifteen checks currently run, in two files.
+
+`test_architecture.py` holds nine, scanning imports with `ast`: the domain and
+application boundaries, presentation not importing infrastructure or the CLI,
+CLI infrastructure imports staying inside its composition root, the
+composition-root whitelist, a scan for module-level service singletons, the
+400-line module cap and the danger band beneath it.
 
 The last two are the module size rule in its two tiers. The cap is 400 lines and
 the band is the top 5% of it, so a file between 381 and 399 fails and has to come
 down to 350 rather than being trimmed by a line. The band width is derived from
 the cap in the test rather than written as a second literal, so the two numbers
-cannot drift apart. Delivery scripts at the repo root are out of scope, being
-linear recipes where splitting costs more than it saves.
+cannot drift apart. The rule measures `src`, `installer` and `tests`. Delivery
+scripts are exempt wherever they live, being linear recipes where splitting
+costs more than it saves: that covers the scripts at the repo root and
+`installer/build_payload.py`, which is one of them by nature rather than by
+location. The installer was outside this measurement until its window reached
+422 lines with nothing reporting it, which is why the scope is now named
+explicitly.
+
+`test_focus_rings.py` holds six, scanning the stylesheet sources rather than
+imports. No ring selector may reach a container, no region may ring under the
+mouse and no item view may ring in any state, because a list already shows the
+user where they are through its current item. Four checks assert the rules; the
+other two plant a violation of each kind and assert it is reported, so the guard
+cannot quietly rot into a no-op. The scan is static on purpose: an offscreen
+pixel diff cannot settle what a focus ring paints, since a focused button diffs
+to zero changed pixels under every style tried.
 
 If you add a new entry point, add it to `COMPOSITION_ROOTS` in
 `tests/structural/test_architecture.py` and say why in ARCHITECTURE.md. The
