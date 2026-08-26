@@ -35,6 +35,66 @@ _PCT_DONE = 100
 _FULL_DEPLOY = frozenset({Operation.INSTALL, Operation.UPGRADE, Operation.REINSTALL})
 
 
+class AppIsRunningError(RuntimeError):
+    """Raised when a locked file shows the application is still running."""
+
+
+def _locked_file_message() -> str:
+    """Return a sentence the user can act on, rather than an errno and a path."""
+    return (
+        f"{c.APP_DISPLAY_NAME} is still running, so its files could not be "
+        f"replaced. Close {c.APP_DISPLAY_NAME}, including its tray icon, then "
+        "run this installer again."
+    )
+
+
+def extract_all(payload: Path, target: Path) -> None:
+    """Extract the whole payload, reporting a locked file in plain words.
+
+    Windows holds a running executable with an image mapping that denies
+    write sharing, so this raises PermissionError on the first locked file.
+    The setup program asks the user to close the app before it gets here, so
+    reaching this means the app was started in between or the running check
+    could not run at all. Either way an errno and a path tell the user
+    nothing; the progress bar stopping at its first step is what made
+    this look like a hang.
+
+    Args:
+        payload: The payload zip.
+        target: The install directory.
+
+    Raises:
+        AppIsRunningError: A file could not be written.
+    """
+    try:
+        with zipfile.ZipFile(payload, "r") as archive:
+            archive.extractall(target)
+    except PermissionError as error:
+        raise AppIsRunningError(_locked_file_message()) from error
+
+
+def extract_damaged(payload: Path, target: Path, manifest: dict) -> None:
+    """Restore only the files that are missing or fail their hash.
+
+    Args:
+        payload: The payload zip.
+        target: The install directory.
+        manifest: The payload manifest, naming each file and its hash.
+
+    Raises:
+        AppIsRunningError: A file could not be written.
+    """
+    try:
+        with zipfile.ZipFile(payload, "r") as archive:
+            for entry in manifest["files"]:
+                name = entry["name"]
+                installed = target / name
+                if not installed.exists() or _sha256(installed) != entry["sha256"]:
+                    archive.extract(name, target)
+    except PermissionError as error:
+        raise AppIsRunningError(_locked_file_message()) from error
+
+
 def _payload_zip() -> Path:
     """Return the bundled payload zip path."""
     return c.resource_path(f"installer/{c.PAYLOAD_DIR_NAME}/{c.PAYLOAD_ZIP_NAME}")
@@ -106,8 +166,7 @@ def _deploy(
     target.mkdir(parents=True, exist_ok=True)
 
     progress(_PCT_START, "Extracting files...")
-    with zipfile.ZipFile(_payload_zip(), "r") as archive:
-        archive.extractall(target)
+    extract_all(_payload_zip(), target)
     progress(_PCT_EXTRACTED, "Files extracted.")
 
     return _finalise(target, manifest, create_desktop, create_start_menu, progress)
@@ -124,12 +183,7 @@ def _repair(
 
     progress(_PCT_START, "Verifying files...")
     target.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(_payload_zip(), "r") as archive:
-        for entry in manifest["files"]:
-            name = entry["name"]
-            installed = target / name
-            if not installed.exists() or _sha256(installed) != entry["sha256"]:
-                archive.extract(name, target)
+    extract_damaged(_payload_zip(), target, manifest)
     progress(_PCT_EXTRACTED, "Files verified.")
 
     return _finalise(target, manifest, create_desktop, create_start_menu, progress)

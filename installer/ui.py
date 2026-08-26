@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from installer import constants as c
-from installer import ops, registry
+from installer import ops, registry, running_app
 from installer.state import InstallerState, Operation
 from installer.theme import stylesheet
 from installer.worker import InstallerWorker
@@ -304,7 +304,56 @@ class InstallerWindow(QWidget):
             )
             if reply != QMessageBox.Yes:
                 return
+        if not self._clear_running_app():
+            return
         self._start(operation)
+
+    def _clear_running_app(self) -> bool:
+        """Make sure the app is not running, offering to close it.
+
+        Windows locks a running executable, so deploying over it fails on the
+        first file with a bare permission error naming a path. Asking first
+        turns that into a choice the user can act on.
+
+        Returns:
+            True when the operation may proceed, False when the user declined
+            or the app would not close.
+        """
+        if not running_app.is_running():
+            return True
+
+        reply = QMessageBox.question(
+            self,
+            f"{c.APP_DISPLAY_NAME} is running",
+            f"{c.APP_DISPLAY_NAME} is open; its files cannot be replaced "
+            "while it is.\n\nClose it now and continue?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if reply != QMessageBox.Yes:
+            self._progress_text.setText(
+                f"Close {c.APP_DISPLAY_NAME} first, then try again."
+            )
+            return False
+
+        self._progress_text.setText(f"Closing {c.APP_DISPLAY_NAME}...")
+        # The confirm below blocks this thread while it polls, so paint the
+        # message first: a frozen window with the old text is what the user
+        # read as a hang in the first place.
+        app = QApplication.instance()
+        if app is not None:
+            app.processEvents()
+        if running_app.close_and_confirm():
+            return True
+
+        QMessageBox.warning(
+            self,
+            f"{c.APP_DISPLAY_NAME} is still running",
+            f"{c.APP_DISPLAY_NAME} could not be closed. Close it yourself, "
+            "including its tray icon, then run this installer again.",
+        )
+        self._progress_text.setText(f"{c.APP_DISPLAY_NAME} could not be closed.")
+        return False
 
     def _start(self, operation: Operation) -> None:
         """Begin the chosen operation on the worker thread."""

@@ -93,6 +93,14 @@ BYTES_PER_KB = 1024
 FILE_RETRY_COUNT = 20
 FILE_RETRY_DELAY_SECONDS = 0.15
 
+# Bounded poll waiting for a terminated app to actually disappear. A terminate
+# returning success means the request was accepted, not that the process has
+# gone, so the wait is confirmed rather than assumed. Three seconds in total,
+# which is far longer than a forced terminate needs and short enough that a
+# refusal is reported promptly rather than looking like another hang.
+CLOSE_POLL_COUNT = 30
+CLOSE_POLL_DELAY_SECONDS = 0.1
+
 
 def install_dir() -> Path:
     """Return the per-user install directory.
