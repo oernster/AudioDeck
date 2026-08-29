@@ -1,7 +1,7 @@
 """Entry point for the Audio Deck setup executable.
 
-Shows the state-driven installer window. When invoked with ``--uninstall`` (the
-command registered in Add or Remove Programs) it preselects the uninstall flow.
+Shows the setup window. When invoked with ``--uninstall`` (the command
+registered in Add or Remove Programs) it opens on the removal screen.
 """
 
 from __future__ import annotations
@@ -15,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from installer import constants as c  # noqa: E402
-from installer.state import Operation  # noqa: E402
 from installer.theme import stylesheet  # noqa: E402
 from installer.ui import InstallerWindow  # noqa: E402
 
@@ -26,13 +25,13 @@ def main() -> int:
     Returns:
         Process exit code.
     """
-    preselect = Operation.UNINSTALL if c.UNINSTALL_FLAG in sys.argv else None
+    uninstalling = c.UNINSTALL_FLAG in sys.argv
 
     app = QApplication(sys.argv)
     app.setApplicationName(f"{c.APP_DISPLAY_NAME} Setup")
     app.setStyleSheet(stylesheet(dark=True))
 
-    window = InstallerWindow(preselect=preselect)
+    window = InstallerWindow(uninstalling=uninstalling)
     window.show()
     window.raise_()
     window.activateWindow()

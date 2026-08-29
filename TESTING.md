@@ -107,8 +107,8 @@ tests/
                     the keyboard navigator, the auto-scroller, the donate
                     button and the header's fit to the window
   cli/              Argument parsing and the CLI handler
-  installer/        The setup program's running-app detection and its
-                    locked-file reporting
+  installer/        The setup program's screen model, its running-app
+                    detection and its locked-file reporting
   structural/       Source scans enforcing the layer boundaries, the module
                     size rule, the focus-ring rules and the icon contract
   test_version.py   The VERSION file reader

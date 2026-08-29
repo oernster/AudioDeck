@@ -7,30 +7,32 @@ from __future__ import annotations
 
 import winreg
 from pathlib import Path
-from typing import Optional
 
 from installer import constants as c
-from installer.state import InstalledInfo
 
 
-def read_installed_info() -> Optional[InstalledInfo]:
-    """Read the existing installation details from the registry, if any.
+def read_registered() -> dict[str, str]:
+    """Read what the Apps list records about an existing installation.
+
+    A record naming a directory the application is no longer in describes an
+    install that is not there, so it is reported as nothing rather than as a
+    version setup could repair.
 
     Returns:
-        InstalledInfo when a valid install is found, otherwise None.
+        The recorded version and location, empty when there is no valid entry.
     """
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, c.UNINSTALL_REG_KEY) as key:
             version = _read_str(key, "DisplayVersion")
             location = _read_str(key, "InstallLocation")
     except FileNotFoundError:
-        return None
+        return {}
 
     if not version or not location:
-        return None
+        return {}
     if not (Path(location) / c.APP_EXE_NAME).exists():
-        return None
-    return InstalledInfo(version=version, location=location)
+        return {}
+    return {"DisplayVersion": version, "InstallLocation": location}
 
 
 def _read_str(key: "winreg.HKEYType", name: str) -> str:

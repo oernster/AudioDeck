@@ -155,12 +155,29 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
 ## The setup program
 
 `installer/` is a PySide6 application in its own right, built to the house
-setup-program shape rather than to the application's: `constants.py` holds the
+setup-program shape rather than to the application's. `constants.py` holds the
 identity, the paths and every colour and size; `theme.py` turns those into one
 stylesheet per appearance; `shell.py` holds the furniture a screen is drawn
-from (the header, the hairline, a styled label, a bare column);
-`appearance.py` switches between the two palettes and re-faces the toggle;
-`ui.py` is the window and `ops.py` the work it drives.
+from (the header, the hairline, a styled label, a bare column, one option with
+its hint); `appearance.py` switches between the two palettes and re-faces the
+toggle. `route.py` decides which conversation this run is having and
+`wording.py` says everything the program says, both of them free of Qt so every
+state is a test rather than a screenshot; `existing.py` reads the machine once
+before anything is drawn; `screens.py` lays each screen out and `footer.py`
+owns what a footer is; `ui.py` is the window, `performing.py` the work half
+mixed into it, `worker.py` the thread that work runs on, `ops.py` the work
+itself and `steplog.py` the record of what happened.
+
+**A screen, never a disabled control.** One reading of the machine picks the
+route; the route then decides the screen, its heading, the options on it and the
+buttons under it, so those four cannot drift apart. An operation moves to the
+PROGRESS screen rather than greying the options where they stand: the choices
+are not on screen to be disabled, so there is no row of greyed boxes and no red
+rectangles during an install. The footer is rebuilt for each screen rather than
+relabelled; the progress screen, having nothing safe to offer, offers nothing
+at all. Removal is a screen reachable from every other one, so the
+window's own route never becomes removal and the screen behind it stays the one
+to come back to. Every path ends in a verdict or in the application running.
 
 Two things about it are deliberate and easy to undo by accident. Its colours
 are sampled from the application's own artwork, so the accent is the icon's
@@ -178,10 +195,9 @@ would switch TO rather than the one you are in. Both halves of that are the
 same convention the application's toggle follows, so the two cannot end up
 wearing different pictures for the same idea.
 
-The version is not in the header. It belongs in the body line that names what
-is installed and what the setup program carries, because the relationship
-between those two numbers is the thing the reader needs and only reads as a
-sentence.
+The version is not in the header. A single version belongs in the heading of
+the screen talking about it; an update and a downgrade are about two of them, so
+neither names one there and both appear in the flow line beneath it.
 
 ## Artwork
 

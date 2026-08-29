@@ -37,9 +37,6 @@ UNINSTALL_SUBDIR = "_uninstall"
 # CLI flag that puts the setup exe into uninstall mode.
 UNINSTALL_FLAG = "--uninstall"
 
-# Window copy.
-SUBTITLE_TEXT = f"Welcome to the {APP_DISPLAY_NAME} installer"
-
 # Theme. Every colour is sampled from the application's own artwork rather than
 # picked by eye, so the setup program and the app it installs read as one thing:
 # the accent is the icon's bright blue, the ring is its green and the danger
@@ -110,12 +107,29 @@ CONTENT_SPACING = 16
 ACTION_SPACING = 18
 OPTION_GAP_PX = 10
 
+# The gaps inside a screen: under a heading, under its lead, between the bar
+# and the line naming the step, between the two versions of a change and
+# between one option and the next.
+HEADING_GAP_PX = 7
+LEAD_GAP_PX = 16
+TRACK_GAP_PX = 9
+FLOW_GAP_PX = 11
+OPTION_SPACING_PX = 11
+# How far a hint is indented so it lines up under its option's text rather
+# than under the box.
+HINT_PAD_PX = 7
+
 BASE_FONT_PX = 18
 TITLE_FONT_PX = 32
 SUB_FONT_PX = 18
 HEADING_FONT_PX = 28
 INFO_FONT_PX = 16
 STATUS_FONT_PX = 16
+HINT_FONT_PX = 15
+FLOW_FONT_PX = 22
+# The one mark a verdict carries, drawn large enough to be the first thing
+# read on the screen that says how setup ended.
+VERDICT_FONT_PX = 44
 LICENCE_FONT_PX = 13
 
 BUTTON_MIN_WIDTH = 150

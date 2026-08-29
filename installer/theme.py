@@ -132,8 +132,27 @@ def stylesheet(dark: bool = True) -> str:
             stop: 0 {glow}, stop: {GLOW_EDGE} {colour.window}
         );
     }}
-    QWidget#Pane, QWidget#Body, QLabel, QCheckBox {{
+    QWidget#Pane, QWidget#Body, QWidget#Footer, QLabel, QCheckBox {{
         background: transparent;
+    }}
+    QLabel#FlowFrom {{
+        font-size: {c.FLOW_FONT_PX}px;
+        color: {colour.text_muted};
+    }}
+    QLabel#FlowArrow {{
+        font-size: {c.FLOW_FONT_PX}px;
+        color: {colour.accent};
+    }}
+    QLabel#FlowTo {{
+        font-size: {c.FLOW_FONT_PX}px;
+        font-weight: 700;
+    }}
+    QLabel#Hint {{
+        font-size: {c.HINT_FONT_PX}px;
+        color: {colour.text_muted};
+    }}
+    QLabel#Verdict {{
+        font-size: {c.VERDICT_FONT_PX}px;
     }}
     QLabel#HeaderTitle {{
         font-size: {c.TITLE_FONT_PX}px;

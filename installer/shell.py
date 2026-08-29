@@ -15,6 +15,7 @@ from collections.abc import Iterable
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -24,6 +25,10 @@ from PySide6.QtWidgets import (
 )
 
 from installer import constants as c
+
+# A hint lines up under its option's text rather than under the box, so the
+# indent is derived from the box and the gap beside it.
+HINT_INDENT_PX = c.CHECK_PX + c.OPTION_GAP_PX + c.HINT_PAD_PX
 
 
 def header(
@@ -98,3 +103,23 @@ def column(parent: QWidget, centred: bool = False) -> tuple[QWidget, QVBoxLayout
     if centred:
         made.addStretch()
     return screen, made
+
+
+def option(parent: QWidget, box: QCheckBox, hint: str) -> QWidget:
+    """One choice, with the muted line that explains it underneath.
+
+    Args:
+        parent: The screen the choice is drawn on.
+        box: The control the user acts on.
+        hint: The note under it, empty when the label says enough.
+
+    Returns:
+        The assembled choice.
+    """
+    holder, made = column(parent)
+    made.addWidget(box)
+    if hint:
+        note = label(holder, hint, "Hint")
+        note.setContentsMargins(HINT_INDENT_PX, 0, 0, 0)
+        made.addWidget(note)
+    return holder

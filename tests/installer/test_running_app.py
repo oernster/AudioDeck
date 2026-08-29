@@ -209,23 +209,3 @@ def test_a_clean_extract_still_writes_the_files() -> None:
             archive.writestr(c.APP_EXE_NAME, "new")
         ops.extract_all(payload, target)
         assert (target / c.APP_EXE_NAME).read_text(encoding="utf-8") == "new"
-
-
-def test_the_prompt_is_skipped_when_the_app_is_not_running() -> None:
-    """Nothing is asked or reported when there is nothing to close.
-
-    Only this path is covered here: the others open a modal message box, which
-    needs a running application and a user, so they are verified by installing
-    over a running copy rather than in the suite.
-    """
-    from installer.close_prompt import clear_running_app
-
-    reported: list[str] = []
-    proceed = clear_running_app(
-        parent=None,
-        report=reported.append,
-        is_running=lambda: False,
-        close_and_confirm=lambda: True,
-    )
-    assert proceed is True
-    assert reported == []

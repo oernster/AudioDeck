@@ -13,11 +13,10 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from installer import constants as c
 from installer import registry, shortcuts
-from installer.state import Operation
 
 # Progress callback: (percent, message).
 ProgressCallback = Callable[[int, str], None]
@@ -29,10 +28,7 @@ _PCT_EXTRACTED = 55
 _PCT_UNINSTALLER = 70
 _PCT_REGISTRY = 80
 _PCT_SHORTCUTS = 95
-_PCT_DONE = 100
-
-# Operations that deploy the full payload.
-_FULL_DEPLOY = frozenset({Operation.INSTALL, Operation.UPGRADE, Operation.REINSTALL})
+PCT_DONE = 100
 
 
 class AppIsRunningError(RuntimeError):
@@ -126,43 +122,25 @@ def _dir_size_kb(path: Path) -> int:
     return max(1, total // c.BYTES_PER_KB)
 
 
-def run(
-    operation: Operation,
-    create_desktop: bool,
-    create_start_menu: bool,
-    progress: ProgressCallback,
-) -> Optional[Path]:
-    """Run the requested operation.
-
-    Args:
-        operation: The operation to perform.
-        create_desktop: Whether to create or restore a Desktop shortcut.
-        create_start_menu: Whether to create or restore a Start Menu shortcut.
-        progress: Callback receiving (percent, message).
-
-    Returns:
-        The installed executable path for deploy and repair operations, else None
-        for uninstall.
-    """
-    if operation == Operation.UNINSTALL:
-        _uninstall(progress)
-        return None
-    if operation == Operation.REPAIR:
-        return _repair(create_desktop, create_start_menu, progress)
-    return _deploy(operation, create_desktop, create_start_menu, progress)
-
-
-def _deploy(
-    operation: Operation,
+def deploy(
     create_desktop: bool,
     create_start_menu: bool,
     progress: ProgressCallback,
 ) -> Path:
-    """Fully extract the payload (install, upgrade or reinstall)."""
+    """Write the whole payload: an install, an update, a downgrade or a reinstall.
+
+    Args:
+        create_desktop: Whether a Desktop shortcut is wanted.
+        create_start_menu: Whether a Start Menu entry is wanted.
+        progress: Callback receiving (percent, message).
+
+    Returns:
+        The installed executable.
+    """
     target = c.install_dir()
     manifest = _manifest()
 
-    progress(_PCT_START, f"{operation.value} starting...")
+    progress(_PCT_START, "Starting...")
     target.mkdir(parents=True, exist_ok=True)
 
     progress(_PCT_START, "Extracting files...")
@@ -172,12 +150,21 @@ def _deploy(
     return _finalise(target, manifest, create_desktop, create_start_menu, progress)
 
 
-def _repair(
+def repair(
     create_desktop: bool,
     create_start_menu: bool,
     progress: ProgressCallback,
 ) -> Path:
-    """Restore only missing or corrupted files, verified by hash."""
+    """Restore only the files that are missing or fail their hash.
+
+    Args:
+        create_desktop: Whether a Desktop shortcut is wanted.
+        create_start_menu: Whether a Start Menu entry is wanted.
+        progress: Callback receiving (percent, message).
+
+    Returns:
+        The installed executable.
+    """
     target = c.install_dir()
     manifest = _manifest()
 
@@ -223,7 +210,7 @@ def _finalise(
         target,
     )
 
-    progress(_PCT_DONE, "Done.")
+    progress(PCT_DONE, "Done.")
     return exe_path
 
 
@@ -251,8 +238,12 @@ def _copy_uninstaller(target: Path) -> Path:
     return uninstaller_path
 
 
-def _uninstall(progress: ProgressCallback) -> None:
-    """Remove shortcuts and the registry entry, then delete the install tree."""
+def uninstall(progress: ProgressCallback) -> None:
+    """Remove shortcuts and the registry entry, then delete the install tree.
+
+    Args:
+        progress: Callback receiving (percent, message).
+    """
     progress(_PCT_START, "Removing shortcuts...")
     shortcuts.remove_shortcut(shortcuts.desktop_shortcut_path())
     shortcuts.remove_shortcut(shortcuts.start_menu_shortcut_path())
@@ -262,7 +253,7 @@ def _uninstall(progress: ProgressCallback) -> None:
 
     progress(_PCT_SHORTCUTS, "Removing files...")
     _schedule_self_delete(c.install_dir())
-    progress(_PCT_DONE, "Uninstall complete.")
+    progress(PCT_DONE, "Uninstall complete.")
 
 
 def _schedule_self_delete(target: Path) -> None:
