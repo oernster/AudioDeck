@@ -46,7 +46,7 @@ VIEWER_FONT_CSS = "font-size: 11.7pt;"
 ABOUT_HTML = f"""
 <h2>Audio Deck</h2>
 <p><b>A local-first audio device switcher for Windows, Linux and macOS,
-with Stream Deck integration on Windows.</b></p>
+with Stream Deck and command-line integration on Windows.</b></p>
 <p><b>Version:</b> {__version__}</p>
 <p><b>Author:</b> Oliver Ernster</p>
 <p>Audio Deck is free software, distributed under two licences: the
@@ -151,6 +151,11 @@ def show_documentation(parent: QWidget) -> None:
     text_browser = QTextBrowser()
     text_browser.setOpenExternalLinks(True)
     text_browser.setStyleSheet(VIEWER_FONT_CSS)
+    # The guide's key to the buttons draws the real artwork, referenced by a
+    # path relative to the repository root so the same file also renders on
+    # GitHub. Qt resolves those against its search paths, which is why the
+    # bundle root is named here rather than the paths being made absolute.
+    text_browser.setSearchPaths([str(resource_path("."))])
     text_browser.setMarkdown(content)
     layout.addWidget(text_browser)
     AutoScroller(text_browser)
@@ -186,9 +191,9 @@ def _fit_dialog_width_to_text(
 ) -> None:
     """Size a dialog to the widest line of the ORIGINAL hard-wrapped text.
 
-    The browser shows the reflowed text, but the width comes from the
+    The browser shows the reflowed text while the width comes from the
     original 78-column layout: that keeps the centred headings (centred by
-    leading spaces for that page width) visually centred, and the reflowed
+    leading spaces for that page width) visually centred; the reflowed
     paragraphs then fill the same width edge to edge. The browser must be
     POLISHED before measuring: the app stylesheet's font only lands on the
     widget at polish time, so an unpolished measurement uses the default

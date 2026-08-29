@@ -152,6 +152,30 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `AutoScroller`).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
 
+## The setup program
+
+`installer/` is a PySide6 application in its own right, built to the house
+setup-program shape rather than to the application's: `constants.py` holds the
+identity, the paths and every colour and size; `theme.py` turns those into one
+stylesheet per appearance; `shell.py` holds the furniture a screen is drawn
+from (the header, the hairline, a styled label, a bare column); `ui.py` is the
+window and `ops.py` the work it drives.
+
+Two things about it are deliberate and easy to undo by accident. Its colours
+are sampled from the application's own artwork, so the accent is the icon's
+blue, the ring is its green and the danger colour is the red of the prohibition
+bar, which is what makes the setup program and the app read as one product. Its
+RING MODEL, however, is the house one and not the application's: no ring at
+rest, green while an enabled control is hovered or focused, a permanent danger
+ring while a control is disabled. That is why it is a stylesheet in its own
+right rather than a layer over the app's, which carries a different model and
+would fight it.
+
+The version is not in the header. It belongs in the body line that names what
+is installed and what the setup program carries, because the relationship
+between those two numbers is the thing the reader needs and only reads as a
+sentence.
+
 ## Artwork
 
 Every picture the application draws is generated from a committed master by

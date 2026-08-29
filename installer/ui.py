@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import QSize, Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QApplication,
     QCheckBox,
     QHBoxLayout,
@@ -25,7 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from installer import constants as c
-from installer import ops, registry
+from installer import ops, registry, shell
 from installer.close_prompt import clear_running_app
 from installer.licence_dialog import LicenceDialog
 from installer.state import InstallerState, Operation
@@ -47,7 +48,7 @@ WORKER_JOIN_TIMEOUT_MS = 5000
 
 def _app_icon() -> QIcon:
     """Return the application icon for the window."""
-    return QIcon(str(c.resource_path(f"assets/{c.ICON_FILE_NAME}")))
+    return QIcon(str(c.resource_path(f"assets/{c.ICONS_DIR_NAME}/{c.ICON_FILE_NAME}")))
 
 
 class InstallerWindow(QWidget):
@@ -70,6 +71,12 @@ class InstallerWindow(QWidget):
             installed=registry.read_installed_info(),
         )
 
+        # Neutral start: a zero-size sink absorbs the focus Qt would
+        # otherwise hand to the first control in tab order.
+        self._focus_sink = QWidget(self)
+        self._focus_sink.setFixedSize(0, 0)
+        self._focus_sink.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self.setObjectName("Shell")
         self.setWindowTitle(f"{c.APP_DISPLAY_NAME} Setup")
         self.setWindowIcon(_app_icon())
         self.setMinimumSize(c.WINDOW_MIN_WIDTH, c.WINDOW_MIN_HEIGHT)
@@ -105,73 +112,71 @@ class InstallerWindow(QWidget):
         ]
 
     def showEvent(self, event) -> None:  # noqa: N802 (Qt override)
-        """Focus the natural action, then trigger any preselected operation.
+        """Start neutral, then trigger any preselected operation.
 
-        Qt's default hands focus to the first widget in tab order, which is
-        the Licence button in the header; the natural first choice is the
-        primary operation (Install, Update, Repair), so the ring starts
-        there instead.
+        No control wears a ring until one is asked for. Qt's default would
+        hand focus to the first widget in tab order, which is the Licence
+        button in the header, so a zero-size sink takes it instead and the
+        first Tab enters the ring.
+
+        The window is LOOKED AT before it is acted in: this one asks the
+        reader to check the install location and three choices before pressing
+        anything, so lighting a button up unasked argues for a decision that
+        has not been made yet. It also avoids pointing the ring at a
+        destructive action when the primary operation happens to be one.
         """
         super().showEvent(event)
         if not self._started:
             self._started = True
-            primary = self._left_button or self._right_button
-            if (
-                primary is not None
-                and primary.isEnabled()
-                and primary.isVisibleTo(self)
-            ):
-                primary.setFocus(Qt.FocusReason.TabFocusReason)
+            self._focus_sink.setFocus(Qt.FocusReason.OtherFocusReason)
         if self._preselect is not None:
             preselect, self._preselect = self._preselect, None
             if preselect in self._state.allowed_operations():
                 self._confirm_and_start(preselect)
 
+    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        """Enter activates the focused control, as Space already does.
+
+        Qt gives a plain window neither: Return only clicks a button inside a
+        QDialog, so without this a focused button here ignores Enter entirely.
+        """
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            target = self.focusWidget()
+            if isinstance(target, QAbstractButton) and target.isEnabled():
+                target.click()
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
     def _build_header(self) -> QHBoxLayout:
-        """Build the icon, title, version and right-side buttons."""
-        header = QHBoxLayout()
-        header.setSpacing(c.HEADER_SPACING)
-
-        icon = _app_icon()
-        if not icon.isNull():
-            badge = QLabel()
-            badge.setPixmap(icon.pixmap(QSize(c.ICON_BADGE_PX, c.ICON_BADGE_PX)))
-            header.addWidget(badge, alignment=Qt.AlignVCenter)
-
-        title = QLabel(f"{c.APP_DISPLAY_NAME} Setup")
-        title.setObjectName("HeaderTitle")
-        header.addWidget(title, alignment=Qt.AlignVCenter)
-
-        version = QLabel(f"v{self._state.bundled_version}")
-        version.setObjectName("HeaderVersion")
-        header.addWidget(version, alignment=Qt.AlignBottom)
-
-        header.addStretch()
-
+        """Build the house header: the mark, the identity and the controls."""
         self._licence_button = QPushButton("License")
         self._licence_button.clicked.connect(self._show_licence)
-        header.addWidget(self._licence_button)
-
         self._theme_button = QPushButton("Theme")
         self._theme_button.clicked.connect(self._toggle_theme)
-        header.addWidget(self._theme_button)
-        return header
+        return shell.header(
+            self,
+            f"{c.APP_DISPLAY_NAME} Setup",
+            c.APP_TAGLINE,
+            _app_icon(),
+            (self._licence_button, self._theme_button),
+        )
 
     def _build_body(self, layout: QVBoxLayout) -> None:
         """Build the subtitle, status line, install location and checkboxes."""
         subtitle = QLabel(c.SUBTITLE_TEXT)
-        subtitle.setObjectName("SubTitle")
+        subtitle.setObjectName("Heading")
         subtitle.setAlignment(Qt.AlignHCenter)
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
         status = QLabel(self._state.status_line())
-        status.setObjectName("StatusLine")
+        status.setObjectName("Status")
         status.setAlignment(Qt.AlignHCenter)
         status.setWordWrap(True)
         layout.addWidget(status)
 
-        location_label = QLabel("Install location:")
+        location_label = shell.label(self, "Install location:", "Lead")
         layout.addWidget(location_label)
         location = QLineEdit(str(c.install_dir()))
         location.setReadOnly(True)
@@ -244,7 +249,7 @@ class InstallerWindow(QWidget):
         layout.addWidget(self._progress)
 
         self._progress_text = QLabel("")
-        self._progress_text.setObjectName("StatusLine")
+        self._progress_text.setObjectName("Status")
         self._progress_text.setAlignment(Qt.AlignHCenter)
         self._progress_text.setWordWrap(True)
         layout.addWidget(self._progress_text)

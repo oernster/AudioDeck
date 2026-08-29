@@ -68,10 +68,25 @@ class InstallerState:
         return tuple(op for op in PRIMARY_PRIORITY if op in allowed)
 
     def status_line(self) -> str:
-        """Return a human-readable status line describing the install state."""
+        """Return a human-readable status line describing the install state.
+
+        This carries BOTH versions, which is why the header carries neither.
+        What matters to the reader is the relationship between what is on the
+        machine and what is about to replace it; that only reads as a
+        sentence; either number alone answers half the question.
+        """
         if self.installed is None:
-            return f"{c.APP_DISPLAY_NAME} is not installed for this user."
+            return (
+                f"{c.APP_DISPLAY_NAME} {self.bundled_version} is ready to "
+                "install. Nothing is installed for this user yet."
+            )
+        if self.installed.version == self.bundled_version:
+            return (
+                f"{c.APP_DISPLAY_NAME} {self.installed.version} is already "
+                f"installed at {self.installed.location}."
+            )
         return (
-            f"{c.APP_DISPLAY_NAME} version {self.installed.version} is installed "
-            f"at {self.installed.location}."
+            f"{c.APP_DISPLAY_NAME} {self.installed.version} is installed at "
+            f"{self.installed.location}. This setup carries "
+            f"{self.bundled_version}."
         )

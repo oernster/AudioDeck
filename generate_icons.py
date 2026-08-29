@@ -76,6 +76,14 @@ NEAR_WHITE_MIN = 255 - WHITE_BG_THRESHOLD
 # by importing the UI here, which would drag PySide6 into a build script.
 BUTTON_RENDER_HEIGHT_PX = 288
 
+# The same artwork again, small, for the in-app guide's key to the buttons.
+# Rendered rather than scaled at display time because the guide is markdown and
+# Qt draws an image there at its natural size. Not smaller than this: below
+# about forty pixels the darker marks stop being tellable apart, which is the
+# one thing a key has to get right.
+GUIDE_RENDER_HEIGHT_PX = 48
+GUIDE_PREFIX = "guide-"
+
 # Every button icon, named by what its button DOES rather than by what the
 # picture contains, since the name is what the UI asks for.
 BUTTON_MASTERS = {
@@ -240,12 +248,27 @@ def _negated(base_name: str) -> Image.Image:
 
 
 def generate_button_icons() -> None:
-    """Emit every button icon, including the two composites."""
+    """Emit every button icon, including the two composites.
+
+    Each is written twice: once at the height the tray draws it and once small
+    for the guide's key, both from the same render, so the picture explaining a
+    button cannot fall out of step with the button.
+    """
     for name, master_name in BUTTON_MASTERS.items():
-        _write(_button_icon(master_name), OUTPUT_DIR / f"{name}.png")
+        drawn = _button_icon(master_name)
+        _write(drawn, OUTPUT_DIR / f"{name}.png")
+        _write(
+            _scaled_to_height(drawn, GUIDE_RENDER_HEIGHT_PX),
+            OUTPUT_DIR / f"{GUIDE_PREFIX}{name}.png",
+        )
 
     for name, base_name in BUTTON_COMPOSITES.items():
-        _write(_negated(base_name), OUTPUT_DIR / f"{name}.png")
+        drawn = _negated(base_name)
+        _write(drawn, OUTPUT_DIR / f"{name}.png")
+        _write(
+            _scaled_to_height(drawn, GUIDE_RENDER_HEIGHT_PX),
+            OUTPUT_DIR / f"{GUIDE_PREFIX}{name}.png",
+        )
 
 
 def generate_donate_mark() -> None:
@@ -261,6 +284,10 @@ def generate_donate_mark() -> None:
         BUTTON_RENDER_HEIGHT_PX,
     )
     _write(mark, OUTPUT_DIR / DONATE_NAME)
+    _write(
+        _scaled_to_height(mark, GUIDE_RENDER_HEIGHT_PX),
+        OUTPUT_DIR / f"{GUIDE_PREFIX}{DONATE_NAME}",
+    )
     if DOCS_DIR.is_dir():
         _write(mark, DOCS_DIR / DONATE_NAME)
 

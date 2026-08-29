@@ -220,6 +220,7 @@ on Linux, `~/Library/Application Support/AudioDeck` on macOS):
 | Button faces are generated artwork rather than emoji | Emoji theme themselves and need no packaging step, which is why they were chosen first; at a readable size their detail is coarse and a set assembled from whatever the platform font provides cannot be drawn in one visual language |
 | Icons matched on HEIGHT, sized on WIDTH | A shared bottom edge is what the eye checks along a row, so equal heights matter and equal widths do not; fitting each picture into a square by its longer side would make the wide ones shorter than their neighbours |
 | Masters live beside the generated set and are never read at runtime | The masters are multi-megabyte source artwork; the build stages the generated directory alone, so a runtime read would work in development and fail in a packaged build |
+| The setup program carries its own stylesheet rather than the application's | Both are house style over the same artwork-derived palette; they hold DIFFERENT ring models: the setup program uses the house one (green on hover or focus, a danger ring while disabled) and layering it over the application's would leave the two fighting |
 | The donate button hands its address to the desktop | The application never fetches the payment page, so the local-first guarantee is untouched by the button existing |
 | The update settings store is best-effort where the profile store raises | Profiles are user content; losing a skipped-version note costs one extra prompt, so a failed write is swallowed rather than surfaced |
 

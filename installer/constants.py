@@ -40,52 +40,81 @@ UNINSTALL_FLAG = "--uninstall"
 # Window copy.
 SUBTITLE_TEXT = f"Welcome to the {APP_DISPLAY_NAME} installer"
 
-# Theme: Audio Deck signature purple, shared by dark and light variants.
-COLOR_PURPLE_LIGHT = "#8b6ead"
-COLOR_PURPLE_MID = "#7b5caa"
-COLOR_PURPLE_DEEP = "#4a2c6a"
-COLOR_PURPLE_BORDER = "#5a3d7f"
-COLOR_ACCENT_HOVER = "#f59e0b"
-COLOR_DANGER = "#7a1f25"
-COLOR_DANGER_HOVER = "#6a1b21"
+# Theme. Every colour is sampled from the application's own artwork rather than
+# picked by eye, so the setup program and the app it installs read as one thing:
+# the accent is the icon's bright blue, the ring is its green and the danger
+# colour is the red of the prohibition bar the delete and cancel icons wear.
+#
+# The RING MODEL is the house one and is deliberately not the application's: no
+# ring at rest, a green ring while an enabled control is hovered or focused, a
+# permanent danger ring while a control is disabled. Green reads as "you can use
+# this"; the accent is never a ring, because it carries identity rather than
+# state.
 
-# Dark theme surfaces and text.
-DARK_BG = "#2a2a2a"
-DARK_SURFACE = "#353535"
-DARK_TEXT = "#f0f0f0"
-DARK_TEXT_MUTED = "#b8b8b8"
-DARK_DISABLED_BG = "#555555"
-DARK_DISABLED_TEXT = "#999999"
+# Dark appearance.
+DARK_WINDOW = "#0b1622"
+DARK_SURFACE = "#132335"
+DARK_SURFACE_ALT = "#1b2f46"
+DARK_BORDER = "#24405e"
+DARK_TEXT = "#eaf2fa"
+DARK_TEXT_MUTED = "#9fb3c8"
+DARK_ACCENT = "#00b0f8"
+DARK_SELECTION = "#123a52"
+DARK_RING = "#00d84a"
+DARK_DANGER = "#ff6b6f"
+DARK_DANGER_SOFT = "#3a1418"
+DARK_DISABLED_SURFACE = "#16202b"
+DARK_DISABLED_TEXT = "#63788c"
 
-# Light theme surfaces and text.
-LIGHT_BG = "#f4f1f8"
+# Light appearance. The accent and the ring are darkened rather than reused: a
+# bright cyan and a bright green both fail against white, so each theme names
+# its own value and the contrast holds by construction.
+LIGHT_WINDOW = "#eef6fb"
 LIGHT_SURFACE = "#ffffff"
-LIGHT_TEXT = "#2a2233"
-LIGHT_TEXT_MUTED = "#6b6478"
-LIGHT_DISABLED_BG = "#cfc8d8"
-LIGHT_DISABLED_TEXT = "#8d8699"
+LIGHT_SURFACE_ALT = "#dcecf7"
+LIGHT_BORDER = "#b6d4e6"
+LIGHT_TEXT = "#0d2233"
+LIGHT_TEXT_MUTED = "#4d6a80"
+LIGHT_ACCENT = "#0077b0"
+LIGHT_SELECTION = "#cfe9f8"
+LIGHT_RING = "#00802a"
+LIGHT_DANGER = "#c00000"
+LIGHT_DANGER_SOFT = "#fbe0e1"
+LIGHT_DISABLED_SURFACE = "#dfe7ed"
+LIGHT_DISABLED_TEXT = "#8aa0b0"
 
-# Sizes (named, no magic numbers in the UI).
-WINDOW_MIN_WIDTH = 750
-WINDOW_MIN_HEIGHT = 520
-ICON_BADGE_PX = 64
-HEADER_SPACING = 14
-TITLE_FONT_PT = 22
-SUBTITLE_FONT_PT = 14
-STATUS_FONT_PT = 10
-VERSION_FONT_PT = 11
-CONTENT_MARGIN_H = 36
-CONTENT_MARGIN_TOP = 24
-CONTENT_MARGIN_BOTTOM = 20
+# Sizes (named, no magic numbers in the UI). The house geometry and type
+# scale, in pixels throughout: a point size renders differently per display DPI
+# setting, so a window laid out in points and one laid out in pixels drift apart
+# on the same machine.
+WINDOW_MIN_WIDTH = 850
+WINDOW_MIN_HEIGHT = 620
+
+# The mark is drawn at a size that can be read across the room, which is the
+# single strongest signal that the right installer is open.
+MARK_PX = 126
+CHECK_PX = 24
+TRACK_PX = 9
+RING_PX = 2
+
+HEADER_SPACING = 13
+HEADER_PAD_PX = 15
+CONTENT_MARGIN_H = 26
+CONTENT_MARGIN_TOP = 22
+CONTENT_MARGIN_BOTTOM = 18
 CONTENT_SPACING = 16
 ACTION_SPACING = 18
-BORDER_WIDTH = 2
-BORDER_RADIUS = 6
-BUTTON_RADIUS = 22
-BUTTON_PADDING_V = 10
-BUTTON_PADDING_H = 24
+OPTION_GAP_PX = 10
+
+BASE_FONT_PX = 18
+TITLE_FONT_PX = 32
+SUB_FONT_PX = 18
+HEADING_FONT_PX = 28
+INFO_FONT_PX = 16
+STATUS_FONT_PX = 16
+LICENCE_FONT_PX = 13
+
 BUTTON_MIN_WIDTH = 150
-PROGRESS_HEIGHT = 18
 LICENCE_DIALOG_WIDTH = 680
 LICENCE_DIALOG_HEIGHT = 520
 
