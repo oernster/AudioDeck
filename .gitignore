@@ -81,3 +81,7 @@ uk.codecrafter.AudioDeck.yml
 profiles.json
 *.log
 NOTES.md
+
+# Claude Code session tooling. Local only: a launch.json entry for serving
+# docs/ in a preview pane, never part of the project.
+.claude/
