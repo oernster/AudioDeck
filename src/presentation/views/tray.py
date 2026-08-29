@@ -76,13 +76,31 @@ def apply_tray_icon(
     button.setFixedSize(width_px + ICON_BTN_CHROME_PX, height_px + ICON_BTN_CHROME_PX)
 
 
+def as_picture_control(button: QAbstractButton, name: str) -> None:
+    """Give a picture button its tooltip, its cursor and TAB-ONLY focus.
+
+    The focus policy is the load-bearing half. Qt gives a push button STRONG
+    focus, so a MOUSE click leaves the button focused; a focused control wears
+    the green ring: pressing the donate button opened a browser and left
+    a green rectangle round it for the rest of the session, since nothing in
+    the window took the focus back. The ring means "this is where the keyboard
+    is", so the mouse should never set it.
+
+    The one thing given up is that a click no longer moves the keyboard ring to
+    the button clicked, so the next Tab enters at the first stop rather than
+    beside the mouse. That is the neutral-start behaviour anyway.
+    """
+    button.setToolTip(name)
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+
+
 def style_tray_button(
     button: QAbstractButton, icon_name: str, name: str, object_name: str
 ) -> None:
     """Restyle any button as a tray icon: artwork only, named by its tooltip."""
     button.setObjectName(object_name)
-    button.setToolTip(name)
-    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    as_picture_control(button, name)
     apply_tray_icon(button, icon_name)
 
 
@@ -102,8 +120,7 @@ def style_form_icon_button(
     """
     companion.ensurePolished()
     button.setObjectName("FormIconButton")
-    button.setToolTip(name)
-    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    as_picture_control(button, name)
     apply_tray_icon(button, icon_name, companion.sizeHint().height())
 
 
@@ -128,7 +145,6 @@ class ThemeToggleButton(QPushButton):
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName(theme.TOGGLE_BUTTON_OBJECT_NAME)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.restyle()
 
     def restyle(self) -> None:
@@ -136,5 +152,5 @@ class ThemeToggleButton(QPushButton):
         instance = QApplication.instance()
         app = instance if isinstance(instance, QApplication) else None
         name = theme.current_theme(app)
+        as_picture_control(self, theme.toggle_tooltip(name))
         apply_tray_icon(self, theme.toggle_icon_name(name))
-        self.setToolTip(theme.toggle_tooltip(name))

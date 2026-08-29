@@ -105,7 +105,8 @@ tests/
   infrastructure/   JSON repository, device repository, single-instance guard
   presentation/     Presenters, background worker, device-change notifiers,
                     the keyboard navigator, the auto-scroller, the donate
-                    button and the header's fit to the window
+                    button, the picture buttons' focus policy and the
+                    header's fit to the window
   cli/              Argument parsing and the CLI handler
   installer/        The setup program's screen model, its running-app
                     detection and its locked-file reporting
