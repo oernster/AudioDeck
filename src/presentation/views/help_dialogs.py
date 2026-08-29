@@ -43,12 +43,18 @@ ICON_PX = 64
 # Body font for the markdown viewer: 1.3x the base size rather than 1.5x.
 VIEWER_FONT_CSS = "font-size: 11.7pt;"
 
+# The copyright year is the year of publication, so it is a fixed fact rather
+# than a reading of the clock: a line that renamed itself every January would
+# claim a year the release was never published in.
+COPYRIGHT_LINE = "© Oliver Ernster 2026"
+
 ABOUT_HTML = f"""
 <h2>Audio Deck</h2>
 <p><b>A local-first audio device switcher for Windows, Linux and macOS,
 with Stream Deck and command-line integration on Windows.</b></p>
 <p><b>Version:</b> {__version__}</p>
 <p><b>Author:</b> Oliver Ernster</p>
+<p>{COPYRIGHT_LINE}</p>
 <p>Audio Deck is free software, distributed under two licences: the
 backend under GPL-3.0 and the user interface under LGPL-3.0. See the Help
 menu for both licences.</p>
