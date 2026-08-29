@@ -96,8 +96,12 @@ On Windows, two options, both per user and neither needing admin rights.
 3. It installs to `%LOCALAPPDATA%\Programs\AudioDeck`, offers Desktop and Start
    Menu shortcuts and registers an entry in Add or Remove Programs.
 
-Running the same setup again on an installed copy offers Update, Reinstall,
-Repair and Uninstall, chosen from the version it finds.
+Running the same setup again reads what is installed and shows one screen for
+what that means: an update when it carries a newer version, going back a version
+when it carries an older one, repair and reinstall when the two match.
+Uninstall is offered from every one of them, on a screen of its own that names
+what goes and what stays. While it works it shows a progress screen with no
+choices on it; it always ends on a screen saying how it went.
 
 Windows locks the files of a running program, so if Audio Deck is open the
 setup program says so and offers to close it before continuing. Declining
@@ -133,7 +137,7 @@ The DMG is signed and notarised, so Gatekeeper opens it without warnings.
 ### Create a profile
 
 1. Open `AudioDeck.exe`.
-2. Open the **Configuration** view (the sliders icon).
+2. Open the **Configuration** view (the gear and sliders icon).
 3. Press **New profile** in the header tray.
 4. Name the profile (for example "Gaming Setup").
 5. Select an output device and an input device.
@@ -272,7 +276,7 @@ Settings > Voice & Video to "Default"; in Spotify set the output device to
 
 Disconnected devices still appear in the Configuration view marked as offline, so
 you can build profiles around them. To use one now, connect and enable it; Audio
-Deck picks it up automatically, though **Refresh Devices** forces it.
+Deck picks it up automatically, though **Rescan** forces it.
 
 ### A profile only switched some devices
 

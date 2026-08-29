@@ -111,7 +111,8 @@ tests/
   installer/        The setup program's screen model, its running-app
                     detection and its locked-file reporting
   structural/       Source scans enforcing the layer boundaries, the module
-                    size rule, the focus-ring rules and the icon contract
+                    size rule, the focus-ring rules, the icon contract and
+                    what each build stages
   test_version.py   The VERSION file reader
 ```
 
@@ -132,7 +133,7 @@ QThread, expect the same split.
 
 **Structural tests guard the architecture.** `tests/structural/` parses the
 source so a violation fails the build rather than being caught in review.
-Twenty checks currently run, in three files.
+Thirty-seven checks currently run, in four files.
 
 `test_architecture.py` holds nine, scanning imports with `ast`: the domain and
 application boundaries, presentation not importing infrastructure or the CLI,
@@ -171,6 +172,19 @@ produces, that every master the generator reads is committed, that artwork is
 rendered at least four times the height it is drawn at so Qt only ever scales
 down, plus that no runtime path reaches past the generated set into the masters.
 Each was proved to bite by planting a violation and reading the exit code.
+
+`test_delivery_assets.py` holds seventeen, reading the three delivery scripts
+rather than the source. The icon contract above says a name resolves to a file
+in the repository; whether that file reaches a Linux or a macOS machine is a
+different question, answered by `buildexe.py`, `build_flatpak.sh` and
+`builddmg.py` separately. So each is checked for the generated icon directory
+and for every document the Help menu opens, the DMG script through its own
+values rather than its text. The in-app guide is checked separately, to
+reference only artwork inside the one staged directory. Nothing here runs a build: the Flatpak
+needs Linux and the DMG needs macOS, so the point is to fail on Windows in the
+suite rather than in a release on somebody else's computer. Proved to bite by
+dropping the icon directory from the Flatpak script and the guide from the DMG
+script.
 
 If you add a new entry point, add it to `COMPOSITION_ROOTS` in
 `tests/structural/test_architecture.py` and say why in ARCHITECTURE.md. The

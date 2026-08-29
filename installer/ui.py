@@ -85,7 +85,6 @@ class InstallerWindow(Performing, QWidget):
         self.setObjectName("Shell")
         self.setWindowTitle(f"{c.APP_DISPLAY_NAME} Setup")
         self.setWindowIcon(_app_icon())
-        self.setMinimumSize(c.WINDOW_MIN_WIDTH, c.WINDOW_MIN_HEIGHT)
         self._build_widgets()
         self._build()
         appearance.apply(self._dark, self._theme_button)
@@ -192,15 +191,14 @@ class InstallerWindow(Performing, QWidget):
             c.CONTENT_MARGIN_BOTTOM,
         )
         layout.setSpacing(c.HEADER_PAD_PX)
-        layout.addLayout(
-            shell.header(
-                self,
-                f"{c.APP_DISPLAY_NAME} Setup",
-                c.APP_TAGLINE,
-                _app_icon(),
-                (self._licence_button, self._theme_button),
-            )
+        header = shell.header(
+            self,
+            f"{c.APP_DISPLAY_NAME} Setup",
+            c.APP_TAGLINE,
+            _app_icon(),
+            (self._licence_button, self._theme_button),
         )
+        layout.addLayout(header)
         layout.addWidget(shell.rule(self))
         self._body = QStackedWidget(self)
         self._body.setObjectName("Body")
@@ -210,6 +208,8 @@ class InstallerWindow(Performing, QWidget):
         layout.addWidget(self._body, 1)
         layout.addWidget(shell.rule(self))
         layout.addWidget(self._footer)
+        # Set once the header exists, so it is measured rather than guessed.
+        self.setMinimumSize(*shell.minimum_window_size(header))
 
     def _screens(self) -> tuple[QWidget, ...]:
         """Every screen, in the order the stack indices name them."""

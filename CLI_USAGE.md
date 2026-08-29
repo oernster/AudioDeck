@@ -57,7 +57,7 @@ The executable is created at `dist/AudioDeck.exe`.
 ### 2. Create profiles in the GUI
 
 1. Run `AudioDeck.exe` with no arguments.
-2. Open the **Configuration** view (the gear icon).
+2. Open the **Configuration** view (the gear and sliders icon).
 3. Create your audio profiles (for example "Gaming Setup" or "Work Calls").
 4. Save each profile.
 

@@ -69,6 +69,19 @@ def header(
     return row
 
 
+def minimum_window_size(header: QHBoxLayout) -> tuple[int, int]:
+    """The smallest the window may be, given the header it actually assembled.
+
+    Measured rather than written down. The header is a fixed-size mark, a title
+    that never wraps and however many controls sit at the right, so its width
+    follows what is IN it: a literal minimum silently stops being big enough
+    the moment a control is added; the symptom is a clipped title rather than
+    anything that looks like a sizing bug.
+    """
+    needed = header.sizeHint().width() + 2 * c.CONTENT_MARGIN_H
+    return (max(c.WINDOW_MIN_WIDTH, needed), c.WINDOW_MIN_HEIGHT)
+
+
 def rule(parent: QWidget) -> QFrame:
     """The hairline that separates the header from the body."""
     line = QFrame(parent)

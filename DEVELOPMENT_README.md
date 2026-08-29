@@ -62,9 +62,11 @@ python buildinstaller.py
 ```
 
 `buildinstaller.py` wraps the built executable into
-`dist-installer/AudioDeckSetup.exe`, a per-user themed setup application that
-offers Install, Update, Reinstall, Repair and Uninstall based on the version it
-detects. It has to run after `buildexe.py`.
+`dist-installer/AudioDeckSetup.exe`, a per-user themed setup application. One
+reading of the machine puts it on one of five routes: Install when nothing is
+recorded, Update when the recorded version is older, Go back when it is newer,
+Manage (Repair or Reinstall) when the two match, plus Uninstall whenever it is
+asked for. It has to run after `buildexe.py`.
 
 The executable is written to `dist/AudioDeck.exe`. The build uses PyInstaller in
 `--onefile --windowed` mode (a single windowed binary that still serves the CLI
@@ -143,7 +145,9 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `icons` (the artwork names, defined once as named constants), the header
   band (`header_band.py`: the row's controls plus the window minimum its width
   demands), the tray recipes (`tray.py`: picture buttons matched on height and
-  sized on width, the separator, the sun/moon theme toggle), the external-open
+  sized on width and taking tab focus only, so a mouse click never leaves one
+  wearing the ring, plus the separator and the sun/moon theme toggle), the
+  external-open
   seam (`links.py`, behind which the donate button hands its address to the
   desktop), the theme facility (`theme.py`: dark and light
   token dicts feeding one stylesheet and palette, persisted beside the
@@ -198,6 +202,13 @@ wearing different pictures for the same idea.
 The version is not in the header. A single version belongs in the heading of
 the screen talking about it; an update and a downgrade are about two of them, so
 neither names one there and both appear in the flow line beneath it.
+
+The window's minimum width is measured from the header it actually assembled
+rather than written down, exactly as the application's is. The header is a
+fixed-size mark, a title that never wraps and whatever controls sit at the
+right, so a literal minimum stops being big enough the moment a control is
+added; the symptom is a clipped title rather than anything that looks like a
+sizing bug.
 
 ## Artwork
 
