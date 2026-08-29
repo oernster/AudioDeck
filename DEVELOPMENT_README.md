@@ -158,8 +158,9 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
 setup-program shape rather than to the application's: `constants.py` holds the
 identity, the paths and every colour and size; `theme.py` turns those into one
 stylesheet per appearance; `shell.py` holds the furniture a screen is drawn
-from (the header, the hairline, a styled label, a bare column); `ui.py` is the
-window and `ops.py` the work it drives.
+from (the header, the hairline, a styled label, a bare column);
+`appearance.py` switches between the two palettes and re-faces the toggle;
+`ui.py` is the window and `ops.py` the work it drives.
 
 Two things about it are deliberate and easy to undo by accident. Its colours
 are sampled from the application's own artwork, so the accent is the icon's
@@ -170,6 +171,12 @@ rest, green while an enabled control is hovered or focused, a permanent danger
 ring while a control is disabled. That is why it is a stylesheet in its own
 right rather than a layer over the app's, which carries a different model and
 would fight it.
+
+The theme toggle wears the application's OWN sun and moon artwork, taken from
+the icon set the setup program already carries; it shows the appearance it
+would switch TO rather than the one you are in. Both halves of that are the
+same convention the application's toggle follows, so the two cannot end up
+wearing different pictures for the same idea.
 
 The version is not in the header. It belongs in the body line that names what
 is installed and what the setup program carries, because the relationship

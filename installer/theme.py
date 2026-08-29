@@ -232,6 +232,17 @@ def stylesheet(dark: bool = True) -> str:
         border-color: {colour.danger};
         color: {colour.disabled_text};
     }}
+    /* A square icon button. It keeps the generic ring rules above, so it is
+       listed here only for its shape. */
+    QPushButton#ThemeToggle {{
+        background: {colour.surface_alt};
+        border-radius: 12px;
+        padding: 0px;
+        min-width: {c.TOGGLE_PX}px;
+        max-width: {c.TOGGLE_PX}px;
+        min-height: {c.TOGGLE_PX}px;
+        max-height: {c.TOGGLE_PX}px;
+    }}
     QProgressBar {{
         background: {colour.surface_alt};
         border: 1px solid {colour.border};

@@ -9,11 +9,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import (
     QAbstractButton,
-    QApplication,
     QCheckBox,
     QHBoxLayout,
     QLabel,
@@ -25,12 +24,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from installer import appearance, ops, registry, shell
 from installer import constants as c
-from installer import ops, registry, shell
 from installer.close_prompt import clear_running_app
 from installer.licence_dialog import LicenceDialog
 from installer.state import InstallerState, Operation
-from installer.theme import stylesheet
 from installer.worker import InstallerWorker
 
 # Delay before the window closes itself after launching the application. Any
@@ -152,8 +150,11 @@ class InstallerWindow(QWidget):
         """Build the house header: the mark, the identity and the controls."""
         self._licence_button = QPushButton("License")
         self._licence_button.clicked.connect(self._show_licence)
-        self._theme_button = QPushButton("Theme")
+        self._theme_button = QPushButton()
+        self._theme_button.setObjectName("ThemeToggle")
+        self._theme_button.setIconSize(QSize(c.TOGGLE_ICON_PX, c.TOGGLE_ICON_PX))
         self._theme_button.clicked.connect(self._toggle_theme)
+        appearance.apply(self._dark, self._theme_button)
         return shell.header(
             self,
             f"{c.APP_DISPLAY_NAME} Setup",
@@ -259,11 +260,9 @@ class InstallerWindow(QWidget):
         LicenceDialog(self).exec()
 
     def _toggle_theme(self) -> None:
-        """Switch between the dark and light palettes."""
+        """Switch between the dark and light appearances."""
         self._dark = not self._dark
-        app = QApplication.instance()
-        if app is not None:
-            app.setStyleSheet(stylesheet(self._dark))
+        appearance.apply(self._dark, self._theme_button)
 
     def _confirm_and_start(self, operation: Operation) -> None:
         """Confirm destructive actions, then start the operation."""

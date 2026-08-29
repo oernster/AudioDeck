@@ -93,6 +93,10 @@ WINDOW_MIN_HEIGHT = 620
 # The mark is drawn at a size that can be read across the room, which is the
 # single strongest signal that the right installer is open.
 MARK_PX = 126
+# The toggle is a square icon button, sized by the house geometry so it reads
+# as a control rather than a picture that happens to be clickable.
+TOGGLE_PX = 74
+TOGGLE_ICON_PX = 55
 CHECK_PX = 24
 TRACK_PX = 9
 RING_PX = 2
