@@ -77,6 +77,9 @@ GLOW_ALPHA = 0.11
 GLOW_CENTRE = -0.08
 GLOW_RADIUS = 0.9
 GLOW_EDGE = 0.7
+
+# How far a disabled accent is moved towards the disabled surface.
+DISABLED_MIX = 0.55
 HEX_PAIRS = ((1, 3), (3, 5), (5, 7))
 
 
@@ -84,6 +87,20 @@ def tinted(colour: str, alpha: float) -> str:
     """One palette colour at a given transparency."""
     red, green, blue = (int(colour[start:end], 16) for start, end in HEX_PAIRS)
     return f"rgba({red}, {green}, {blue}, {alpha})"
+
+
+def blended(colour: str, towards: str, weight: float) -> str:
+    """`colour` moved `weight` of the way towards another colour.
+
+    A derivation rather than a further pair of literals, so a muted accent
+    cannot drift away from the accent it is a muting of.
+    """
+    parts = []
+    for start, end in HEX_PAIRS:
+        near = int(colour[start:end], 16)
+        far = int(towards[start:end], 16)
+        parts.append(round(near + (far - near) * weight))
+    return "#" + "".join(f"{part:02x}" for part in parts)
 
 
 def palette_for(dark: bool) -> Palette:
@@ -95,6 +112,10 @@ def stylesheet(dark: bool = True) -> str:
     """Return the whole setup program stylesheet for one appearance."""
     colour = palette_for(dark)
     glow = tinted(colour.accent, GLOW_ALPHA)
+    # A checked box that is disabled must still READ as checked. Muting the
+    # accent rather than replacing it is what keeps the state legible while the
+    # control's own red ring says it cannot be used.
+    checked_disabled = blended(colour.accent, colour.disabled_surface, DISABLED_MIX)
     return f"""
     QWidget {{
         background: {colour.window};
@@ -186,6 +207,15 @@ def stylesheet(dark: bool = True) -> str:
     }}
     QCheckBox::indicator:disabled {{
         background: {colour.disabled_surface};
+    }}
+    /* Listed AFTER both rules above because it has to beat them: a checked and
+       disabled indicator matches `:checked` and `:disabled` equally, so
+       whichever is written last wins. Without this the box loses its fill the
+       moment it is disabled and a checked option reads as an unchecked one,
+       which is exactly backwards while an install is running. */
+    QCheckBox::indicator:checked:disabled {{
+        background: {checked_disabled};
+        border-color: {checked_disabled};
     }}
     QPushButton {{
         background: {colour.surface_alt};
