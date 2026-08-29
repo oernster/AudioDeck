@@ -1,4 +1,4 @@
-# <img width="64" height="64" alt="Audio Deck icon" src="https://github.com/user-attachments/assets/0ee08d6a-0311-414b-8188-cf09a58c46b5" /> Audio Deck
+# <img width="64" height="64" alt="application-icon" src="https://github.com/user-attachments/assets/47f99fb1-0c2f-4bb5-9b66-31522a73d5f7" /> Audio Deck
 
 A local-first audio device switcher for Windows, Linux and macOS, with a GUI,
 a command-line interface and Stream Deck integration on Windows. Any macro
