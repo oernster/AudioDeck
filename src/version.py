@@ -42,3 +42,10 @@ def _read_version() -> str:
 
 
 __version__ = _read_version()
+
+
+# Where the donate button sends a browser. The only address the application
+# knows. It is handed to the desktop rather than fetched, so nothing here ever
+# opens a connection of its own and the offline guarantee is untouched by the
+# button existing.
+DONATE_URL = "https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G"

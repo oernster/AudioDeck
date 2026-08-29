@@ -25,6 +25,8 @@ suite rather than left to convention.
 | Only one GUI instance runs per user session | Two windows would race over the same profiles file | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py` |
 | Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 | No module exceeds 400 lines; none sits in the band just beneath it | Size is a structural property: unmeasured, a view reaches 600 lines and nothing reports it | `tests/structural/test_architecture.py`, measuring `src`, `installer` and `tests`; the delivery scripts are exempt by nature |
+| Every icon the UI names resolves to a file the generator produces | A name with no artwork behind it draws nothing and is invisible until the window is on screen | `tests/structural/test_icon_assets.py`, checking the names against the generator and the files |
+| The window never opens narrower than its own header | The header is fixed-size picture buttons, so its width follows the artwork height; a literal minimum silently clips the right-hand controls | `header_band.minimum_window_size`, measured rather than written down, with `tests/presentation/test_header_fits.py` |
 | A focus ring marks a control, never the container holding it or an item view | A ring says "this is what you are about to act on"; drawn round a pane it reports where the pointer is instead, while a click into the empty space below a list outlines everything and selects nothing | `tests/structural/test_focus_rings.py`, scanning the stylesheet sources |
 
 The test suite targets 100% coverage measured with `pytest -v --cov`, using real
@@ -81,7 +83,10 @@ src/
                        releases/latest endpoint, opener injected for tests)
   presentation/         GUI layer (PySide6)
     views/             MainWindow, ConfigurationView, ActuationView, the
-                       header tray recipes (tray.py) and theme facility
+                       header band (header_band.py: the row's controls and the
+                       window minimum it demands), the tray recipes (tray.py:
+                       picture buttons matched on height), the external-open
+                       seam (links.py) and theme facility
                        (theme.py: dark and light token dicts, stylesheet and
                        palette builders, persistence), the Help button and
                        its dialogs, icons, the update dialogs
@@ -89,8 +94,7 @@ src/
     presenters/        ConfigurationPresenter, ActuationPresenter,
                        UpdatePresenter (MVP)
     widgets/           KeyboardNavigator (the explicit focus ring),
-                       AutoScroller (self-reading help surfaces),
-                       glyph metrics (measured emoji sizing)
+                       AutoScroller (self-reading help surfaces)
     notifiers/         Device-change notifiers per platform behind one factory:
                        WM_DEVICECHANGE (Windows), pactl subscribe (Linux),
                        periodic polling (macOS)
@@ -213,6 +217,10 @@ on Linux, `~/Library/Application Support/AudioDeck` on macOS):
 | The guard fails open | If the lock cannot be created at all the application still starts; a guard that cannot be established must never be the reason it will not run |
 | The update check reads only GitHub's `releases/latest` endpoint | That endpoint returns only a published, non-draft, non-prerelease release, so a tag pushed mid-development can never prompt; nothing re-checks those flags client-side |
 | Unparseable versions compare as not-newer | A malformed tag can never raise a spurious prompt and a `0.0.0-dev` source run stays silent |
+| Button faces are generated artwork rather than emoji | Emoji theme themselves and need no packaging step, which is why they were chosen first; at a readable size their detail is coarse and a set assembled from whatever the platform font provides cannot be drawn in one visual language |
+| Icons matched on HEIGHT, sized on WIDTH | A shared bottom edge is what the eye checks along a row, so equal heights matter and equal widths do not; fitting each picture into a square by its longer side would make the wide ones shorter than their neighbours |
+| Masters live beside the generated set and are never read at runtime | The masters are multi-megabyte source artwork; the build stages the generated directory alone, so a runtime read would work in development and fail in a packaged build |
+| The donate button hands its address to the desktop | The application never fetches the payment page, so the local-first guarantee is untouched by the button existing |
 | The update settings store is best-effort where the profile store raises | Profiles are user content; losing a skipped-version note costs one extra prompt, so a failed write is swallowed rather than surfaced |
 
 ## Quality enforcement

@@ -69,7 +69,9 @@ detects. It has to run after `buildexe.py`.
 The executable is written to `dist/AudioDeck.exe`. The build uses PyInstaller in
 `--onefile --windowed` mode (a single windowed binary that still serves the CLI
 when run with arguments), collects `comtypes`, declares the `pycaw` hidden
-imports and bundles the icon, the `VERSION` file, the in-app user guide
+imports and bundles the generated icon set (`assets/icons`, the only part of
+`assets/` that ships, since the masters beside it are source artwork), the
+`VERSION` file, the in-app user guide
 (`DOCUMENTATION.md`) and the three licence files (the overview plus the full
 GPL-3.0 and LGPL-3.0 texts, all read by the Help menu at runtime). Build
 identity and inputs live at the top of `buildexe.py`.
@@ -92,13 +94,13 @@ AudioDeck/
     main.py          Entry point and GUI composition root
   tests/             Mirrors src/, plus the installer tests and the structural scans
   installer/         The bespoke themed setup application
-  assets/            Generated icon set (one master image)
+  assets/            Artwork masters, with the generated set in assets/icons
   docs/              GitHub Pages site and screenshots
   examples/          Stream Deck batch-file templates
   VERSION            Single source of truth for the version
   buildexe.py        Portable executable
   buildinstaller.py  Setup executable, run after buildexe.py
-  generate_icons.py  Regenerates assets/ from the master image
+  generate_icons.py  Regenerates assets/icons/ from the masters in assets/
   pyproject.toml     Packaging plus the pytest, coverage, black, ruff and mypy configuration
 ```
 
@@ -138,14 +140,37 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `pactl subscribe` on Linux, a periodic poll on macOS) that drive live
   updates and auto-apply on reconnect, `BackgroundRunner`
   (a serial worker thread keeping COM and settle sleeps off the GUI thread),
-  `icons` (the emoji button glyphs, defined once as named constants), the
-  header tray recipes (`tray.py`: measured-glyph icon buttons, the separator,
-  the sun/moon theme toggle), the theme facility (`theme.py`: dark and light
+  `icons` (the artwork names, defined once as named constants), the header
+  band (`header_band.py`: the row's controls plus the window minimum its width
+  demands), the tray recipes (`tray.py`: picture buttons matched on height and
+  sized on width, the separator, the sun/moon theme toggle), the external-open
+  seam (`links.py`, behind which the donate button hands its address to the
+  desktop), the theme facility (`theme.py`: dark and light
   token dicts feeding one stylesheet and palette, persisted beside the
   profiles), the Help button with its menu and dialogs (`help_button.py`,
   `help_dialogs.py`) and the covered widgets (`KeyboardNavigator`,
-  `AutoScroller`, glyph metrics).
+  `AutoScroller`).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
+
+## Artwork
+
+Every picture the application draws is generated from a committed master by
+`python generate_icons.py`. Masters live in `assets/`; the generated set lands
+in `assets/icons/` and is the only part of `assets/` the build stages, because
+the masters are multi-megabyte source artwork.
+
+It emits three kinds of output. The application icon is centre-cropped square
+and written at the platform sizes plus a multi-frame `.ico`. The button icons
+are cropped to their opaque box and scaled by HEIGHT alone, never squared, at
+four times the height the tray draws them at so Qt only ever scales down. The
+donate mark is written to the app and the site from one render, so the two
+cannot drift.
+
+Two button icons are composites rather than masters: the prohibition bar
+(`negative.png`) laid over the icon of the thing being negated, giving delete a
+struck-through stored profile and cancel a struck-through edit. Adding a picture
+means adding its master, naming it in `generate_icons.py` and naming it in
+`icons.py`; the structural tests fail if those three ever disagree.
 
 ## Development workflow
 

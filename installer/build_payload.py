@@ -37,7 +37,10 @@ PAYLOAD_FILES = (
     (DIST_DIR / c.APP_EXE_NAME, c.APP_EXE_NAME),
     (PROJECT_ROOT / "README.md", "README.md"),
     (PROJECT_ROOT / "LICENSE", "LICENSE"),
-    (PROJECT_ROOT / "assets" / c.ICON_FILE_NAME, c.ICON_FILE_NAME),
+    (
+        PROJECT_ROOT / "assets" / c.ICONS_DIR_NAME / c.ICON_FILE_NAME,
+        c.ICON_FILE_NAME,
+    ),
 )
 
 

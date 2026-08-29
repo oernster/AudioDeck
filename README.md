@@ -7,7 +7,6 @@ command-line interface.
 
 **Author:** Oliver Ernster
 
-If you find it useful, you can [buy me a coffee](https://www.paypal.com/ncp/payment/Z36XJEEA4MNV6).
 
 ## What it is
 
@@ -134,23 +133,26 @@ The DMG is signed and notarised, so Gatekeeper opens it without warnings.
 ### Create a profile
 
 1. Open `AudioDeck.exe`.
-2. Open the **Configuration** view (the gear icon).
-3. Press **➕ New profile** in the header tray.
+2. Open the **Configuration** view (the sliders icon).
+3. Press **New profile** in the header tray.
 4. Name the profile (for example "Gaming Setup").
 5. Select an output device and an input device.
-6. Press **💾 Save**.
+6. Press **Save**.
 
 ### Switch profiles
 
-1. Open the **Quick Switch** view (the arrows icon).
+1. Open the **Quick Switch** view (the circling arrows icon).
 2. Select a profile.
-3. Press **▶️ Switch** in the header tray or double-click the profile.
+3. Press **Switch** in the header tray or double-click the profile.
+
+Every control in the header is a picture rather than a text label, so each one
+names itself through a tooltip on hover.
 
 A profile whose device is currently offline is marked in the list. Switching to
 it applies whatever devices are available now; a device that is off is applied
 automatically the moment it reconnects (for example when you turn on a Bluetooth
 headset). The device list rescans on device changes and periodically; the
-**📡 Rescan** tray button forces an immediate rescan.
+**Rescan** tray button forces an immediate rescan.
 
 ## Stream Deck integration (Windows)
 
@@ -298,6 +300,18 @@ rather than exiting it.
 
 Run the batch file manually to read the error, confirm the path to
 `AudioDeck.exe` and verify the profile name with `--list`.
+
+## Supporting the project
+
+Audio Deck is free and stays free. There is no paid tier, no licence key and no
+feature held back behind a donation. The donate button sits in the window's
+header, to the left of the light and dark toggle; pressing it hands the address
+to your own browser rather than fetching anything, so it costs the offline
+guarantee above nothing.
+
+If it has replaced something you were paying for, a contribution supports its
+maintenance and continued development:
+[Donate](https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G).
 
 ## License
 

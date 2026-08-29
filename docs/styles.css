@@ -105,6 +105,19 @@ nav {
 }
 .btn-secondary:hover { background: var(--surface1); transform: translateY(-1px); }
 
+/* A button whose label is preceded by artwork rather than plain text. Sized in
+   em against the button's own type, so the two stay in proportion if that type
+   ever changes. At one line box the artwork could not be read, so the mark
+   takes 1.8 times that and this button is deliberately taller than a text-only
+   one beside it. display: block drops the inline descender space that would
+   otherwise add a stray couple of pixels under the picture. */
+.btn-secondary img {
+  display: block;
+  height: 2.7em;
+  width: auto;
+}
+
+
 /* Hero */
 .hero { max-width: 1100px; margin: 0 auto; padding: 5.5rem 2rem 3rem; text-align: center; }
 

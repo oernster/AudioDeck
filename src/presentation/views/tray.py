@@ -1,73 +1,110 @@
-"""Shared emoji tray recipes: icon buttons, the separator, the theme toggle.
+"""Shared tray recipes: icon buttons, the separator, the theme toggle.
 
-One home for the ClearBudget-style tray sizing so every header icon (the
-view switchers, the per-view action icons, the Help button, the theme
-toggle) is built by the same rules: the glyph is measured and scaled to
-paint at one height, the button is a fixed square of the glyph plus the
-ring chrome, the font goes on as a widget-level stylesheet WITH a selector
-(a stylesheet rule beats setFont and a bare font-size would cascade to the
-tooltip) and the colour rules stay in the app sheet so a theme switch
-restyles them for free.
+One home for the tray sizing so every header control (the view switchers, the
+per-view action icons, the donate button, the theme toggle, Help) is built by
+the same rules: the artwork is drawn at ONE height, the button is that picture
+plus the ring chrome; the colour rules stay in the app sheet so a theme
+switch restyles them for free.
+
+Every tray button draws a PICTURE. It drew an emoji once, chosen because emoji
+theme themselves and need no packaging step; they were replaced because at a
+readable size their detail is coarse and a set assembled from whatever the font
+happened to provide could not be drawn in one visual language.
+
+Matched on HEIGHT, sized on WIDTH. A shared height is what puts a row of
+differently shaped pictures on one baseline, which is the edge the eye actually
+checks along a row; forcing a shared WIDTH instead squeezes the wide ones, while
+fitting each picture into a square by its LONGER side makes the wide ones
+SHORTER than their neighbours, which is the failure this rule exists to avoid.
+So each button is exactly as wide as its own artwork and exactly as tall as
+every other button.
+
+Author: Oliver Ernster
 """
 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QApplication,
     QFrame,
     QPushButton,
+    QWidget,
 )
 
 from src.presentation.views import theme
-from src.presentation.widgets.glyph_metrics import glyph_font_px_for_height
+from src.presentation.views.resource_paths import button_icon_path
 
-# Each tray glyph is sized to paint at this height, and its button is a
-# fixed square of the glyph plus the ring chrome (without which Qt's
-# default push-button minimum makes an icon-sized control 80-odd pixels
-# wide).
-ICON_GLYPH_HEIGHT_PX = 32
+# Every tray icon is drawn at this height. The generator renders each master at
+# four times this so the artwork stays crisp on a display above 100% scale and
+# Qt only ever scales DOWN, which is the direction that looks good.
+ICON_HEIGHT_PX = 72
+
+# The ring chrome around a tray button: 2px padding plus 2px border each side.
+# Added to the artwork's own box so the ring never sits hard against the
+# picture and a hover cannot reflow the row.
 ICON_BTN_CHROME_PX = 8
 
-# The ring border each side of a tray button, matching the app stylesheet.
-_RING_BORDER_PX = 2
 
-# The toggle glyph's painted height as a fraction of the tray icons'.
-# Deliberately below 1.0: the sun and the moon are solid saturated shapes
-# that fill their whole outline, while the other tray glyphs are pictograms
-# with internal detail, so equal heights leave the toggle looking the
-# heavier. Optical weight, not bounding box, is what the eye compares.
-TOGGLE_GLYPH_SCALE = 0.8
-
-
-def apply_tray_glyph(
-    button: QAbstractButton, glyph: str, height_px: int = ICON_GLYPH_HEIGHT_PX
+def apply_tray_icon(
+    button: QAbstractButton, icon_name: str, height_px: int = ICON_HEIGHT_PX
 ) -> None:
-    """Show `glyph` on a tray button, sized to paint at `height_px`.
+    """Draw `icon_name`'s artwork on a tray button at `height_px`.
 
-    The font size is derived from THIS glyph by measuring it, so different
-    emoji read as one matched family; the selector scopes the size to the
-    button so a tooltip cannot inherit it. The derived size is capped at
-    the button's usable square, so a font whose real metrics differ from
-    the measured ones can shrink a glyph slightly but never clip it away.
+    The button is fixed to the artwork's own width and the shared height, since
+    Qt's default push-button minimum would otherwise make an icon-sized control
+    80-odd pixels wide.
+
+    A picture that fails to load leaves the button present, sized and
+    tooltipped rather than taking the window down; that a name resolves at all
+    is held by a structural test, so a missing file fails the suite instead of
+    shipping.
     """
-    usable_px = ICON_GLYPH_HEIGHT_PX + ICON_BTN_CHROME_PX - 2 * _RING_BORDER_PX
-    glyph_px = min(glyph_font_px_for_height(glyph, height_px), usable_px)
-    button.setText(glyph)
-    button.setStyleSheet(f"#{button.objectName()} {{ font-size: {glyph_px}px; }}")
+    pixmap = QPixmap(str(button_icon_path(icon_name)))
+    width_px = height_px
+    if not pixmap.isNull():
+        pixmap = pixmap.scaledToHeight(
+            height_px, Qt.TransformationMode.SmoothTransformation
+        )
+        button.setIcon(QIcon(pixmap))
+        button.setIconSize(pixmap.size())
+        width_px = pixmap.width()
+    # The face is the picture, so any inherited label would sit beside it.
+    button.setText("")
+    button.setFixedSize(width_px + ICON_BTN_CHROME_PX, height_px + ICON_BTN_CHROME_PX)
 
 
 def style_tray_button(
-    button: QAbstractButton, glyph: str, name: str, object_name: str
+    button: QAbstractButton, icon_name: str, name: str, object_name: str
 ) -> None:
-    """Restyle any button as a tray icon: glyph only, named by its tooltip."""
+    """Restyle any button as a tray icon: artwork only, named by its tooltip."""
     button.setObjectName(object_name)
     button.setToolTip(name)
     button.setCursor(Qt.CursorShape.PointingHandCursor)
-    apply_tray_glyph(button, glyph)
-    side = ICON_GLYPH_HEIGHT_PX + ICON_BTN_CHROME_PX
-    button.setFixedSize(side, side)
+    apply_tray_icon(button, icon_name)
+
+
+def style_form_icon_button(
+    button: QAbstractButton, icon_name: str, name: str, companion: QWidget
+) -> None:
+    """Restyle a button that sits INSIDE a form row rather than in the header.
+
+    Its height comes from the control it sits beside rather than from the tray,
+    so the row keeps a single line height. The header's own icon height is
+    around three times a combo box, so reusing it here would stretch every form
+    row the button appeared in.
+
+    `companion` is polished before it is measured: a freshly built widget still
+    carries the fallback font until Qt polishes it, so measuring too early
+    gives the wrong height by a few pixels.
+    """
+    companion.ensurePolished()
+    button.setObjectName("FormIconButton")
+    button.setToolTip(name)
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+    apply_tray_icon(button, icon_name, companion.sizeHint().height())
 
 
 def make_separator() -> QFrame:
@@ -76,31 +113,28 @@ def make_separator() -> QFrame:
     separator.setObjectName("Separator")
     separator.setFrameShape(QFrame.Shape.VLine)
     separator.setFrameShadow(QFrame.Shadow.Plain)
+    # A separator is chrome, never a stop on the keyboard ring.
+    separator.setFocusPolicy(Qt.FocusPolicy.NoFocus)
     return separator
 
 
 class ThemeToggleButton(QPushButton):
-    """The sun/moon toggle: its glyph shows the mode a press switches TO.
+    """The sun/moon toggle: its artwork shows the mode a press switches TO.
 
-    The glyph changes with the theme and each one paints a different
-    fraction of its em box, so `restyle` re-derives the font size from the
-    incoming glyph every switch; `apply_theme` finds the button through the
-    duck-typed restyle scan.
+    The picture changes with the theme, so `restyle` re-reads it every switch;
+    `apply_theme` finds the button through the duck-typed restyle scan.
     """
 
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName(theme.TOGGLE_BUTTON_OBJECT_NAME)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        side = ICON_GLYPH_HEIGHT_PX + ICON_BTN_CHROME_PX
-        self.setFixedSize(side, side)
         self.restyle()
 
     def restyle(self) -> None:
-        """Point the glyph and tooltip at the mode a press switches to."""
+        """Point the artwork and tooltip at the mode a press switches to."""
         instance = QApplication.instance()
         app = instance if isinstance(instance, QApplication) else None
         name = theme.current_theme(app)
-        target = max(1, round(ICON_GLYPH_HEIGHT_PX * TOGGLE_GLYPH_SCALE))
-        apply_tray_glyph(self, theme.toggle_glyph(name), target)
+        apply_tray_icon(self, theme.toggle_icon_name(name))
         self.setToolTip(theme.toggle_tooltip(name))

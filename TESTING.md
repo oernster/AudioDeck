@@ -104,12 +104,13 @@ tests/
   application/      Use cases and DTOs
   infrastructure/   JSON repository, device repository, single-instance guard
   presentation/     Presenters, background worker, device-change notifiers,
-                    the keyboard navigator, the auto-scroller and glyph metrics
+                    the keyboard navigator, the auto-scroller, the donate
+                    button and the header's fit to the window
   cli/              Argument parsing and the CLI handler
   installer/        The setup program's running-app detection and its
                     locked-file reporting
   structural/       Source scans enforcing the layer boundaries, the module
-                    size rule and the focus-ring rules
+                    size rule, the focus-ring rules and the icon contract
   test_version.py   The VERSION file reader
 ```
 
@@ -130,7 +131,7 @@ QThread, expect the same split.
 
 **Structural tests guard the architecture.** `tests/structural/` parses the
 source so a violation fails the build rather than being caught in review.
-Fifteen checks currently run, in two files.
+Twenty checks currently run, in three files.
 
 `test_architecture.py` holds nine, scanning imports with `ast`: the domain and
 application boundaries, presentation not importing infrastructure or the CLI,
@@ -158,6 +159,17 @@ other two plant a violation of each kind and assert it is reported, so the guard
 cannot quietly rot into a no-op. The scan is static on purpose: an offscreen
 pixel diff cannot settle what a focus ring paints, since a focused button diffs
 to zero changed pixels under every style tried.
+
+`test_icon_assets.py` holds five, checking the artwork contract rather than the
+source. The UI names its pictures by action and resolves them at runtime, so a
+name with no file behind it draws nothing and the button still builds, sizes and
+tooltips itself: deliberate, so one missing asset costs a control rather than
+the window, which is exactly why it has to fail here instead. The five assert
+that every name resolves, that every name is one the generator actually
+produces, that every master the generator reads is committed, that artwork is
+rendered at least four times the height it is drawn at so Qt only ever scales
+down, plus that no runtime path reaches past the generated set into the masters.
+Each was proved to bite by planting a violation and reading the exit code.
 
 If you add a new entry point, add it to `COMPOSITION_ROOTS` in
 `tests/structural/test_architecture.py` and say why in ARCHITECTURE.md. The

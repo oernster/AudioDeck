@@ -40,7 +40,7 @@ from src.presentation.presenters.configuration_presenter import ConfigurationPre
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views import theme
 from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
-from src.presentation.views.resource_paths import resource_path
+from src.presentation.views.resource_paths import APP_ICON_ICO, resource_path
 from src.presentation.views.splash_screen import create_splash_screen
 from src.cli.argument_parser import parse_arguments
 from src.cli.cli_handler import CLIHandler
@@ -154,7 +154,7 @@ def main() -> int:
     theme.apply_theme(app, theme.load_saved_theme(ui_settings_path), ui_settings_path)
 
     # Set application icon for Windows taskbar
-    icon_path = resource_path("assets/audiodeck.ico")
+    icon_path = resource_path(APP_ICON_ICO)
     if icon_path.exists():
         from PySide6.QtGui import QIcon
 

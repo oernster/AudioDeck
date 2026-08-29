@@ -28,7 +28,7 @@ BUNDLE_ID = "uk.codecrafter.AudioDeck"
 ENTRY_SCRIPT = PROJECT_ROOT / "src" / "main.py"
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 LICENSE_FILE = PROJECT_ROOT / "LICENSE"
-ASSETS_DIR = PROJECT_ROOT / "assets"
+ASSETS_DIR = PROJECT_ROOT / "assets" / "icons"
 DIST_DIR = PROJECT_ROOT / "dist"
 WORK_DIR = PROJECT_ROOT / "build"
 APP_BUNDLE = DIST_DIR / f"{APP_NAME}.app"
@@ -181,7 +181,7 @@ def build_app(entitlements: Path, icns_path: Path) -> None:
         f"--icon={icns_path}",
         f"--osx-bundle-identifier={BUNDLE_ID}",
         f"--osx-entitlements-file={entitlements}",
-        f"--add-data={ASSETS_DIR}:assets",
+        f"--add-data={ASSETS_DIR}:assets/icons",
         *(f"--add-data={data_file}:." for data_file in data_files),
         str(ENTRY_SCRIPT),
     )

@@ -29,9 +29,11 @@ THEME_LIGHT = "light"
 _THEME_KEY = "theme"
 _APP_THEME_PROPERTY = "audiodeck_theme"
 
-# The glyph shows the mode a press switches TO, not the current one.
+# The artwork shows the mode a press switches TO, not the current one:
+# under the dark theme the button offers the sun, since pressing it brings
+# the light.
 TOGGLE_BUTTON_OBJECT_NAME = "ThemeToggleButton"
-_TOGGLE_GLYPHS = {THEME_DARK: "☀️", THEME_LIGHT: "\U0001f319"}
+_TOGGLE_ICON_NAMES = {THEME_DARK: "light-mode", THEME_LIGHT: "dark-mode"}
 _TOGGLE_TOOLTIPS = {
     THEME_DARK: "Switch to light mode",
     THEME_LIGHT: "Switch to dark mode",
@@ -116,9 +118,9 @@ def _save_theme(settings_path: Path, name: str) -> None:
         pass
 
 
-def toggle_glyph(theme_name: str) -> str:
-    """Return the sun/moon glyph a toggle button shows under `theme_name`."""
-    return _TOGGLE_GLYPHS[theme_name]
+def toggle_icon_name(theme_name: str) -> str:
+    """Return the sun/moon artwork a toggle button shows under `theme_name`."""
+    return _TOGGLE_ICON_NAMES[theme_name]
 
 
 def toggle_tooltip(theme_name: str) -> str:
@@ -215,7 +217,8 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
             color: {tokens["text_muted"]};
         }}
         QPushButton#ViewButton, QPushButton#TrayAction,
-        QPushButton#ThemeToggleButton, QPushButton#HelpButton {{
+        QPushButton#ThemeToggleButton, QPushButton#HelpButton,
+        QPushButton#DonateButton, QPushButton#FormIconButton {{
             background-color: transparent;
             border: 2px solid transparent;
             border-radius: 4px;
@@ -228,11 +231,16 @@ def build_stylesheet(tokens: dict[str, str]) -> str:
         QPushButton#ThemeToggleButton:enabled:hover,
         QPushButton#ThemeToggleButton:enabled:focus,
         QPushButton#HelpButton:enabled:hover,
-        QPushButton#HelpButton:enabled:focus {{
+        QPushButton#HelpButton:enabled:focus,
+        QPushButton#DonateButton:enabled:hover,
+        QPushButton#DonateButton:enabled:focus,
+        QPushButton#FormIconButton:enabled:hover,
+        QPushButton#FormIconButton:enabled:focus {{
             background-color: {tokens["surface"]};
             border: 2px solid {tokens["ring"]};
         }}
-        QPushButton#ViewButton:disabled, QPushButton#TrayAction:disabled {{
+        QPushButton#ViewButton:disabled, QPushButton#TrayAction:disabled,
+        QPushButton#FormIconButton:disabled {{
             background-color: transparent;
             border: 2px solid {tokens["danger"]};
         }}

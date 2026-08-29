@@ -37,10 +37,10 @@ SETUP_NAME = "AudioDeckSetup"
 # PE FileDescription for the setup program, which is what Task Manager shows.
 SETUP_DESCRIPTION = f"{identity.APP_DISPLAY_NAME} Setup"
 INSTALLER_ENTRY = PROJECT_ROOT / "installer" / "app.py"
-ICON_FILE = PROJECT_ROOT / "assets" / "audiodeck.ico"
+ICON_FILE = PROJECT_ROOT / "assets" / "icons" / "audiodeck.ico"
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 LICENSE_FILE = PROJECT_ROOT / "LICENSE"
-ASSETS_DIR = PROJECT_ROOT / "assets"
+ASSETS_DIR = PROJECT_ROOT / "assets" / "icons"
 PAYLOAD_DIR = PROJECT_ROOT / "installer" / "payload"
 
 # Build directories.
@@ -114,7 +114,7 @@ def build_installer() -> None:
         _add_data(manifest, "installer/payload"),
         _add_data(VERSION_FILE, "."),
         _add_data(LICENSE_FILE, "."),
-        _add_data(ASSETS_DIR, "assets"),
+        _add_data(ASSETS_DIR, "assets/icons"),
         "--hidden-import=installer.worker",
         "--hidden-import=installer.ops",
         "--hidden-import=installer.ui",

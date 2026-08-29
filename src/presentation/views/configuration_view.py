@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
+from src.presentation.views import tray
 from src.presentation.views.icons import (
     ICON_CANCEL,
     ICON_DELETE,
@@ -62,7 +63,7 @@ class ConfigurationView(QWidget):
         layout.addWidget(profile_group)
 
         # Action buttons: created here so the enabled logic stays with the
-        # view, but placed in the main window's header tray, not this layout.
+        # view while placed in the main window's header tray, not this layout.
         self._new_button = QPushButton()
         self._edit_button = QPushButton()
         self._delete_button = QPushButton()
@@ -99,9 +100,13 @@ class ConfigurationView(QWidget):
         self._output_combo = QComboBox()
         self._output_combo.addItem("(None)", None)
         output_layout.addWidget(self._output_combo)
-        self._refresh_output_button = QPushButton(ICON_REFRESH)
-        self._refresh_output_button.setMaximumWidth(40)
-        self._refresh_output_button.setToolTip("Refresh output devices")
+        self._refresh_output_button = QPushButton()
+        tray.style_form_icon_button(
+            self._refresh_output_button,
+            ICON_REFRESH,
+            "Refresh output devices",
+            self._output_combo,
+        )
         output_layout.addWidget(self._refresh_output_button)
         editor_layout.addLayout(output_layout)
 
@@ -116,9 +121,13 @@ class ConfigurationView(QWidget):
         self._input_combo = QComboBox()
         self._input_combo.addItem("(None)", None)
         input_layout.addWidget(self._input_combo)
-        self._refresh_input_button = QPushButton(ICON_REFRESH)
-        self._refresh_input_button.setMaximumWidth(40)
-        self._refresh_input_button.setToolTip("Refresh input devices")
+        self._refresh_input_button = QPushButton()
+        tray.style_form_icon_button(
+            self._refresh_input_button,
+            ICON_REFRESH,
+            "Refresh input devices",
+            self._input_combo,
+        )
         input_layout.addWidget(self._refresh_input_button)
         editor_layout.addLayout(input_layout)
 

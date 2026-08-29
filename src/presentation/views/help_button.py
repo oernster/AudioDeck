@@ -19,6 +19,7 @@ from PySide6.QtCore import QPoint
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu, QPushButton
 
+from src.presentation.views.icons import ICON_HELP
 from src.presentation.views.tray import style_tray_button
 
 
@@ -31,7 +32,7 @@ def build_help_button(
 ) -> QPushButton:
     """Build the Help icon with its menu wired to the given actions."""
     help_button = QPushButton()
-    style_tray_button(help_button, "ℹ️", "Help", "HelpButton")
+    style_tray_button(help_button, ICON_HELP, "Help", "HelpButton")
 
     help_menu = QMenu(help_button)
     entries = (

@@ -25,12 +25,18 @@ from src.presentation.notifiers.notifier_factory import (
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.update_presenter import UpdatePresenter
-from src.presentation.views import help_dialogs, tray, update_dialogs
+from src.presentation.views import header_band, help_dialogs, tray, update_dialogs
 from src.presentation.views.actuation_view import ActuationView
 from src.presentation.views.configuration_view import ConfigurationView
 from src.presentation.views.help_button import build_help_button
-from src.presentation.views.resource_paths import resource_path
+from src.presentation.views.icons import (
+    ICON_CONFIGURATION,
+    ICON_QUICK_SWITCH,
+)
+from src.presentation.views.links import open_externally
+from src.presentation.views.resource_paths import APP_ICON_ICO, resource_path
 from src.presentation.widgets.keyboard_nav import KeyboardNavigator
+from src.version import DONATE_URL
 
 # The main window's title. A second launch locates the running instance by
 # this exact string, so the two must never drift apart.
@@ -40,6 +46,9 @@ WINDOW_TITLE = "Audio Deck"
 # periodic re-check covers sessions that stay open for days.
 UPDATE_LAUNCH_DELAY_MS = 3000
 UPDATE_RECHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
+
+# How long a transient status-bar message stays up.
+STATUS_MESSAGE_TIMEOUT_MS = 5000
 
 
 class MainWindow(QMainWindow):
@@ -89,10 +98,9 @@ class MainWindow(QMainWindow):
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle(WINDOW_TITLE)
-        self.setMinimumSize(600, 500)
 
         # Set window icon
-        icon_path = resource_path("assets/audiodeck.ico")
+        icon_path = resource_path(APP_ICON_ICO)
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
 
@@ -104,30 +112,40 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Two view icons, a separator, then the ACTIVE view's action icons,
-        # then the theme toggle and Help on the right. Icons only: no button
-        # chrome, the glyph is the control.
-        self._quick_switch_button = self._make_view_button("🔄", "Quick Switch")
-        self._configuration_button = self._make_view_button("⚙️", "Configuration")
+        # then the donate button, the theme toggle and Help on the right.
+        # Pictures only: no button chrome, the artwork is the control.
+        self._quick_switch_button = header_band.make_view_button(
+            ICON_QUICK_SWITCH, "Quick Switch"
+        )
+        self._configuration_button = header_band.make_view_button(
+            ICON_CONFIGURATION, "Configuration"
+        )
 
         # Create views (their action buttons live in the header, below)
         self._configuration_view = ConfigurationView(self._configuration_presenter)
         self._actuation_view = ActuationView(self._actuation_presenter)
 
         header = QHBoxLayout()
-        header.setContentsMargins(8, 8, 8, 0)
+        header.setContentsMargins(*header_band.HEADER_MARGINS)
         header.addWidget(self._quick_switch_button)
         header.addWidget(self._configuration_button)
         header.addWidget(tray.make_separator())
         self._view_action_buttons = (
-            self._adopt_tray_actions(header, self._actuation_view.tray_actions()),
-            self._adopt_tray_actions(header, self._configuration_view.tray_actions()),
+            header_band.adopt_tray_actions(header, self._actuation_view.tray_actions()),
+            header_band.adopt_tray_actions(
+                header, self._configuration_view.tray_actions()
+            ),
         )
         header.addStretch()
+        self._donate_button = header_band.make_donate_button(self.open_donation)
+        header.addWidget(self._donate_button)
         self._theme_toggle = tray.ThemeToggleButton()
         self._theme_toggle.clicked.connect(self._on_toggle_theme)
         header.addWidget(self._theme_toggle)
         header.addWidget(self._create_help_button())
         layout.addLayout(header)
+        # Set once the header exists, so it is measured rather than guessed.
+        self.setMinimumSize(*header_band.minimum_window_size(header))
 
         self._view_stack = QStackedWidget()
         self._view_stack.addWidget(self._actuation_view)
@@ -140,25 +158,6 @@ class MainWindow(QMainWindow):
 
         # React to device changes via the native notifier (debounced in the view)
         self._install_device_notifier()
-
-    @staticmethod
-    def _make_view_button(glyph: str, name: str) -> QPushButton:
-        """Build one view-switching icon, in the ClearBudget tray style."""
-        button = QPushButton()
-        tray.style_tray_button(button, glyph, name, "ViewButton")
-        return button
-
-    @staticmethod
-    def _adopt_tray_actions(
-        header: QHBoxLayout, actions: tuple[tuple[QPushButton, str, str], ...]
-    ) -> tuple[QPushButton, ...]:
-        """Restyle one view's action buttons as tray icons and add them."""
-        buttons = []
-        for button, glyph, name in actions:
-            tray.style_tray_button(button, glyph, name, "TrayAction")
-            header.addWidget(button)
-            buttons.append(button)
-        return tuple(buttons)
 
     def _show_view(self, index: int) -> None:
         """Show a view, mark its button active and swap the tray actions.
@@ -183,7 +182,7 @@ class MainWindow(QMainWindow):
         """Disable the displayed view's button: present but inert.
 
         The disabled state paints the permanent red ring, which is the
-        app-wide marker for a control that exists but cannot be used, and
+        app-wide marker for a control that exists but cannot be used;
         the keyboard ring skips it, so the current view is never a stop.
         """
         buttons = (self._quick_switch_button, self._configuration_button)
@@ -311,6 +310,18 @@ class MainWindow(QMainWindow):
         )
         # Refresh actuation view to show new profile
         self._actuation_view.refresh()
+
+    def open_donation(self) -> None:
+        """Hand the donation page to whatever the desktop opens links with.
+
+        A desktop that declines to open a browser has to SAY so: silence
+        leaves the user pressing a button that appears to do nothing.
+        """
+        if not open_externally(DONATE_URL):
+            self.statusBar().showMessage(
+                "Could not open a browser for the donation page",
+                STATUS_MESSAGE_TIMEOUT_MS,
+            )
 
     def _on_auto_applied(self, message: str) -> None:
         """Show a brief status message when a reconnected device is applied.

@@ -27,6 +27,9 @@ PAYLOAD_DIR_NAME = "payload"
 PAYLOAD_ZIP_NAME = "payload.zip"
 MANIFEST_NAME = "manifest.json"
 ICON_FILE_NAME = "audiodeck.ico"
+# Where the generated icon set lives in the repo. The masters it is derived
+# from sit in assets/ beside it and are never shipped.
+ICONS_DIR_NAME = "icons"
 
 # Layout inside the install directory.
 UNINSTALL_SUBDIR = "_uninstall"

@@ -204,13 +204,13 @@ def build_executable() -> None:
         # Collect all comtypes data
         "--collect-all=comtypes",
         # Add application icon (from the generated asset set)
-        "--icon=assets/audiodeck.ico",
+        "--icon=assets/icons/audiodeck.ico",
         # PE version resource, so Windows names the process "Audio Deck"
         f"--version-file={version_resource}",
         # Bundle the VERSION file so the frozen app reads the real version
         f"--add-data={project_root / 'VERSION'};.",
         # Bundle the generated icon set (window, taskbar, splash, about, dialogs)
-        f"--add-data={project_root / 'assets'};assets",
+        f"--add-data={project_root / 'assets' / 'icons'};assets/icons",
         # Bundle the in-app user guide and the licence files (the Help menu
         # reads each of these from the bundle at runtime)
         f"--add-data={project_root / 'DOCUMENTATION.md'};.",

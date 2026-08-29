@@ -7,24 +7,24 @@ account, no cloud and no background service.
 
 ## Create a profile
 
-1. Open the **Configuration** view (the gear icon).
-2. Press **➕ New profile**.
+1. Open the **Configuration** view (the sliders icon).
+2. Press **New profile**.
 3. Name the profile, then select an output device, an input device or both.
-4. Press **💾 Save**.
+4. Press **Save**.
 
 A device that is currently disconnected still appears, marked offline, so
 profiles can be built around it.
 
 ## Switch profiles
 
-1. Open the **Quick Switch** view (the arrows icon).
+1. Open the **Quick Switch** view (the circling arrows icon).
 2. Select a profile.
-3. Press **▶️ Switch** or double-click the profile.
+3. Press **Switch** or double-click the profile.
 
 A profile with an offline device switches whatever is available now; the
 missing device is applied automatically the moment it reconnects (for
 example when a Bluetooth headset is turned on). Devices rescan on change
-and periodically; **📡 Rescan** forces it.
+and periodically; **Rescan** forces it.
 
 ## Stream Deck (Windows) and the command line
 
@@ -40,6 +40,15 @@ same way through the command line. Point a button (for example BarRaider's Advan
 Launcher on a Stream Deck) at `AudioDeck.exe` with
 `--profile "Profile Name"` as the arguments. Profile names are case
 sensitive. Command-line switching works while the window is open.
+
+Every button in the header is a picture rather than a text label. Hover one to
+read what it does.
+
+## Supporting Audio Deck
+
+Audio Deck is free and stays free: no paid tier, no licence key and no feature
+held back behind a donation. The donate button in the header opens a payment
+page in your own browser; the application itself sends nothing.
 
 ## Where profiles live
 
