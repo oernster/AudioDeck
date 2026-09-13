@@ -7,6 +7,12 @@ command-line interface.
 
 **Author:** Oliver Ernster
 
+> **Commercial licences available.** Audio Deck is free and open source under
+> GPL-3.0, with its interface layer under LGPL-3.0. If those terms do not suit
+> what you are building, such as a closed-source product, a commercial licence
+> can be bought from me separately. It covers my own code; PySide6 keeps its
+> own LGPL-3.0 licence. See
+> [commercial licensing](https://ernster.dev/commercial-licensing.html).
 
 ## What it is
 
@@ -314,8 +320,9 @@ to your own browser rather than fetching anything, so it costs the offline
 guarantee above nothing.
 
 If it has replaced something you were paying for, a contribution supports its
-maintenance and continued development:
-[Donate](https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G).
+maintenance and continued development.
+
+<a href="https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G"><img src="assets/icons/donate.png" alt="Donate to Audio Deck" width="120"></a>
 
 ## License
 
@@ -325,6 +332,10 @@ application, infrastructure and CLI layers) under
 (`src/presentation`) under [LGPL-3.0](LICENSE-LGPL-3.0.txt), aligning with
 Qt's own licensing. See [LICENSE](LICENSE) for the map; the running
 application shows both under Help.
+
+A commercial licence for my own code is also available, separately from the
+open-source licences: see
+[commercial licensing](https://ernster.dev/commercial-licensing.html).
 
 Copyright (C) 2024-2026 Oliver Ernster.
 
