@@ -41,7 +41,7 @@ def parse_arguments() -> CLIArguments:
     """
     parser = argparse.ArgumentParser(
         prog="AudioDeck",
-        description="Audio device profile switcher for Windows",
+        description="Audio device profile switcher for Windows, macOS and Linux",
         epilog="When run without arguments, launches the GUI interface.",
     )
 

@@ -12,9 +12,15 @@ from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
 from src.domain.value_objects.device_type import DeviceType
 from tests.conftest import FakeGetProfilesUseCase, FakeSwitchUseCase, save_profile
 
+# Deliberately not any real platform's command, so a test that finds it in the
+# output proves the handler printed what it was given.
+COMMAND = "audiodeck-under-test"
+
 
 def handler(profile_repo, switch=None):
-    return CLIHandler(GetProfilesUseCase(profile_repo), switch or FakeSwitchUseCase())
+    return CLIHandler(
+        GetProfilesUseCase(profile_repo), switch or FakeSwitchUseCase(), COMMAND
+    )
 
 
 def applied_outcome(*types):
@@ -35,6 +41,16 @@ def test_list_profiles_with_all_combos(profile_repo, capsys):
     assert "Empty (Empty)" in out
 
 
+def test_list_names_the_platform_command(profile_repo, capsys):
+    """The hint names the command it was given, never a hardcoded AudioDeck.exe."""
+    save_profile(profile_repo, "Gaming", "o", "i")
+    handler(profile_repo).handle(CLIArguments(list_profiles=True))
+    out = capsys.readouterr().out
+    assert f'{COMMAND} --profile "PROFILE_NAME"' in out
+    assert f'{COMMAND} --profile "Gaming"' in out
+    assert "AudioDeck.exe" not in out
+
+
 def test_list_no_profiles(profile_repo, capsys):
     code = handler(profile_repo).handle(CLIArguments(list_profiles=True))
     assert code == 0
@@ -49,7 +65,9 @@ def test_no_command(profile_repo, capsys):
 
 def test_handle_unexpected_exception(profile_repo, capsys):
     cli = CLIHandler(
-        FakeGetProfilesUseCase(error=RuntimeError("boom")), FakeSwitchUseCase()
+        FakeGetProfilesUseCase(error=RuntimeError("boom")),
+        FakeSwitchUseCase(),
+        COMMAND,
     )
     code = cli.handle(CLIArguments(list_profiles=True))
     assert code == 1

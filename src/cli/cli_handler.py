@@ -6,6 +6,7 @@ from pathlib import Path
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.cli.argument_parser import CLIArguments
+from src.cli.launch_command import launch_command_for
 from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
 from src.infrastructure.backend_factory import create_device_backend
 from src.infrastructure.caching_device_repository import CachingDeviceRepository
@@ -19,15 +20,19 @@ class CLIHandler:
         self,
         get_profiles_use_case: GetProfilesUseCase,
         switch_profile_use_case: SwitchProfileUseCase,
+        launch_command: str,
     ) -> None:
         """Initialize CLI handler with its use cases.
 
         Args:
             get_profiles_use_case: Use case for retrieving profiles
             switch_profile_use_case: Use case for switching profiles
+            launch_command: The command this platform runs Audio Deck with,
+                named in the output that tells the user what to type next
         """
         self._get_profiles_use_case = get_profiles_use_case
         self._switch_profile_use_case = switch_profile_use_case
+        self._launch_command = launch_command
 
     @classmethod
     def from_profiles_path(
@@ -52,6 +57,7 @@ class CLIHandler:
             SwitchProfileUseCase(
                 profile_repository, device_repository, backend.controller
             ),
+            launch_command_for(sys.platform),
         )
 
     def handle(self, args: CLIArguments) -> int:
@@ -105,10 +111,10 @@ class CLIHandler:
             print(f"  • {profile.name}{device_info}")
 
         print("\nTo switch to a profile, use:")
-        print('  AudioDeck.exe --profile "PROFILE_NAME"')
+        print(f'  {self._launch_command} --profile "PROFILE_NAME"')
         print("\nExample:")
         # The empty case returned above, so there is always a first profile.
-        print(f'  AudioDeck.exe --profile "{profiles[0].name}"')
+        print(f'  {self._launch_command} --profile "{profiles[0].name}"')
 
         return 0
 

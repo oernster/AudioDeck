@@ -67,7 +67,7 @@ The executable is created at `dist/AudioDeck.exe`.
 dist\AudioDeck.exe --list
 ```
 
-Example output:
+Example output on Windows (the listing names your own platform's command):
 
 ```
 Available Audio Profiles:
