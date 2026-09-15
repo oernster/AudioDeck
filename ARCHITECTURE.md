@@ -98,7 +98,9 @@ src/
     presenters/        ConfigurationPresenter, ActuationPresenter,
                        UpdatePresenter (MVP)
     widgets/           KeyboardNavigator (the explicit focus ring),
-                       AutoScroller (self-reading help surfaces)
+                       AutoScroller (self-reading help surfaces),
+                       guide_document (DOCUMENTATION.md read into the
+                       Guide's sections, pictures beside their names)
     notifiers/         Device-change notifiers per platform behind one factory:
                        WM_DEVICECHANGE (Windows), pactl subscribe (Linux),
                        periodic polling (macOS)

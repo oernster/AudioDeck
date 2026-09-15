@@ -202,7 +202,7 @@ class MainWindow(QMainWindow):
     def _create_help_button(self) -> QPushButton:
         """Create the Help icon for the header row, menu wired to this window."""
         return build_help_button(
-            self._show_documentation,
+            self._show_guide,
             self._show_ui_license,
             self._show_backend_license,
             self._check_for_updates,
@@ -211,8 +211,8 @@ class MainWindow(QMainWindow):
 
     # The Help actions are thin wrappers so the menu wiring above reads as
     # a menu, so a Qt signal always has a bound method to connect to.
-    def _show_documentation(self) -> None:
-        help_dialogs.show_documentation(self)
+    def _show_guide(self) -> None:
+        help_dialogs.show_guide(self)
 
     def _show_ui_license(self) -> None:
         help_dialogs.show_ui_license(self)

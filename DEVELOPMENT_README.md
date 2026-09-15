@@ -153,7 +153,8 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   token dicts feeding one stylesheet and palette, persisted beside the
   profiles), the Help button with its menu and dialogs (`help_button.py`,
   `help_dialogs.py`) and the covered widgets (`KeyboardNavigator`,
-  `AutoScroller`).
+  `AutoScroller` plus `guide_document`, which reads `DOCUMENTATION.md` into
+  the Guide's sections and draws each picture beside its name).
 - **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
 
 ## The setup program

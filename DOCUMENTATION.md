@@ -55,7 +55,7 @@ itself.
 move to rather than the one you are in.
 
 ![](assets/icons/guide-help-info.png)
-**Help.** The documentation, the two licences, the update check and this page.
+**Help.** This guide, the two licences, the update check and About.
 
 The Rescan mark appears once more inside the Configuration editor, beside each
 device list, where it reloads that list on the spot.

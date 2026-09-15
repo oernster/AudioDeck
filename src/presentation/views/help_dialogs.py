@@ -1,4 +1,4 @@
-"""The dialogs behind the Help button: documentation, licences and about.
+"""The dialogs behind the Help button: the Guide, the licences and About.
 
 These were methods on MainWindow, which put the dialog bodies inside the
 class that owns the views and the device notifier. They are plain functions
@@ -25,8 +25,13 @@ from PySide6.QtWidgets import (
 )
 
 from src import __version__
+from src.presentation.views import theme
 from src.presentation.views.resource_paths import APP_ICON_PNG, resource_path
 from src.presentation.widgets.auto_scroller import AutoScroller
+from src.presentation.widgets.guide_document import guide_html, parse_guide
+
+# The guide's words live in this one file, which GitHub renders as well.
+GUIDE_FILE = "DOCUMENTATION.md"
 
 # The licence text arrives hard-wrapped, so the dialog is sized to the text
 # rather than to a guessed minimum. The cap comes from the screen, not a
@@ -130,19 +135,10 @@ def _read_bundled_text(
         return None
 
 
-def show_documentation(parent: QWidget) -> None:
-    """Show the in-app user guide, headed by the app icon on the left."""
-    content = _read_bundled_text(
-        parent,
-        resource_path("DOCUMENTATION.md"),
-        "DOCUMENTATION.md",
-        "Documentation Not Found",
-    )
-    if content is None:
-        return
-
+def build_guide_dialog(parent: QWidget | None, content: str) -> QDialog:
+    """Build the Guide over the guide's markdown, headed by the app icon."""
     dialog = QDialog(parent)
-    dialog.setWindowTitle("Audio Deck Documentation")
+    dialog.setWindowTitle("Audio Deck Guide")
     dialog.setMinimumSize(760, 600)
 
     layout = QVBoxLayout(dialog)
@@ -162,13 +158,22 @@ def show_documentation(parent: QWidget) -> None:
     # GitHub. Qt resolves those against its search paths, which is why the
     # bundle root is named here rather than the paths being made absolute.
     text_browser.setSearchPaths([str(resource_path("."))])
-    text_browser.setMarkdown(content)
+    text_browser.setHtml(guide_html(parse_guide(content), theme.colours()["surface"]))
     layout.addWidget(text_browser)
     AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
+    return dialog
 
-    dialog.exec()
+
+def show_guide(parent: QWidget) -> None:
+    """Show the Guide: each picture in a column beside what it does."""
+    content = _read_bundled_text(
+        parent, resource_path(GUIDE_FILE), GUIDE_FILE, "Guide Not Found"
+    )
+    if content is None:
+        return
+    build_guide_dialog(parent, content).exec()
 
 
 def _reflow_hard_wrapped(text: str) -> str:
