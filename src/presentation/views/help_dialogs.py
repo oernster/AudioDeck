@@ -37,10 +37,16 @@ GUIDE_FILE = "DOCUMENTATION.md"
 # rather than to a guessed minimum. The cap comes from the screen, not a
 # constant: at the app's 13.5pt base font a 78-column licence line is
 # around 1400px wide, so any fixed cap either truncates the text on a
-# desktop monitor or overflows a small one. The margin keeps the dialog
-# clear of the screen edges when the text wants more than the screen has.
+# desktop monitor or overflows a small one. The margin keeps a dialog clear
+# of the screen edges when its content wants more than the screen has.
 LICENCE_HEIGHT_PX = 600
-LICENCE_SCREEN_MARGIN_PX = 80
+DIALOG_SCREEN_MARGIN_PX = 80
+
+# The Guide opens at least this size. Its width then grows to whatever its
+# content cannot wrap below, measured in the font it is drawn in, so the page
+# never scrolls sideways.
+GUIDE_MIN_WIDTH_PX = 760
+GUIDE_HEIGHT_PX = 600
 
 # Icon size used by every dialog that shows the app icon.
 ICON_PX = 64
@@ -139,7 +145,6 @@ def build_guide_dialog(parent: QWidget | None, content: str) -> QDialog:
     """Build the Guide over the guide's markdown, headed by the app icon."""
     dialog = QDialog(parent)
     dialog.setWindowTitle("Audio Deck Guide")
-    dialog.setMinimumSize(760, 600)
 
     layout = QVBoxLayout(dialog)
 
@@ -160,10 +165,34 @@ def build_guide_dialog(parent: QWidget | None, content: str) -> QDialog:
     text_browser.setSearchPaths([str(resource_path("."))])
     text_browser.setHtml(guide_html(parse_guide(content), theme.colours()["surface"]))
     layout.addWidget(text_browser)
+    _fit_guide_width(dialog, text_browser, layout)
     AutoScroller(text_browser)
 
     _add_close_button(dialog, layout)
     return dialog
+
+
+def _fit_guide_width(
+    dialog: QDialog, browser: QTextBrowser, layout: QVBoxLayout
+) -> None:
+    """Widen the Guide to the width its content cannot wrap below.
+
+    Measured on Windows, not guessed: the guide laid out 734px wide in a
+    722px page, which hung a horizontal scrollbar under the whole of it.
+    The floor comes from a copy of the document laid out one pixel wide,
+    where everything that can wrap has wrapped; what is left is the width
+    nothing can reduce, margins included. The browser is polished first,
+    as for the licences, so the copy carries the stylesheet's font rather
+    than the fallback.
+    """
+    browser.ensurePolished()
+    browser.document().setDefaultFont(browser.font())
+    narrowest = browser.document().clone(browser)
+    narrowest.setTextWidth(1)
+    needed = math.ceil(narrowest.size().width()) + _browser_chrome(browser, layout)
+    width = _capped_to_screen(dialog, max(GUIDE_MIN_WIDTH_PX, needed))
+    dialog.setMinimumSize(width, GUIDE_HEIGHT_PX)
+    dialog.resize(width, GUIDE_HEIGHT_PX)
 
 
 def show_guide(parent: QWidget) -> None:
@@ -218,17 +247,34 @@ def _fit_dialog_width_to_text(
         (metrics.horizontalAdvance(line) for line in original.splitlines()),
         default=0.0,
     )
-    chrome = (
+    chrome = _browser_chrome(browser, layout) + 2 * math.ceil(
+        browser.document().documentMargin()
+    )
+    width = _capped_to_screen(dialog, math.ceil(widest) + chrome)
+    dialog.setMinimumSize(width, LICENCE_HEIGHT_PX)
+    dialog.resize(width, LICENCE_HEIGHT_PX)
+
+
+def _browser_chrome(browser: QTextBrowser, layout: QVBoxLayout) -> int:
+    """The width a dialog adds round its browser's document.
+
+    The vertical scrollbar, the browser's frame on both sides and the
+    layout's margins. The document's own margin is not included, since a
+    measured document size already carries it.
+    """
+    return (
         browser.verticalScrollBar().sizeHint().width()
         + 2 * browser.frameWidth()
-        + 2 * math.ceil(browser.document().documentMargin())
         + layout.contentsMargins().left()
         + layout.contentsMargins().right()
     )
-    cap = dialog.screen().availableGeometry().width() - LICENCE_SCREEN_MARGIN_PX
-    width = min(math.ceil(widest) + chrome, cap)
-    dialog.setMinimumSize(width, LICENCE_HEIGHT_PX)
-    dialog.resize(width, LICENCE_HEIGHT_PX)
+
+
+def _capped_to_screen(dialog: QDialog, width: int) -> int:
+    """`width`, held clear of the edges of the screen the dialog is on."""
+    return min(
+        width, dialog.screen().availableGeometry().width() - DIALOG_SCREEN_MARGIN_PX
+    )
 
 
 def _show_licence_file(parent: QWidget, file_name: str, title: str) -> None:
