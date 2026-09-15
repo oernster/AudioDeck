@@ -272,10 +272,11 @@ def generate_button_icons() -> None:
 
 
 def generate_donate_mark() -> None:
-    """Emit the donate mark for the app and for the site, from one render.
+    """Emit the donate mark for the app: its button and the guide's key.
 
-    Both destinations take the SAME image so the button in the window and the
-    button on the site cannot drift apart.
+    The site is deliberately not written. Every project site carries the same
+    small house mark, committed in docs/ as it is, so a render of this app's
+    own master would make this one site the odd one out.
     """
     if not DONATE_MASTER.exists():
         raise FileNotFoundError(f"Donate master not found: {DONATE_MASTER}")
@@ -288,8 +289,6 @@ def generate_donate_mark() -> None:
         _scaled_to_height(mark, GUIDE_RENDER_HEIGHT_PX),
         OUTPUT_DIR / f"{GUIDE_PREFIX}{DONATE_NAME}",
     )
-    if DOCS_DIR.is_dir():
-        _write(mark, DOCS_DIR / DONATE_NAME)
 
 
 def generate_site_icons() -> None:

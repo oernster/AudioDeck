@@ -70,13 +70,13 @@
         and two thin clients (the PySide6 GUI and the CLI) wired in separate
         composition roots. Structural tests parse the source on every run, so a layering
         violation fails the build instead of surviving into review.</p>
-      <p>What works now is a two-view app that installs per-user with no administrator rights and
-        stores profiles in a local JSON file under your own AppData: no account, no cloud, no
-        background service. The one thing it asks the network is whether a newer release exists,
-        an anonymous daily call to GitHub's releases API that carries nothing about you or your
-        profiles. Launch it twice and the
-        existing window fronts itself; headless switches stay exempt, so the Stream Deck keys
-        keep working while the window is open.</p>
+      <p>What works now is a two-view app that installs per user (with no administrator rights on
+        Windows or Linux) and stores profiles in a local JSON file in your own per-user app-data
+        folder: no account, no cloud, no background service. The one thing it asks the network is
+        whether a newer release exists, an anonymous daily call to GitHub's releases API that
+        carries nothing about you or your profiles. Launch it twice and no second window opens
+        (on Windows the existing one fronts itself); headless switches stay exempt, so the Stream
+        Deck keys keep working while the window is open.</p>
       <p>Full reasoning at <a href="https://www.crankthecode.com/posts/audiodeck">crankthecode.com</a>.</p>
       <div class="cta-row">
         <a class="btn-primary" href="download.html">Download Audio Deck</a>

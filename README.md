@@ -57,6 +57,12 @@ profiles; a failed check is silent.
 - Partial switching: the available devices in a profile are applied even if one
   is currently missing; the missing one is reported.
 - Automatic and on-demand rescanning of devices, with offline devices marked.
+- Dark and light themes, switched from the header and remembered between
+  launches.
+- Full keyboard navigation: Tab and the arrow keys walk one focus ring; a green
+  outline marks where you are.
+- Help > Guide, which shows every picture button beside its name and what it
+  does.
 - A single window per user: launching Audio Deck again while the window is open
   starts no second copy. On Windows the existing window is brought to the
   front; on Linux and macOS the second launch simply exits, because neither
@@ -115,9 +121,11 @@ leaves the installation untouched.
 
 ### Portable (Windows)
 
-1. Download the standalone `AudioDeck.exe` from the releases page.
-2. Place it in any folder.
-3. Run it. Nothing is installed and no registry entry is written.
+Releases carry the setup program rather than a standalone executable. To run
+Audio Deck without installing it, build one from source (see
+[Building from source](#building-from-source)): `python buildexe.py` writes
+`dist/AudioDeck.exe`. Place it in any folder and run it; nothing is installed
+and no registry entry is written.
 
 Both builds read and write the same profiles file, so you can move between them.
 
@@ -133,7 +141,7 @@ Both builds read and write the same profiles file, so you can move between them.
 
 ### macOS (DMG)
 
-1. Download `audiodeck-macos-arm64.dmg` from the releases page.
+1. Download `AudioDeck.dmg` from the releases page.
 2. Open it and drag Audio Deck into Applications.
 
 The DMG is signed and notarised, so Gatekeeper opens it without warnings.
@@ -303,8 +311,7 @@ launch exits quietly. Command-line switching is exempt, so `--profile` and
 
 Windows will not let the setup program replace the files of a program that is
 open. Let it close Audio Deck for you, else close it yourself and run the setup
-again. Remember the tray icon: closing the window minimises Audio Deck there
-rather than exiting it.
+again.
 
 ### A Stream Deck button does nothing
 
@@ -333,11 +340,11 @@ application, infrastructure and CLI layers) under
 Qt's own licensing. See [LICENSE](LICENSE) for the map; the running
 application shows both under Help.
 
+Copyright (C) 2024-2026 Oliver Ernster.
+
 A commercial licence for my own code is also available, separately from the
 open-source licences: see
 [commercial licensing](https://ernster.dev/commercial-licensing.html).
-
-Copyright (C) 2024-2026 Oliver Ernster.
 
 ## Credits
 

@@ -49,8 +49,8 @@ python src/main.py --profile "Gaming Setup"
 ```
 
 Only one Audio Deck window may be open per user. If an installed or
-packaged copy is already running, launching from source raises that window and
-exits immediately rather than opening a second one, so close the other copy
+packaged copy is already running, launching from source exits immediately
+(raising that window on Windows) rather than opening a second one, so close the other copy
 before testing GUI changes. Headless runs (`--list` and `--profile`) are exempt
 and can be run as often as you like.
 
@@ -155,7 +155,9 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   `help_dialogs.py`) and the covered widgets (`KeyboardNavigator`,
   `AutoScroller` plus `guide_document`, which reads `DOCUMENTATION.md` into
   the Guide's sections and draws each picture beside its name).
-- **CLI**: `argument_parser` and `cli_handler`, sharing the application layer.
+- **CLI**: `argument_parser`, `cli_handler` and `launch_command` (the command
+  each platform runs Audio Deck with, named in the CLI's own output), sharing
+  the application layer.
 
 ## The setup program
 
@@ -222,8 +224,8 @@ It emits three kinds of output. The application icon is centre-cropped square
 and written at the platform sizes plus a multi-frame `.ico`. The button icons
 are cropped to their opaque box and scaled by HEIGHT alone, never squared, at
 four times the height the tray draws them at so Qt only ever scales down. The
-donate mark is written to the app and the site from one render, so the two
-cannot drift.
+donate mark is written to the app only: the site carries the house mark every
+project site shares, committed in `docs/` as it is.
 
 Two button icons are composites rather than masters: the prohibition bar
 (`negative.png`) laid over the icon of the thing being negated, giving delete a
@@ -302,9 +304,9 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
    automated coverage, because it needs a real running program and a real user;
    it is also the path that fails on locked files when it is wrong.
 8. Refresh `docs/screenshots/` if the interface changed.
-9. Assemble the release with `AudioDeckSetup.exe`, the portable `AudioDeck.exe`,
-   `README.md`, `CLI_USAGE.md`, `examples/streamdeck_profiles/` and the licence
-   files (`LICENSE`, `LICENSE-GPL-3.0.txt`, `LICENSE-LGPL-3.0.txt`).
+9. Publish the release with `AudioDeckSetup.exe`, `AudioDeck.dmg` and
+   `audiodeck.flatpak`. Those are the names the website's download buttons link
+   to; the update check picks each platform's asset by its extension.
 
 ## Troubleshooting development issues
 

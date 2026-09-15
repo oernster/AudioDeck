@@ -102,11 +102,13 @@ tests/
   conftest.py       Hand-written doubles, shared fixtures, headless Qt setup
   domain/           Entities, value objects, exceptions, Protocol conformance
   application/      Use cases and DTOs
-  infrastructure/   JSON repository, device repository, single-instance guard
+  infrastructure/   JSON repositories, device repository, the Windows, macOS
+                    and Linux backends with their factory, the GitHub
+                    release source and both single-instance guards
   presentation/     Presenters, background worker, device-change notifiers,
                     the keyboard navigator, the auto-scroller, the donate
-                    button, the picture buttons' focus policy and the
-                    header's fit to the window
+                    button, the picture buttons' focus policy, the header's
+                    fit to the window, the About box and the Guide
   cli/              Argument parsing and the CLI handler
   installer/        The setup program's screen model, its running-app
                     detection and its locked-file reporting

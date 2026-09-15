@@ -237,7 +237,8 @@ on Linux, `~/Library/Application Support/AudioDeck` on macOS):
   `E402` and `I001` in `pyproject.toml`, because it inserts the project root on
   `sys.path` before importing from `src`; sorting those imports would break
   running `python src/main.py` directly. Do not remove that ignore.
-- Types: mypy over `src`, in its strict configuration. Clean. Qt enums must be
+- Types: mypy over `src`, with untyped and incomplete definitions disallowed.
+  Clean. Qt enums must be
   written fully qualified (`Qt.ItemDataRole.UserRole`, not `Qt.UserRole`);
   PySide6 forwards the shorthand at runtime but does not declare it in its
   stubs, so the shorthand form fails type checking.
