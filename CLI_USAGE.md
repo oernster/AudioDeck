@@ -104,6 +104,7 @@ still applied and the offline one is reported on standard error, for example:
 Switching to profile "Gaming Setup"...
 ✓ Profile switched successfully!
   Changed: Output device(s)
+
 Some devices were not available and were skipped:
   - Input (not available)
 ```

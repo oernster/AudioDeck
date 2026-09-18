@@ -153,8 +153,10 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   token dicts feeding one stylesheet and palette, persisted beside the
   profiles), the Help button with its menu and dialogs (`help_button.py`,
   `help_dialogs.py`) and the covered widgets (`KeyboardNavigator`,
-  `AutoScroller` plus `guide_document`, which reads `DOCUMENTATION.md` into
-  the Guide's sections and draws each picture beside its name).
+  `AutoScroller`, `guide_document`, which reads `DOCUMENTATION.md` into
+  the Guide's sections and draws each picture beside its name, plus
+  `inactive_tooltips`, which lets a tooltip show while another program has
+  focus).
 - **CLI**: `argument_parser`, `cli_handler` and `launch_command` (the command
   each platform runs Audio Deck with, named in the CLI's own output), sharing
   the application layer.
@@ -173,7 +175,11 @@ state is a test rather than a screenshot; `existing.py` reads the machine once
 before anything is drawn; `screens.py` lays each screen out and `footer.py`
 owns what a footer is; `ui.py` is the window, `performing.py` the work half
 mixed into it, `worker.py` the thread that work runs on, `ops.py` the work
-itself and `steplog.py` the record of what happened.
+itself and `steplog.py` the record of what happened. `app.py` is its entry
+point and the one place it reaches into the application: it installs
+`src.presentation.widgets.inactive_tooltips`, so its tooltips show while
+another program has focus, exactly as the application's do. Nothing else in
+`installer/` imports from `src`.
 
 **A screen, never a disabled control.** One reading of the machine picks the
 route; the route then decides the screen, its heading, the options on it and the

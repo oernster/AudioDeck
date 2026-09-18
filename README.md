@@ -164,7 +164,8 @@ The DMG is signed and notarised, so Gatekeeper opens it without warnings.
 3. Press **Switch** in the header tray or double-click the profile.
 
 Every control in the header is a picture rather than a text label, so each one
-names itself through a tooltip on hover.
+names itself through a tooltip on hover. On Windows the tooltip shows even
+while another program has focus.
 
 A profile whose device is currently offline is marked in the list. Switching to
 it applies whatever devices are available now; a device that is off is applied
@@ -323,8 +324,8 @@ Run the batch file manually to read the error, confirm the path to
 Audio Deck is free and stays free. There is no paid tier, no licence key and no
 feature held back behind a donation. The donate button sits in the window's
 header, to the left of the light and dark toggle; pressing it hands the address
-to your own browser rather than fetching anything, so it costs the offline
-guarantee above nothing.
+to your own browser rather than fetching anything, so it leaves the local-first
+promise above untouched.
 
 If it has replaced something you were paying for, a contribution supports its
 maintenance and continued development.

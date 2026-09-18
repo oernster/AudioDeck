@@ -108,7 +108,8 @@ tests/
   presentation/     Presenters, background worker, device-change notifiers,
                     the keyboard navigator, the auto-scroller, the donate
                     button, the picture buttons' focus policy, the header's
-                    fit to the window, the About box and the Guide
+                    fit to the window, the About box, the Guide and
+                    tooltips over an inactive window
   cli/              Argument parsing and the CLI handler
   installer/        The setup program's screen model, its running-app
                     detection and its locked-file reporting
