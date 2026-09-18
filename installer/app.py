@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from installer import constants as c  # noqa: E402
 from installer.theme import stylesheet  # noqa: E402
 from installer.ui import InstallerWindow  # noqa: E402
+from src.presentation.widgets import inactive_tooltips  # noqa: E402
 
 
 def main() -> int:
@@ -28,6 +29,7 @@ def main() -> int:
     uninstalling = c.UNINSTALL_FLAG in sys.argv
 
     app = QApplication(sys.argv)
+    inactive_tooltips.install(app)
     app.setApplicationName(f"{c.APP_DISPLAY_NAME} Setup")
     app.setStyleSheet(stylesheet(dark=True))
 

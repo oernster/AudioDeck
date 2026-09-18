@@ -39,6 +39,7 @@ from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCa
 from src.presentation.presenters.configuration_presenter import ConfigurationPresenter
 from src.presentation.presenters.actuation_presenter import ActuationPresenter
 from src.presentation.views import theme
+from src.presentation.widgets import inactive_tooltips
 from src.presentation.views.main_window import MainWindow, WINDOW_TITLE
 from src.presentation.views.resource_paths import APP_ICON_ICO, resource_path
 from src.presentation.views.splash_screen import create_splash_screen
@@ -143,6 +144,7 @@ def main() -> int:
 
     # Create Qt application
     app = QApplication(sys.argv)
+    inactive_tooltips.install(app)
     app.setApplicationName("Audio Deck")
     app.setOrganizationName("AudioDeck")
 
