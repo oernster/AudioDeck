@@ -330,7 +330,7 @@ promise above untouched.
 If it has replaced something you were paying for, a contribution supports its
 maintenance and continued development.
 
-<a href="https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G"><img src="assets/icons/donate.png" alt="Donate to Audio Deck" width="120"></a>
+<a href="https://www.paypal.com/ncp/payment/8DD4P8F5U69F6"><img src="assets/icons/donate.png" alt="Donate to Audio Deck" width="120"></a>
 
 ## License
 

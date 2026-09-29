@@ -27,7 +27,7 @@ from src.version import DONATE_URL
 # The address AudioDeck's own donate button must send a browser to. Written out
 # in full rather than imported into the comparison, so this test fails if the
 # constant is ever edited, which is the whole point of it.
-_EXPECTED_ADDRESS = "https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G"
+_EXPECTED_ADDRESS = "https://www.paypal.com/ncp/payment/8DD4P8F5U69F6"
 
 
 class _StatusBarStub:

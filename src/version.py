@@ -48,4 +48,4 @@ __version__ = _read_version()
 # knows. It is handed to the desktop rather than fetched, so nothing here ever
 # opens a connection of its own and the offline guarantee is untouched by the
 # button existing.
-DONATE_URL = "https://www.paypal.com/ncp/payment/KJBJ5BBWQ542G"
+DONATE_URL = "https://www.paypal.com/ncp/payment/8DD4P8F5U69F6"
