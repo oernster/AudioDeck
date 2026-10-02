@@ -77,7 +77,11 @@ src/
     windows/           Core Audio enumeration and control (pycaw, comtypes),
                        SingleInstanceGuard (named mutex, Win32 behind Protocols)
     linux/             PulseAudio/PipeWire enumeration and control over the
-                       pactl command (subprocess behind a Protocol)
+                       pactl command; pw-dump reads the devices where pactl
+                       finds none and pw-metadata writes the default where
+                       pactl is refused (on the host through flatpak-spawn
+                       inside the Flatpak); each command is a subprocess
+                       behind a Protocol
     macos/             CoreAudio enumeration and control over ctypes (behind a
                        Protocol; devices identified by stable UID)
     posix/             Lock-file single instance (flock behind a Protocol),
@@ -214,8 +218,8 @@ on Linux, `~/Library/Application Support/AudioDeck` on macOS):
 | Local JSON persistence | Local-first, no service or account; the file is portable and easy to back up |
 | Shared application core for GUI and CLI | One set of use cases, two front ends; no duplicated switching logic |
 | Single `VERSION` file as source of truth | Runtime and packaging read the same value; nothing else hardcodes a version |
-| One platform backend per operating system behind shared Protocols | Windows Core Audio via pycaw, PulseAudio/PipeWire via pactl, macOS CoreAudio via ctypes; the domain, application, presenters and CLI are identical on all three |
-| pactl subprocess on Linux rather than a Python PulseAudio library | pactl ships with every PulseAudio and PipeWire desktop, so the port adds no Python dependency; JSON output keeps the parsing testable |
+| One platform backend per operating system behind shared Protocols | Windows Core Audio via pycaw, PulseAudio/PipeWire via pactl with pw-dump and pw-metadata as fallbacks, macOS CoreAudio via ctypes; the domain, application, presenters and CLI are identical on all three |
+| Command-line tools on Linux (pactl, falling back to pw-dump and pw-metadata) rather than a Python PulseAudio library | pactl comes with PulseAudio's client tools, which a PipeWire-only desktop may lack; pw-dump and pw-metadata ship with PipeWire itself. The port adds no Python dependency; JSON output keeps the parsing testable |
 | ctypes CoreAudio on macOS rather than pyobjc | The needed HAL surface is a handful of stable C calls; pyobjc would be a heavyweight dependency for that sliver |
 | macOS devices identified by UID, not AudioDeviceID | The AudioDeviceID is transient across reboots and unplugs; the UID is stable, so profiles survive |
 | Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |

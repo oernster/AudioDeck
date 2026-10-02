@@ -83,7 +83,7 @@ profiles; a failed check is silent.
 | Language | Python 3.10+ |
 | GUI | PySide6 (Qt for Python) |
 | Audio API (Windows) | pycaw with comtypes (Windows Core Audio) |
-| Audio API (Linux) | pactl (PulseAudio/PipeWire), no extra Python dependency |
+| Audio API (Linux) | pactl (PulseAudio/PipeWire) with pw-dump and pw-metadata as fallbacks, no extra Python dependency |
 | Audio API (macOS) | CoreAudio via ctypes, no extra Python dependency |
 | Persistence | JSON file in the platform's per-user app-data directory |
 | Packaging | PyInstaller (Windows, macOS), Flatpak (Linux) |
@@ -354,5 +354,6 @@ open-source licences: see
 
 - Built with PySide6 (Qt for Python).
 - Uses pycaw for the Windows Core Audio API, pactl for PulseAudio/PipeWire on
-  Linux and CoreAudio on macOS.
+  Linux (with PipeWire's pw-dump and pw-metadata as fallbacks) and CoreAudio
+  on macOS.
 - Packaged with PyInstaller and Flatpak.

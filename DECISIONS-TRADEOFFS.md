@@ -63,10 +63,11 @@ the presenters and the command line are identical on all three.
 
 The only call the application makes is to ask GitHub whether a newer release
 exists. The request carries no identifier, not the application's version and
-nothing about the profiles.
+nothing about the profiles. It goes out with Python's default user agent,
+which names the Python version and nothing more.
 
 - **Rather than:** telemetry, usage figures or an account.
-- **Gains:** nothing about the user or the machine leaves it.
+- **Gains:** nothing about the user or the profiles leaves the machine.
 - **Costs:** no figures on which versions are in use or how the product is
   used.
 

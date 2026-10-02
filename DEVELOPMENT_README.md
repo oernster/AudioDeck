@@ -124,7 +124,10 @@ enforced invariants are in [ARCHITECTURE.md](ARCHITECTURE.md). Key components:
   newer published release should be offered and with which download.
 - **Infrastructure**: one audio backend per platform behind the shared
   Protocols, chosen by `backend_factory` (Windows: Core Audio via pycaw and
-  comtypes; Linux: pactl over a subprocess seam; macOS: CoreAudio via ctypes,
+  comtypes; Linux: pactl over a subprocess seam, with pw-dump reading the
+  devices where pactl finds none and pw-metadata writing the default where
+  pactl is refused, through flatpak-spawn on the host inside the Flatpak;
+  macOS: CoreAudio via ctypes,
   devices keyed by stable UID), the platform-neutral
   `CachingDeviceRepository`, `JsonProfileRepository`,
   `JsonUpdateSettingsRepository` (the skipped-version store, best-effort by
@@ -337,7 +340,7 @@ Delete the `build/` and `dist/` folders, reinstall PyInstaller
 
 On Windows, ensure the audio service is running, that devices are enabled and
 that pycaw is installed correctly. On Linux, ensure PulseAudio or PipeWire is
-running and `pactl info` answers. On macOS, ensure the devices appear in the
+running and that `pactl info` or `pw-dump` answers. On macOS, ensure the devices appear in the
 system sound settings.
 
 ## Contributing
@@ -360,5 +363,6 @@ Copyright (C) 2024-2026 Oliver Ernster.
 
 - Built with PySide6 (Qt for Python).
 - Uses pycaw for the Windows Core Audio API, pactl for PulseAudio/PipeWire on
-  Linux and CoreAudio via ctypes on macOS.
+  Linux (with PipeWire's pw-dump and pw-metadata as fallbacks) and CoreAudio
+  via ctypes on macOS.
 - Packaged with PyInstaller and Flatpak.

@@ -3,8 +3,11 @@
 #
 # Offline-wheels variant: PySide6 wheels are downloaded on the host first,
 # then installed inside the sandbox with --no-index, so the build itself
-# needs no network. The runtime sandbox gets the PulseAudio socket (device
-# control via pactl) and network (the GitHub update check only).
+# needs no network. The runtime sandbox gets the PulseAudio socket (devices
+# are read through pactl; pw-dump answers where pactl finds none), the right to
+# talk to org.freedesktop.Flatpak (PipeWire refuses a sandboxed client the
+# default device, so pw-metadata writes it on the host through flatpak-spawn)
+# and network (the GitHub update check only).
 #
 # Author: Oliver Ernster
 
