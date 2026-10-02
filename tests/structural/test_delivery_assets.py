@@ -15,6 +15,7 @@ computer.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -36,6 +37,11 @@ RUNTIME_DOCUMENTS = ("DOCUMENTATION.md", "LICENSE", "VERSION")
 # The scripts that put the application on a machine. Each stages the tree in
 # its own way, so each is read for the same set of names.
 DELIVERY_SCRIPTS = ("buildexe.py", "build_flatpak.sh", "builddmg.py")
+
+# SPDX expression syntax: the suffix for "this version only" and the operator
+# for licences that all apply at once.
+SPDX_ONLY = "-only"
+SPDX_AND = "AND"
 
 
 def _script(name: str) -> str:
@@ -99,6 +105,26 @@ def test_the_macos_icns_is_assembled_from_the_generated_set() -> None:
     assert (
         missing == []
     ), f"the DMG icon build reads sizes that are not generated: {missing}"
+
+
+def test_the_flatpak_metainfo_states_the_licence_split_in_license() -> None:
+    """The store listing names the licences LICENSE grants, in SPDX form.
+
+    LICENSE names each component's licence by version with no "or any later
+    version" grant, so each identifier is the "-only" form; the two parts ship
+    together, so AppStream's SPDX expression joins them with AND.
+    """
+    licence = (PROJECT_ROOT / "LICENSE").read_text(encoding="utf-8")
+    granted = re.findall(r"->\s.*\(([A-Z]+-[\d.]+)\)", licence)
+    match = re.search(
+        r"<project_license>([^<]+)</project_license>", _script("build_flatpak.sh")
+    )
+
+    assert granted, "LICENSE no longer names its licences as NAME (ID) lines"
+    assert "any later version" not in licence
+    assert match is not None, "build_flatpak.sh writes no project_license"
+    expected = f" {SPDX_AND} ".join(f"{name}{SPDX_ONLY}" for name in granted)
+    assert match.group(1) == expected
 
 
 @pytest.mark.parametrize("asset", (APP_ICON_PNG, APP_ICON_ICO))

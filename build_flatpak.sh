@@ -93,7 +93,7 @@ cat > "${PACKAGING_DIR}/${APP_ID}.metainfo.xml" <<METAINFO
 <component type="desktop-application">
   <id>${APP_ID}</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>LGPL-3.0-or-later</project_license>
+  <project_license>GPL-3.0-only AND LGPL-3.0-only</project_license>
   <name>${APP_NAME}</name>
   <summary>${APP_SUMMARY}</summary>
   <description>
