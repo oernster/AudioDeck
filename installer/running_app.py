@@ -16,8 +16,9 @@ app is repeatedly killed and restarted the setup program itself can be recorded
 as a descendant. It then terminates itself, with no traceback and no crash
 report, because a terminate is not a crash. The app starts no children that
 need ending, so ``/t`` buys nothing and costs the installer its life. ``/f``
-stays, because the app intercepts a window close to minimise to its tray icon
-and would otherwise keep its files locked.
+stays: without it taskkill only asks the app's window to close, which leaves
+whether and when the app goes up to the app, while the setup program waits
+only a bounded time for its files to be released.
 
 Every command runs through an injected callable, so the tests drive real code
 against a hand-written fake rather than patching the subprocess module.

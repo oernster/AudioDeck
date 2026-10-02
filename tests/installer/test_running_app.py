@@ -182,7 +182,10 @@ def test_a_locked_file_becomes_a_sentence_the_user_can_act_on() -> None:
         finally:
             os.chmod(target / c.APP_EXE_NAME, stat.S_IWRITE)
     assert c.APP_DISPLAY_NAME in message
-    assert "tray icon" in message
+    assert "run this installer again" in message
+    # AudioDeck has no system tray icon, so the message must not send the user
+    # looking for one.
+    assert "tray" not in message
     assert "Errno" not in message
 
 

@@ -92,8 +92,7 @@ RUNNING_LEAD = (
 )
 STILL_RUNNING_HEADING = f"{c.APP_DISPLAY_NAME} is still open"
 STILL_RUNNING_LEAD = (
-    "Setup could not close it. Close it yourself, including its tray icon, "
-    "then run setup again."
+    "Setup could not close it. Close it yourself, then run setup again."
 )
 LAUNCHING_LEAD = "It is starting now."
 REMOVED_HEADING = f"{c.APP_DISPLAY_NAME} has been removed"

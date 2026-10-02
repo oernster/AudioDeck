@@ -39,7 +39,7 @@ def _locked_file_message() -> str:
     """Return a sentence the user can act on, rather than an errno and a path."""
     return (
         f"{c.APP_DISPLAY_NAME} is still running, so its files could not be "
-        f"replaced. Close {c.APP_DISPLAY_NAME}, including its tray icon, then "
+        f"replaced. Close {c.APP_DISPLAY_NAME}, then "
         "run this installer again."
     )
 
