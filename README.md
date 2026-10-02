@@ -278,6 +278,9 @@ This README covers using Audio Deck. The rest is split by audience.
 | [TESTING.md](TESTING.md) | How to run the tests, what the coverage gate measures and what it excludes |
 | [TECH_DEBT.md](TECH_DEBT.md) | What is still open, what is deliberately left and what only looks like debt |
 
+[`DECISIONS-TRADEOFFS.md`](DECISIONS-TRADEOFFS.md) sets out the decisions Audio
+Deck rests on, with what each one gains and what it costs.
+
 ## Troubleshooting
 
 ### Applications still use the old device
