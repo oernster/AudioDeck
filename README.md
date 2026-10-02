@@ -272,7 +272,7 @@ This README covers using Audio Deck. The rest is split by audience.
 | Document | What it covers |
 | --- | --- |
 | [DOCUMENTATION.md](DOCUMENTATION.md) | The succinct user guide, also shown by Help > Guide in the app |
-| [DEVELOPMENT_README.md](DEVELOPMENT_README.md) | Developer notes: setup, running from source, the build, workflow, code style and releasing |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Developer notes: setup, running from source, the build, workflow, code style and releasing |
 | [CLI_USAGE.md](CLI_USAGE.md) | The command-line surface in depth, with batch-file recipes for Stream Deck |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The design, the layers, the dependency direction and the enforced invariants |
 | [TESTING.md](TESTING.md) | How to run the tests, what the coverage gate measures and what it excludes |

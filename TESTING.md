@@ -2,7 +2,7 @@
 
 How Audio Deck is tested, what the coverage gate measures and what it
 deliberately does not. For the design see [ARCHITECTURE.md](ARCHITECTURE.md);
-for developer setup see [DEVELOPMENT_README.md](DEVELOPMENT_README.md).
+for developer setup see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Running the tests
 
