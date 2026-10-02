@@ -66,8 +66,8 @@
         missing rather than silently half-failing.</p>
       <p>Under the surface it is a four-layer clean architecture in Python: a pure domain, an
         application layer of use cases, infrastructure speaking to each platform's audio stack
-        (Windows Core Audio through pycaw, PulseAudio and PipeWire through pactl with pw-dump and pw-metadata as fallbacks,
-        macOS CoreAudio)
+        (Windows Core Audio through pycaw, macOS CoreAudio, PulseAudio and PipeWire through pactl
+        with pw-dump and pw-metadata as fallbacks)
         and two thin clients (the PySide6 GUI and the CLI) wired in separate
         composition roots. Structural tests parse the source on every run, so a layering
         violation fails the build instead of surviving into review.</p>

@@ -4,7 +4,7 @@ Audio Deck follows a clean, layered architecture:
 `UI -> Application -> Domain <- Infrastructure`. The domain is pure and depends
 on nothing; the application orchestrates use cases over domain interfaces;
 infrastructure implements those interfaces against each platform's audio stack
-(Windows Core Audio, PulseAudio/PipeWire, macOS CoreAudio) and the filesystem;
+(Windows Core Audio, macOS CoreAudio, PulseAudio/PipeWire) and the filesystem;
 the UI and the CLI are clients of the application layer only.
 
 ## Invariants
@@ -28,6 +28,7 @@ suite rather than left to convention.
 | An operation moves to a screen; nothing is disabled in place | The choices are not on screen to be greyed, so an install cannot show a row of dead boxes each wearing the danger ring; the footer belongs to the screen and the progress screen offers nothing | `tests/installer/test_screen_model.py`, driving the window and scanning the package for the old shape |
 | A checked control that is disabled still paints as checked | A stylesheet rule, not a live state: the setup program no longer disables anything, so this holds the ordering trap in the sheet itself, where `::indicator:checked` and `::indicator:disabled` match a checked and disabled box equally and whichever is written last wins | `tests/installer/test_theme_states.py`, sampling the painted indicator rather than reading the sheet |
 | Every asset the application reads is staged by every build | The icon contract says a name resolves to a file in the repository, which is a different question from whether that file reaches a Linux or macOS machine; a picture left out of one build is invisible until somebody opens the window on that platform | `tests/structural/test_delivery_assets.py`, reading the three delivery scripts and the DMG script's own values |
+| The Flatpak's store listing states exactly the licence split `LICENSE` grants | The listing is where a Linux user reads the licence before installing; written by hand in a build script, it drifts from `LICENSE` with nothing to report it | `tests/structural/test_delivery_assets.py`, reading the licence IDs off `LICENSE` and the SPDX expression off `build_flatpak.sh` |
 | Every icon the UI names resolves to a file the generator produces | A name with no artwork behind it draws nothing and is invisible until the window is on screen | `tests/structural/test_icon_assets.py`, checking the names against the generator and the files |
 | The window never opens narrower than its own header | The header is fixed-size picture buttons, so its width follows the artwork height; a literal minimum silently clips the right-hand controls | `header_band.minimum_window_size`, measured rather than written down, with `tests/presentation/test_header_fits.py` |
 | A picture button takes TAB focus only | The ring says where the keyboard is; Qt's StrongFocus default lets a mouse click set it, which left a green rectangle round the donate button for the rest of the session once it had opened a browser | `tests/presentation/test_picture_button_focus.py`, driving a real mouse press and counting ring pixels |
@@ -193,8 +194,9 @@ The update check keeps its one setting (the skipped version) in
 store's failure rules leak into the other.
 
 Profiles are persisted as a JSON array in the platform's per-user app-data
-directory (`%LOCALAPPDATA%\AudioDeck` on Windows, `$XDG_DATA_HOME/audiodeck`
-on Linux, `~/Library/Application Support/AudioDeck` on macOS):
+directory (`%LOCALAPPDATA%\AudioDeck` on Windows,
+`~/Library/Application Support/AudioDeck` on macOS, `$XDG_DATA_HOME/audiodeck`
+on Linux):
 
 ```json
 [

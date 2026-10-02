@@ -50,9 +50,7 @@ Windows, Linux and macOS each have their own audio backend behind the same
 interfaces, chosen at start-up from the platform. The domain, the use cases,
 the presenters and the command line are identical on all three.
 
-- **Rather than:** Windows only. The device layer was once raw COM throughout
-  and was judged to have no path to other platforms; the macOS icon set was
-  even deleted as unusable before the port proved otherwise.
+- **Rather than:** Windows only.
 - **Gains:** one product and one set of rules on every desktop.
 - **Costs:** three backends to keep working, each tested over fakes at its
   seam rather than against real hardware.
@@ -182,9 +180,9 @@ general, multimedia and communications.
 
 ### Events where the platform offers them, polling where it does not
 
-Windows reports device changes as messages and Linux through a long-running
-`pactl subscribe`; macOS is polled every few seconds. Every platform also
-rescans on a slower timer. A burst of changes is folded into one rescan.
+Windows and Linux report device changes as they happen; macOS is polled every
+few seconds. Every platform also rescans on a slower timer. A burst of changes
+is folded into one rescan.
 
 - **Rather than:** a CoreAudio listener on macOS, whose callback lifetime
   rules are a crash risk from Python; polling everywhere.
@@ -198,7 +196,7 @@ Enumerating devices, switching and reading the current defaults run on a
 background thread. The window only draws what comes back.
 
 - **Rather than:** calling the audio system from the window directly, which
-  froze it during rescans and switches.
+  freezes it during rescans and switches.
 - **Gains:** the window stays responsive while devices come and go.
 - **Costs:** status arrives a moment after it is asked for; the threading has
   to be owned and tested.
@@ -216,9 +214,9 @@ for does report its failure.
 
 ### Linux through command-line tools
 
-The Linux backend reads devices through `pactl`; where only PipeWire's own
-tools exist it reads them through `pw-dump`. It sets the default through
-`pactl` and falls back to writing PipeWire's metadata with `pw-metadata`.
+The Linux backend drives the sound server through its own command-line tools:
+PulseAudio's client tools first, PipeWire's own where those are absent or
+refused.
 
 - **Rather than:** a Python PulseAudio library.
 - **Gains:** no extra Python dependency; JSON output keeps the parsing
@@ -275,8 +273,7 @@ device was applied; skipped devices are listed on the error stream.
 ### The command line names the platform's own command
 
 What the command line prints about running itself names the executable on
-Windows, the Flatpak on Linux and the bundle's executable on macOS. A test
-holds those names to the build scripts.
+Windows, the bundle's executable on macOS and the Flatpak on Linux.
 
 - **Rather than:** naming the Windows executable everywhere.
 - **Gains:** the advice works on the machine it is printed on.
@@ -309,34 +306,27 @@ the lock cannot be created at all, the application starts anyway.
 
 ### Every button is a picture
 
-Every control in the window draws generated artwork. Delete and cancel share
-one prohibition bar laid over the picture of what they negate. Each button
-names itself in a tooltip.
+Every control in the window draws artwork generated from committed source
+images. Delete and cancel share one prohibition bar laid over the picture of
+what they negate. Each button names itself in a tooltip. The pictures share
+one height and each button is as wide as its own artwork, so the row sits on
+one baseline; the window is never narrower than the row it carries. Only the
+generated set ships; the large source images stay in the repository.
 
-- **Rather than:** emoji, which were used first because they theme themselves
-  and need no packaging step.
+- **Rather than:** emoji, which theme themselves and need no packaging step;
+  pictures squared to one box, which makes the wide ones shorter than their
+  neighbours.
 - **Gains:** one visual language at a readable size, which emoji drawn from
-  whatever font was present could not give.
+  whatever font is present cannot give; small packages.
 - **Costs:** the artwork has to be generated, staged by every build and
-  checked by test.
-
-### Matched on height, sized on width
-
-Every button picture is drawn at one height; each button is as wide as its own
-artwork. Artwork is rendered at four times the height it is drawn at, so it is
-only ever scaled down.
-
-- **Rather than:** fitting each picture into a square.
-- **Gains:** a row of differently shaped pictures sits on one baseline, which
-  is the edge the eye checks.
-- **Costs:** button widths vary along the row.
+  checked; button widths vary along the row.
 
 ### Two view buttons over one stack
 
 Quick Switch and Configuration are two buttons in the header over a stack of
 pages; the button for the view already showing is disabled.
 
-- **Rather than:** a tab strip, which was built first and then removed.
+- **Rather than:** a tab strip.
 - **Gains:** the header holds every control in one row of pictures; the
   keyboard model has no strip to walk.
 - **Costs:** none recorded.
@@ -367,41 +357,22 @@ the same artwork.
 
 Tab and the arrow keys walk one explicit ring through every control, wrapping
 at both ends. A list is one stop whose items are walked with Up and Down.
-Picture buttons take focus from the keyboard only, never from a click.
+Picture buttons take focus from the keyboard only, never from a click. A ring
+marks a control, never the pane, list or scroll area holding it; a list shows
+where the user is through its current item.
 
 - **Rather than:** mouse-first controls; Qt's default focus policy, under which
-  a click on the donate button left a ring round it for the rest of the
-  session.
-- **Gains:** the whole window works without a mouse; the ring only ever shows
-  where the keyboard is.
+  a mouse click leaves a ring on whatever was clicked; rings that reach a
+  container and outline it whenever the pointer rests there.
+- **Gains:** the whole window works without a mouse; a ring always means the
+  thing about to be acted on.
 - **Costs:** every new control needs its place in the ring.
-
-### A ring marks a control, never a container
-
-No pane, list or scroll area draws a focus ring, in any state. A list shows
-where the user is through its current item. A structural test scans the
-stylesheets for any rule that would break this.
-
-- **Rather than:** rings inherited by accident from grouped stylesheet rules,
-  which once outlined the profile list whenever the pointer rested in it.
-- **Gains:** a ring always means the thing about to be acted on.
-- **Costs:** none recorded.
-
-### The window is never narrower than its header
-
-The window's minimum width is measured from the assembled header rather than
-written down.
-
-- **Rather than:** a fixed minimum, which at the larger icon size would have
-  clipped the right-hand controls.
-- **Gains:** resizing the artwork carries the window minimum with it.
-- **Costs:** none recorded.
 
 ### Tooltips show while another program has focus
 
 Every top-level window, dialogs included, is marked as it is shown so its
-tooltips appear even when it is not the active window. This was measured on
-Windows.
+tooltips appear even when it is not the active window. This has been checked
+on Windows.
 
 - **Rather than:** Qt's default of tooltips over the active window only, with
   each window opting in.
@@ -412,8 +383,8 @@ Windows.
 ### The guide is a key to the real buttons
 
 Help then Guide reads the user guide file into sections and draws each
-button's own artwork beside its name. A test checks that every word of the
-file reaches the page.
+button's own artwork beside its name, so every word of the file reaches the
+page.
 
 - **Rather than:** a plain rendering of the file; screenshots.
 - **Gains:** the guide cannot drift from the buttons; the words have one home.
@@ -456,12 +427,15 @@ registers itself under the user's own part of the registry.
 Install, update, downgrade, repair and removal are one bespoke program. One
 reading of the machine picks the route and the route decides the screen, its
 heading, its options and its buttons. Work moves to a progress screen that
-offers nothing; every path ends on a screen saying how it went.
+offers nothing; every path ends on a screen saying how it went. Repair
+restores only the files that are missing or damaged, checked against what the
+build recorded.
 
 - **Rather than:** a generic installer; options greyed out in place while the
-  work ran, which once made a ticked box look identical to an unticked one.
+  work runs, where a disabled ticked box can read as unticked; a repair that
+  rewrites every file.
 - **Gains:** one identity throughout; a heading can never disagree with the
-  route.
+  route; a repair touches nothing that is already right.
 - **Costs:** the setup program is Audio Deck's own to maintain.
 
 ### Offer to close a running copy first
@@ -477,16 +451,6 @@ program alone and never asks to end its whole process tree.
 - **Gains:** an update over an open copy just works; declining changes
   nothing and says what to do.
 - **Costs:** none recorded.
-
-### Repair replaces only what is damaged
-
-Each file in the payload carries its hash. Repair restores only files that
-are missing or whose hash does not match.
-
-- **Rather than:** reinstalling every file.
-- **Gains:** a repair touches nothing that is already right.
-- **Costs:** the hashes are computed at build time and carried in the setup
-  program.
 
 ### Removing the application leaves the profiles
 
@@ -507,24 +471,12 @@ disabled.
 - **Gains:** neither program's ring rules fight the other's.
 - **Costs:** two stylesheets to keep in step.
 
-### Masters stay out of the packages
-
-The multi-megabyte source artwork sits beside the generated set in the
-repository. Builds stage only the generated set; a test fails if any runtime
-path reaches past it. Another checks that every build script stages what the
-application reads.
-
-- **Rather than:** shipping the masters; moving them out of the repository.
-- **Gains:** installers stay small; a master and the pictures derived from it
-  are read together.
-- **Costs:** two directories under one roof that must not be confused.
-
 ### Each platform built by its own tools
 
 Windows is built with PyInstaller into a single executable wrapped by the
-setup program; Linux is a Flatpak built from wheels downloaded beforehand, so
-the sandboxed build needs no network; macOS is a disk image that is signed,
-notarised and stapled. The macOS build fails rather than produce an
+setup program; macOS is a disk image that is signed, notarised and stapled;
+Linux is a Flatpak built from wheels downloaded beforehand, so the sandboxed
+build needs no network. The macOS build fails rather than produce an
 unnotarised image unless that is asked for explicitly.
 
 - **Rather than:** one cross-platform packager; an unsigned macOS build.
@@ -547,13 +499,14 @@ separately.
 
 ### The website's stylesheet is addressed by its content
 
-Each local stylesheet and script link carries a hash of the file it points
-at, with line endings folded first.
+Each local stylesheet and script link on the website carries a fingerprint of
+the file it points at, so a changed file gets a new address.
 
 - **Rather than:** relying on the browser cache expiring.
-- **Gains:** a new page never arrives paired with the old stylesheet; a
-  Windows checkout and GitHub agree on the hash.
-- **Costs:** the stamping script must be run after editing the site's styles.
+- **Gains:** a new page never arrives paired with the old stylesheet; an
+  unchanged file keeps its address and its cache.
+- **Costs:** the fingerprints must be refreshed after editing the site's
+  styles.
 
 ## Engineering
 
@@ -582,15 +535,14 @@ presenters call use cases and report back with Qt signals.
 
 ### Complete coverage of what can be measured
 
-The suite fails below 100 per cent statement and branch coverage over the
-package. Five paths are excluded, each with a written reason: package markers,
-the composition root, view construction and the two Windows modules that
-would change the machine's real default devices if run.
+The suite fails below complete statement and branch coverage over the
+package. A short list of paths is excluded, each with a written reason:
+package markers, the composition root, view construction and the Windows
+modules that would change the machine's real default devices if run.
 
 - **Rather than:** a lower figure; tests that change the developer's audio
   while they run.
-- **Gains:** a gap is a missing test or dead code, never noise. Branch
-  coverage has already found an unreachable branch, which was deleted.
+- **Gains:** a gap is a missing test or dead code, never noise.
 - **Costs:** the excluded modules rely on their seams being faked faithfully.
 
 ### Tests with real parts
@@ -606,21 +558,19 @@ proved by planting a violation and watching them fail.
 
 ### Small modules
 
-No module in the package, the setup program or the tests may exceed four
-hundred lines. The band just beneath the cap fails too. A module that
-reaches it is cut to three hundred and fifty rather than shaved. Delivery
-scripts are exempt.
+Every module in the package, the setup program and the tests sits under a
+size cap; one that comes close is cut well below it rather than shaved by a
+line. Delivery scripts are exempt, being linear recipes.
 
-- **Rather than:** letting files grow, which is how one view reached six
-  hundred lines with nothing reporting it.
-- **Gains:** modules split at real seams; the band's width is derived from the
-  cap so the two numbers cannot drift.
+- **Rather than:** letting files grow until somebody notices.
+- **Gains:** modules split at real seams; the cap is measured on every run
+  rather than remembered.
 - **Costs:** more, smaller files.
 
 ### One home for the version
 
-The version lives only in the root `VERSION` file. The application, the
-package metadata and the build scripts read it; the documentation carries
+The version lives in one file at the root of the repository. The application,
+the package metadata and the build scripts read it; the documentation carries
 none.
 
 - **Rather than:** a version written wherever it is needed.
@@ -634,7 +584,7 @@ setup program are checked with the package; mypy checks the package with
 untyped definitions disallowed. All three are run by hand rather than from
 inside the test suite.
 
-- **Rather than:** running them path-scoped, which once left the build
-  scripts and the setup program unlinted.
+- **Rather than:** running them path-scoped, which leaves the build scripts
+  and the setup program unchecked.
 - **Gains:** the whole repository is held to the same standard.
 - **Costs:** a step that relies on being remembered.

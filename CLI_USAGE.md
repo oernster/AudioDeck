@@ -11,15 +11,15 @@ platform's command:
 
 ```
 Windows  AudioDeck.exe
-Linux    flatpak run uk.codecrafter.AudioDeck
 macOS    /Applications/AudioDeck.app/Contents/MacOS/AudioDeck
+Linux    flatpak run uk.codecrafter.AudioDeck
 ```
 
-For example, listing profiles on Linux is
-`flatpak run uk.codecrafter.AudioDeck --list` and on macOS
-`/Applications/AudioDeck.app/Contents/MacOS/AudioDeck --list`. The batch-file
-recipes below are Windows-specific; on Linux or macOS use an ordinary shell
-script with the same arguments.
+For example, listing profiles on macOS is
+`/Applications/AudioDeck.app/Contents/MacOS/AudioDeck --list` and on Linux
+`flatpak run uk.codecrafter.AudioDeck --list`. The batch-file recipes below are
+Windows-specific; on macOS or Linux use an ordinary shell script with the same
+arguments.
 
 ## Quick reference
 

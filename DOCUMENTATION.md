@@ -101,9 +101,9 @@ AudioDeck.exe --version        Print the version
 ```
 
 Profile names are case sensitive; switching this way works while the window
-is open. On Linux the command is `flatpak run uk.codecrafter.AudioDeck` and on
-macOS it is `/Applications/AudioDeck.app/Contents/MacOS/AudioDeck`, with the
-same arguments.
+is open. On macOS the command is
+`/Applications/AudioDeck.app/Contents/MacOS/AudioDeck` and on Linux it is
+`flatpak run uk.codecrafter.AudioDeck`, with the same arguments.
 
 Elgato's Stream Deck integration is Windows only: point a button, for example
 BarRaider's Advanced Launcher, at `AudioDeck.exe` with
@@ -115,8 +115,8 @@ running the same command.
 
 ```
 Windows  %LOCALAPPDATA%\AudioDeck\profiles.json
-Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 macOS    ~/Library/Application Support/AudioDeck/profiles.json
+Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 ```
 
 Back up that file to keep your profiles.

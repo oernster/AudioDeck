@@ -13,7 +13,7 @@ documentation see [README.md](README.md); for the design and its invariants see
 
 ### Prerequisites
 
-- Windows 10 or 11; a Linux desktop with PulseAudio or PipeWire; or macOS.
+- Windows 10 or 11; macOS; or a Linux desktop with PulseAudio or PipeWire.
 - Python 3.10 or higher.
 - Git.
 
@@ -103,6 +103,7 @@ AudioDeck/
   buildexe.py        Portable executable
   buildinstaller.py  Setup executable, run after buildexe.py
   generate_icons.py  Regenerates assets/icons/ from the masters in assets/
+  stamp_assets.py    Versions the site's stylesheet links by content hash
   pyproject.toml     Packaging plus the pytest, coverage, black, ruff and mypy configuration
 ```
 
@@ -312,7 +313,10 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
    close Audio Deck, wait for it to go and then install. This path has no
    automated coverage, because it needs a real running program and a real user;
    it is also the path that fails on locked files when it is wrong.
-8. Refresh `docs/screenshots/` if the interface changed.
+8. Refresh `docs/screenshots/` if the interface changed. If `docs/styles.css`
+   changed, run `python stamp_assets.py` so every page links the new
+   stylesheet rather than a cached copy of the old one; a second run reports
+   nothing to do.
 9. Publish the release with `AudioDeckSetup.exe`, `AudioDeck.dmg` and
    `audiodeck.flatpak`. Those are the names the website's download buttons link
    to; the update check picks each platform's asset by its extension.

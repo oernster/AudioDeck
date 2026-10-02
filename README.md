@@ -1,6 +1,6 @@
 # <img width="64" height="64" alt="application-icon" src="https://github.com/user-attachments/assets/47f99fb1-0c2f-4bb5-9b66-31522a73d5f7" /> Audio Deck
 
-A local-first audio device switcher for Windows, Linux and macOS, with a GUI,
+A local-first audio device switcher for Windows, macOS and Linux, with a GUI,
 a command-line interface and Stream Deck integration on Windows. Any macro
 deck or macro buttons on any OS that can run a command work through the
 command-line interface.
@@ -83,16 +83,16 @@ profiles; a failed check is silent.
 | Language | Python 3.10+ |
 | GUI | PySide6 (Qt for Python) |
 | Audio API (Windows) | pycaw with comtypes (Windows Core Audio) |
-| Audio API (Linux) | pactl (PulseAudio/PipeWire) with pw-dump and pw-metadata as fallbacks, no extra Python dependency |
 | Audio API (macOS) | CoreAudio via ctypes, no extra Python dependency |
+| Audio API (Linux) | pactl (PulseAudio/PipeWire) with pw-dump and pw-metadata as fallbacks, no extra Python dependency |
 | Persistence | JSON file in the platform's per-user app-data directory |
 | Packaging | PyInstaller (Windows, macOS), Flatpak (Linux) |
 | Tests | pytest with coverage |
 
 ## Requirements
 
-- Windows 10 or Windows 11; a Linux desktop running PulseAudio or PipeWire
-  (Ubuntu and every mainstream distribution); or macOS on Apple Silicon.
+- Windows 10 or Windows 11; macOS on Apple Silicon; or a Linux desktop running
+  PulseAudio or PipeWire (Ubuntu and every mainstream distribution).
 - An Elgato Stream Deck is optional and its integration is Windows only;
   other macro decks and macro buttons work on any OS through the command
   line.
@@ -129,6 +129,13 @@ and no registry entry is written.
 
 Both builds read and write the same profiles file, so you can move between them.
 
+### macOS (DMG)
+
+1. Download `AudioDeck.dmg` from the releases page.
+2. Open it and drag Audio Deck into Applications.
+
+The DMG is signed and notarised, so Gatekeeper opens it without warnings.
+
 ### Linux (Flatpak)
 
 1. Download `audiodeck.flatpak` from the releases page.
@@ -139,18 +146,11 @@ Both builds read and write the same profiles file, so you can move between them.
 3. Launch Audio Deck from your desktop's app grid or run
    `flatpak run uk.codecrafter.AudioDeck`.
 
-### macOS (DMG)
-
-1. Download `AudioDeck.dmg` from the releases page.
-2. Open it and drag Audio Deck into Applications.
-
-The DMG is signed and notarised, so Gatekeeper opens it without warnings.
-
 ## Quick start
 
 ### Create a profile
 
-1. Open `AudioDeck.exe`.
+1. Open Audio Deck.
 2. Open the **Configuration** view (the gear and sliders icon).
 3. Press **New profile** in the header tray.
 4. Name the profile (for example "Gaming Setup").
@@ -220,8 +220,8 @@ Profiles are stored per platform at:
 
 ```
 Windows  %LOCALAPPDATA%\AudioDeck\profiles.json
-Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 macOS    ~/Library/Application Support/AudioDeck/profiles.json
+Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 ```
 
 Back up this file to keep your profiles.
@@ -244,15 +244,6 @@ python buildinstaller.py
 `buildinstaller.py` wraps that build into `dist-installer/AudioDeckSetup.exe`,
 so run it after `buildexe.py`.
 
-Linux (needs flatpak and flatpak-builder):
-
-```
-./build_flatpak.sh
-```
-
-writes `audiodeck.flatpak`; `./cleanup_flatpak.sh` removes the Flatpak build
-artefacts and nothing else.
-
 macOS (notarisation reads the `AudioDeck` notarytool keychain profile, stored
 once with `xcrun notarytool store-credentials AudioDeck`; `APPLE_ID` and
 `APPLE_APP_PASSWORD` in the environment override it):
@@ -264,6 +255,15 @@ python builddmg.py
 writes `AudioDeck.dmg` in the repo root, signed, notarised and stapled. The
 build fails rather than emit an unnotarised image; `SKIP_NOTARIZE=1` opts out
 for a local test build.
+
+Linux (needs flatpak and flatpak-builder):
+
+```
+./build_flatpak.sh
+```
+
+writes `audiodeck.flatpak`; `./cleanup_flatpak.sh` removes the Flatpak build
+artefacts and nothing else.
 
 ## Documentation
 
@@ -333,7 +333,7 @@ promise above untouched.
 If it has replaced something you were paying for, a contribution supports its
 maintenance and continued development.
 
-<a href="https://www.paypal.com/ncp/payment/8DD4P8F5U69F6"><img src="assets/icons/donate.png" alt="Donate to Audio Deck" width="120"></a>
+<a href="https://www.paypal.com/ncp/payment/8DD4P8F5U69F6"><img src="docs/donate.png" alt="Donate to Audio Deck" width="120"></a>
 
 ## License
 
@@ -353,7 +353,7 @@ open-source licences: see
 ## Credits
 
 - Built with PySide6 (Qt for Python).
-- Uses pycaw for the Windows Core Audio API, pactl for PulseAudio/PipeWire on
-  Linux (with PipeWire's pw-dump and pw-metadata as fallbacks) and CoreAudio
-  on macOS.
+- Uses pycaw for the Windows Core Audio API, CoreAudio on macOS and pactl for
+  PulseAudio/PipeWire on Linux (with PipeWire's pw-dump and pw-metadata as
+  fallbacks).
 - Packaged with PyInstaller and Flatpak.
