@@ -405,7 +405,8 @@ moment the reader takes over, resuming in place afterwards.
 ### A build that cannot run is not shipped
 
 PyInstaller writes an executable even when it could not find a module. Every
-build script reads its warning file afterwards and fails if a module the
+PyInstaller build (the Windows executable, the setup program and the macOS
+bundle) reads its warning file afterwards and fails if a module the
 application cannot run without is listed.
 
 - **Rather than:** trusting the packager's success.

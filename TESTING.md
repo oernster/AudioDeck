@@ -11,12 +11,16 @@ pip install -r requirements-dev.txt
 pytest -v --cov
 ```
 
-That is the whole command. Coverage settings live in `pyproject.toml` under
-`[tool.coverage.run]`, so the flags do not have to be remembered.
+That is the whole command. The coverage flags and the 100% gate are in
+`addopts` under `[tool.pytest.ini_options]` in `pyproject.toml`, with what is
+measured under `[tool.coverage.run]`, so the flags do not have to be
+remembered. Because the gate rides on every run, a run over part of the suite
+fails it unless coverage is switched off.
 
-Read the **exit code**, not the output. A coverage-gated run prints the coverage
-table last and emits no "N passed" summary line, so grepping the text for
-`passed` or `failed` matches coverage filenames instead of results.
+Read the **exit code**, not the output. The run ends with an "N passed" line
+even when the coverage gate has failed: a run over one layer prints "34 passed"
+on its last line beneath `FAIL Required test coverage of 100% not reached`, then
+exits 1. Only the exit code reports the tests and the gate together.
 
 ```powershell
 pytest -v --cov
@@ -27,7 +31,7 @@ Useful variations:
 
 ```powershell
 pytest -q --no-cov                      # fast run, no coverage
-pytest tests/domain -p no:cacheprovider # one layer
+pytest tests/domain --no-cov            # one layer; without --no-cov the gate fails it
 pytest --cov-report=html                # then open htmlcov/index.html
 ```
 

@@ -253,8 +253,9 @@ pytest -v --cov
 
 The gate is 100% with branch coverage, over everything except the composition
 root, the PySide6 views and the two raw-COM modules. Coverage settings live in
-`pyproject.toml`. Read `$LASTEXITCODE` rather than the output, because a gated
-run prints no "N passed" line. See [TESTING.md](TESTING.md) for the full picture,
+`pyproject.toml`. Read `$LASTEXITCODE` rather than the output, because the
+closing "N passed" line still appears when the coverage gate has failed. See
+[TESTING.md](TESTING.md) for the full picture,
 including the no-mock-libraries rule and the Qt threading caveat.
 
 ### Code quality
@@ -273,7 +274,9 @@ Passing explicit paths such as `ruff check src tests` silently misses the build
 scripts and the installer, which is how findings accumulated there unnoticed.
 
 Mypy stays scoped to `src` on purpose: the build scripts and the installer are
-not annotated to the same standard. All three checks currently pass.
+not annotated to the same standard. Ruff and black pass. Mypy does not: it
+reports two functions in `src/presentation/widgets/inactive_tooltips.py` with
+unannotated parameters, so `mypy src` exits 1 until those are annotated.
 
 Qt enums are written in their fully-qualified form (`Qt.ItemDataRole.UserRole`,
 not `Qt.UserRole`). PySide6 forwards the shorthand at runtime but its stubs do
@@ -306,7 +309,8 @@ it at runtime and `pyproject.toml` reads it for packaging. To release, edit
 3. Run `pytest -v --cov` and confirm `$LASTEXITCODE` is 0.
 4. Run the code-quality checks (`ruff check`, `black --check .`, `mypy src`) and
    confirm each exits 0.
-5. Build with `python buildexe.py` then `python buildinstaller.py`.
+5. Build with `python buildexe.py` then `python buildinstaller.py` on Windows,
+   `python builddmg.py` on a Mac and `./build_flatpak.sh` on Linux.
 6. Smoke-test both artefacts: GUI mode, launching twice (the second should raise
    the first window), `--list`, `--profile` and a Stream Deck button.
 7. Run the setup program over a copy that is already running. It should offer to

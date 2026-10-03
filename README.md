@@ -262,8 +262,10 @@ Linux (needs flatpak and flatpak-builder):
 ./build_flatpak.sh
 ```
 
-writes `audiodeck.flatpak`; `./cleanup_flatpak.sh` removes the Flatpak build
-artefacts and nothing else.
+writes `audiodeck.flatpak` and installs it for the current user.
+`./cleanup_flatpak.sh` undoes that: it uninstalls the user's Audio Deck Flatpak
+and deletes the bundle and the Flatpak build directories, leaving every Windows
+and macOS output alone.
 
 ## Documentation
 

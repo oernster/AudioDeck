@@ -21,7 +21,7 @@ suite rather than left to convention.
 | Only a composition root names an infrastructure concrete | Everything else is constructor-injected and stays swappable | Composition-root whitelist test (`main.py` and `cli_handler.py`) |
 | No module-level service singletons | No hidden global state or service locators | Structural AST scan for module-level service construction |
 | The version string exists only in the root `VERSION` file | Single source of truth; no drift across code and packaging | `version.py` reads `VERSION`; `pyproject.toml` reads the same file |
-| Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually |
+| Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually; mypy does not currently pass (see Quality enforcement) |
 | Only one GUI instance runs per user session | Two windows would race over the same profiles file | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py` |
 | Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 | No module exceeds 400 lines; none sits in the band just beneath it | Size is a structural property: unmeasured, a view reaches 600 lines and nothing reports it | `tests/structural/test_architecture.py`, measuring `src`, `installer` and `tests`; the delivery scripts are exempt by nature |
@@ -247,7 +247,9 @@ on Linux):
   `sys.path` before importing from `src`; sorting those imports would break
   running `python src/main.py` directly. Do not remove that ignore.
 - Types: mypy over `src`, with untyped and incomplete definitions disallowed.
-  Clean. Qt enums must be
+  Not currently clean: two functions in
+  `src/presentation/widgets/inactive_tooltips.py` have unannotated parameters,
+  so `mypy src` exits 1. Qt enums must be
   written fully qualified (`Qt.ItemDataRole.UserRole`, not `Qt.UserRole`);
   PySide6 forwards the shorthand at runtime but does not declare it in its
   stubs, so the shorthand form fails type checking.
