@@ -12,14 +12,16 @@ program.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt
 from PySide6.QtWidgets import QWidget
 
 
 class _TooltipsOnInactiveWindows(QObject):
     """Marks every top-level window as it is shown so its tooltips always show."""
 
-    def eventFilter(self, watched, event) -> bool:  # noqa: N802 (Qt naming)
+    def eventFilter(  # noqa: N802 (Qt naming)
+        self, watched: QObject, event: QEvent
+    ) -> bool:
         if (
             event.type() == QEvent.Type.Show
             and isinstance(watched, QWidget)
@@ -29,7 +31,7 @@ class _TooltipsOnInactiveWindows(QObject):
         return False
 
 
-def install(app) -> None:
+def install(app: QCoreApplication) -> None:
     """Show `app`'s tooltips over an inactive window too.
 
     The filter is parented to `app`, which keeps it alive for the

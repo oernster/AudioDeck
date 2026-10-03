@@ -274,9 +274,8 @@ Passing explicit paths such as `ruff check src tests` silently misses the build
 scripts and the installer, which is how findings accumulated there unnoticed.
 
 Mypy stays scoped to `src` on purpose: the build scripts and the installer are
-not annotated to the same standard. Ruff and black pass. Mypy does not: it
-reports two functions in `src/presentation/widgets/inactive_tooltips.py` with
-unannotated parameters, so `mypy src` exits 1 until those are annotated.
+not annotated to the same standard. All three checks pass: ruff, black and
+`mypy src` each exit 0.
 
 Qt enums are written in their fully-qualified form (`Qt.ItemDataRole.UserRole`,
 not `Qt.UserRole`). PySide6 forwards the shorthand at runtime but its stubs do
