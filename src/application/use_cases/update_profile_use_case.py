@@ -25,17 +25,17 @@ class UpdateProfileUseCase:
     def execute(
         self,
         profile_id: UUID,
-        name: Optional[str] = None,
-        output_device_id: Optional[str] = None,
-        input_device_id: Optional[str] = None,
+        name: str,
+        output_device_id: Optional[str],
+        input_device_id: Optional[str],
     ) -> ProfileDTO:
-        """Update an existing audio profile.
+        """Replace an existing profile's settings with the full desired state.
 
         Args:
             profile_id: ID of profile to update
-            name: Optional new name
-            output_device_id: Optional new output device ID
-            input_device_id: Optional new input device ID
+            name: The profile name
+            output_device_id: The output device ID, None for no output
+            input_device_id: The input device ID, None for no input
 
         Returns:
             Updated profile DTO
@@ -50,7 +50,7 @@ class UpdateProfileUseCase:
             raise ProfileNotFoundException(f"Profile with ID {profile_id} not found")
 
         # Check for name conflicts if name is being changed
-        if name is not None and name != profile.name:
+        if name != profile.name:
             existing = self._profile_repository.get_by_name(name)
             if existing is not None and existing.id != profile_id:
                 raise ProfileStorageException(

@@ -35,17 +35,18 @@ def test_update_all_fields():
     assert profile.updated_at >= before
 
 
-def test_update_name_none_keeps_name():
-    profile = make(name="Keep")
-    profile.update(name=None, output_device_id="o2")
-    assert profile.name == "Keep"
-    assert profile.output_device_id == "o2"
+def test_update_with_no_device_clears_it():
+    # Audit A-4: None used to mean "leave unchanged", so "(None)" was ignored.
+    profile = make(output="out", inp="in")
+    profile.update(name="Keep", output_device_id=None, input_device_id="in")
+    assert profile.output_device_id is None
+    assert profile.input_device_id == "in"
 
 
 def test_update_empty_name_raises():
     profile = make()
     with pytest.raises(ValueError, match="Profile name cannot be empty"):
-        profile.update(name="")
+        profile.update(name="", output_device_id="out", input_device_id="in")
 
 
 def test_to_dict_round_trip():

@@ -151,3 +151,41 @@ def test_switch_partial(profile_repo, capsys):
     assert code == 0
     assert "switched successfully" in captured.out
     assert "were not available" in captured.err
+
+
+def _run_with(profile_repo, capsys, *skipped, applied=()):
+    save_profile(profile_repo, "P", "o", "i")
+    outcome = SwitchOutcome(applied=applied, skipped=tuple(skipped))
+    code = handler(profile_repo, FakeSwitchUseCase(outcome=outcome)).handle(
+        CLIArguments(profile_name="P")
+    )
+    return code, capsys.readouterr().err
+
+
+def test_a_refusal_is_not_called_unavailable(profile_repo, capsys):
+    # Audit A-10: every skip used to sit under "were not available".
+    refused = SkippedDevice(DeviceType.OUTPUT, "o", SkipReason.CONTROL_FAILED)
+    code, err = _run_with(profile_repo, capsys, refused)
+    assert code == 1
+    assert "not available" not in err
+    assert "refused" in err
+
+
+def test_each_reason_gets_its_own_heading(profile_repo, capsys):
+    gone = SkippedDevice(DeviceType.INPUT, "i", SkipReason.UNAVAILABLE)
+    refused = SkippedDevice(DeviceType.OUTPUT, "o", SkipReason.CONTROL_FAILED)
+    _, err = _run_with(profile_repo, capsys, gone, refused)
+    unavailable_at = err.index("were not available")
+    refused_at = err.index("refused")
+    assert err.index("Input") > unavailable_at
+    assert err.index("Output") > refused_at
+
+
+def test_a_partly_set_device_names_its_missing_roles(profile_repo, capsys):
+    partly = SkippedDevice(
+        DeviceType.OUTPUT, "o", SkipReason.PARTIALLY_SET, "Communications"
+    )
+    code, err = _run_with(profile_repo, capsys, partly, applied=(DeviceType.OUTPUT,))
+    assert code == 0
+    assert "set for only some roles" in err
+    assert "missing Communications" in err

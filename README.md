@@ -52,10 +52,14 @@ profiles; a failed check is silent.
 - Quick switching between saved audio profiles.
 - A GUI for creating, editing and deleting profiles.
 - A command-line interface for automation and Stream Deck.
-- Selecting devices that are not connected yet (for example a Bluetooth headset
-  that is currently off), which are applied automatically when they reconnect.
+- On Windows, selecting devices that are not connected yet (for example a
+  Bluetooth headset that is currently off). On Linux and macOS only the devices
+  present now are listed. On every platform a profile's device that is offline
+  when you switch is applied automatically when it reconnects as the same
+  device.
 - Partial switching: the available devices in a profile are applied even if one
-  is currently missing; the missing one is reported.
+  is currently missing; the missing one is reported; so is a device the
+  system refused, set for only some of its roles or left unchanged.
 - Automatic and on-demand rescanning of devices, with offline devices marked.
 - Dark and light themes, switched from the header and remembered between
   launches.
@@ -170,7 +174,10 @@ while another program has focus.
 A profile whose device is currently offline is marked in the list. Switching to
 it applies whatever devices are available now; a device that is off is applied
 automatically the moment it reconnects (for example when you turn on a Bluetooth
-headset). The device list rescans on device changes and periodically; the
+headset), as long as the system still knows it as the same device. Only the
+device that was waiting is applied; if the defaults have been changed meanwhile
+(by a Stream Deck key, say), the wait is dropped rather than undo that change.
+The device list rescans on device changes and periodically; the
 **Rescan** tray button forces an immediate rescan.
 
 ## Stream Deck integration (Windows)
@@ -224,7 +231,10 @@ macOS    ~/Library/Application Support/AudioDeck/profiles.json
 Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 ```
 
-Back up this file to keep your profiles.
+Back up this file to keep your profiles. Audio Deck writes it whole to a
+temporary file first and only then puts it in place, so a save that fails part
+way (a full disk) leaves your profiles as they were. The copy before the last
+save is kept beside it as `profiles.json.bak`.
 
 The update check keeps its one setting (a skipped version, if you chose one)
 beside the profiles in `update_settings.json`. Losing it costs nothing but one
@@ -294,16 +304,30 @@ Settings > Voice & Video to "Default"; in Spotify set the output device to
 
 ### A device is missing
 
-Disconnected devices still appear in the Configuration view marked as offline, so
-you can build profiles around them. To use one now, connect and enable it; Audio
-Deck picks it up automatically, though **Rescan** forces it.
+On Windows, disconnected devices still appear in the Configuration view marked
+as offline, so you can build profiles around them. On Linux and macOS the lists
+show only the devices present now, so connect a device before choosing it. To
+use one now, connect and enable it; Audio Deck picks it up automatically, though
+**Rescan** forces it.
 
 ### A profile only switched some devices
 
 This is expected when one of the profile's devices is currently offline. The
 available device is applied and the offline one is reported. It is applied
-automatically when it reconnects; switching again once it is connected also
-works.
+automatically when it reconnects as the same device; if the system gives it a
+new identity (another USB port, a re-paired headset), choose it again in the
+Configuration view. Switching again once it is connected also works.
+
+The report names any other reason too: the system refused the device; Windows
+set it for only some of its roles (naming the ones it missed); the system
+accepted the change but kept the old default.
+
+### Audio Deck says another switch is still running
+
+Switches from the window and from the command line take turns through a lock
+file beside the profiles, so two at once never leave a mix of both. A switch
+waits up to ten seconds for another to finish; if it is still running after
+that, try the profile again.
 
 ### Audio Deck will not open a second window
 

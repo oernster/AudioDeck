@@ -76,7 +76,21 @@ decision rather than a convenience.
 
 The two COM modules are excluded at the module level but not untested in effect:
 everything that consumes them is driven through fakes at their seams, so the
-logic around them is fully covered.
+logic around them is fully covered. The controller's decision about which of
+Windows' three roles took a device lives in `endpoint_roles.py`, which is free
+of COM and measured. On Windows, `tests/infrastructure/test_windows_com_seam.py`
+also drives both COM modules with `CoCreateInstance` and pycaw's
+`AudioUtilities` replaced by hand-written fakes, so no default device changes.
+
+Three tests read state back rather than trusting a message: the profile file
+after a save that fills the disk part way
+(`tests/infrastructure/test_profile_file_safety.py`), each slot's default after
+a switch over a fake machine whose controller can ignore calls
+(`tests/application/test_switch_truthfulness.py`) and the stored profile after
+choosing (None) in the real editor offscreen
+(`tests/presentation/test_configuration_none_choice.py`). Two switches at once
+run over the platform's real file lock on a temporary path
+(`tests/infrastructure/test_switch_lock.py`).
 
 Line-level exclusions (`[tool.coverage.report]`) cover `pragma: no cover`,
 `if TYPE_CHECKING:`, `raise NotImplementedError` and bare `...` Protocol bodies.

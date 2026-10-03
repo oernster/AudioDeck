@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from src.infrastructure.backend_factory import (
     create_device_backend,
     create_single_instance,
+    create_switch_lock,
 )
 from src.infrastructure.caching_device_repository import CachingDeviceRepository
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
@@ -178,8 +179,13 @@ def main() -> int:
     update_profile_use_case = UpdateProfileUseCase(profile_repository)
     delete_profile_use_case = DeleteProfileUseCase(profile_repository)
     get_profiles_use_case = GetProfilesUseCase(profile_repository)
+    # The per-user lock the CLI holds too, so a Stream Deck switch and a
+    # switch in the window never interleave.
     switch_profile_use_case = SwitchProfileUseCase(
-        profile_repository, device_repository, backend.controller
+        profile_repository,
+        device_repository,
+        backend.controller,
+        create_switch_lock(sys.platform, get_profiles_path().parent),
     )
 
     # Presentation layer - presenters

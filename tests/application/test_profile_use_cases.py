@@ -37,15 +37,23 @@ def test_create_duplicate_name_raises(profile_repo):
 def test_update_profile(profile_repo):
     profile = save_profile(profile_repo, "Old")
     use_case = UpdateProfileUseCase(profile_repo)
-    dto = use_case.execute(profile.id, name="New", output_device_id="o2")
+    dto = use_case.execute(profile.id, "New", "o2", "dev-in")
     assert dto.name == "New"
     assert dto.output_device_id == "o2"
+
+
+def test_update_with_no_device_clears_it(profile_repo):
+    profile = save_profile(profile_repo, "Old", "dev-out", "dev-in")
+    UpdateProfileUseCase(profile_repo).execute(profile.id, "Old", None, "dev-in")
+    stored = profile_repo.get_by_id(profile.id)
+    assert stored.output_device_id is None
+    assert stored.input_device_id == "dev-in"
 
 
 def test_update_missing_raises(profile_repo):
     use_case = UpdateProfileUseCase(profile_repo)
     with pytest.raises(ProfileNotFoundException):
-        use_case.execute(uuid4(), name="X")
+        use_case.execute(uuid4(), "X", None, None)
 
 
 def test_update_name_conflict_raises(profile_repo):
@@ -53,13 +61,13 @@ def test_update_name_conflict_raises(profile_repo):
     target = save_profile(profile_repo, "Mine")
     use_case = UpdateProfileUseCase(profile_repo)
     with pytest.raises(ProfileStorageException, match="already exists"):
-        use_case.execute(target.id, name="Taken")
+        use_case.execute(target.id, "Taken", "dev-out", "dev-in")
 
 
 def test_update_same_name_allowed(profile_repo):
     profile = save_profile(profile_repo, "Same")
     use_case = UpdateProfileUseCase(profile_repo)
-    dto = use_case.execute(profile.id, name="Same", output_device_id="o3")
+    dto = use_case.execute(profile.id, "Same", "o3", "dev-in")
     assert dto.output_device_id == "o3"
 
 

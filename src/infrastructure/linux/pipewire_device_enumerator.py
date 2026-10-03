@@ -1,7 +1,7 @@
 """PipeWire device enumerator over pw-dump JSON output.
 
 pw-dump reports every object the sound server knows about. Audio sinks are
-output devices and audio sources are input devices, and unlike PulseAudio the
+output devices and audio sources are input devices; unlike PulseAudio the
 loopback monitor of a sink is not a separate node, so nothing has to be
 filtered out. Devices are identified by their node name, which is the same
 identifier PulseAudio reports and is stable across reboots, while the node
@@ -14,6 +14,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.pw_dump_api import PwDumpApi
@@ -48,13 +49,20 @@ class PipewireDeviceEnumerator:
         self._pw_dump = pw_dump
 
     def _objects(self) -> List[Any]:
-        """Return the parsed object graph, empty when it cannot be read."""
+        """Return the parsed object graph.
+
+        Raises:
+            DeviceEnumerationException: If pw-dump cannot be run or answers
+                with something other than JSON
+        """
         try:
             objects = json.loads(self._pw_dump.dump())
-        except Exception:
-            # Degrade to an empty list: pw-dump missing, the server down or
-            # non-JSON output all mean no devices can be read right now.
-            return []
+        except Exception as e:
+            # pw-dump missing, the server down or non-JSON output all mean
+            # the devices cannot be read, which is not the same as none.
+            raise DeviceEnumerationException(
+                f"Could not read the audio devices with pw-dump: {e}"
+            ) from e
         return objects if isinstance(objects, list) else []
 
     def _default_names(self, objects: List[Any]) -> Dict[DeviceType, Optional[str]]:

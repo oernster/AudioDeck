@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.macos.coreaudio_api import CoreAudioApi
@@ -62,10 +63,18 @@ class MacosDeviceEnumerator:
         """
         devices: List[AudioDevice] = []
 
-        default_output_id = self._core_audio.default_device_id(input_device=False)
-        default_input_id = self._core_audio.default_device_id(input_device=True)
+        try:
+            default_output_id = self._core_audio.default_device_id(input_device=False)
+            default_input_id = self._core_audio.default_device_id(input_device=True)
+            device_ids = list(self._core_audio.all_device_ids())
+        except Exception as e:
+            # Nothing can be listed: report it as such rather than let it
+            # read as a machine with no devices.
+            raise DeviceEnumerationException(
+                f"Could not read the audio devices: {e}"
+            ) from e
 
-        for position, device_id in enumerate(self._core_audio.all_device_ids()):
+        for position, device_id in enumerate(device_ids):
             try:
                 if self._core_audio.has_output_streams(device_id):
                     device = self._device_for_flow(

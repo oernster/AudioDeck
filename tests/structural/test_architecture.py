@@ -7,6 +7,8 @@ described in ARCHITECTURE.md.
 import ast
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC = PROJECT_ROOT / "src"
 TESTS = PROJECT_ROOT / "tests"
@@ -50,7 +52,14 @@ SERVICE_SUFFIXES = (
     "Notifier",
 )
 
-# Substrings that must never appear in an import within a given layer.
+# The name a call to the __import__ builtin is reported under, so a layer can
+# forbid it like any module.
+DYNAMIC_IMPORT = "__import__"
+
+# Package that roots every module path; relative imports resolve from it.
+SOURCE_PACKAGE = "src"
+
+# Prefixes that must never begin an import within a given layer.
 DOMAIN_FORBIDDEN = (
     "src.application",
     "src.infrastructure",
@@ -59,6 +68,12 @@ DOMAIN_FORBIDDEN = (
     "PySide6",
     "pycaw",
     "comtypes",
+    # Dynamic imports, processes and native calls are platform reach by
+    # another route; the domain needs none of them.
+    "importlib",
+    "subprocess",
+    "ctypes",
+    DYNAMIC_IMPORT,
 )
 APPLICATION_FORBIDDEN = (
     "src.infrastructure",
@@ -70,15 +85,54 @@ APPLICATION_FORBIDDEN = (
 )
 
 
+def _package_of(path: Path) -> list:
+    """Return the dotted package parts of a module, from the src root down.
+
+    Found by walking up to the nearest folder named src, so the same rule
+    resolves the real tree and a throwaway one planted under a temp folder.
+    """
+    parts = list(path.parent.parts)
+    root = len(parts) - 1 - parts[::-1].index(SOURCE_PACKAGE)
+    return parts[root:]
+
+
+def _absolute(path: Path, node: ast.ImportFrom):
+    """Yield the absolute module names a from-import refers to.
+
+    `from ...infrastructure import x` resolves against the module's own
+    package; `from ... import infrastructure` names a module in each alias.
+    """
+    if node.level == 0:
+        yield node.module or ""
+        return
+    package = _package_of(path)
+    base = ".".join(package[: len(package) - (node.level - 1)])
+    if node.module is not None:
+        yield f"{base}.{node.module}"
+        return
+    for alias in node.names:
+        yield f"{base}.{alias.name}"
+
+
 def _imported_names(path: Path):
-    """Yield every imported module name in a source file."""
+    """Yield every imported module name in a source file, made absolute.
+
+    A call to the __import__ builtin yields DYNAMIC_IMPORT, because what it
+    loads is a string the scan cannot follow.
+    """
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 yield alias.name
-        elif isinstance(node, ast.ImportFrom) and node.module is not None:
-            yield node.module
+        elif isinstance(node, ast.ImportFrom):
+            yield from _absolute(path, node)
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == DYNAMIC_IMPORT
+        ):
+            yield DYNAMIC_IMPORT
 
 
 def _violations(layer_dir: Path, forbidden):
@@ -208,3 +262,59 @@ def test_no_module_sits_in_the_danger_band():
         if DANGER_BAND_FLOOR < _line_count(path) < MAX_MODULE_LINES
     ]
     assert offenders == []
+
+
+# Every spelling the audit found passing the scan (A-12), planted one at a time
+# into a throwaway domain package. The positive control is the plain absolute
+# import the scan always caught.
+PLANTED_DOMAIN_VIOLATIONS = {
+    "absolute": "from src.infrastructure.caching_device_repository import C\n",
+    "relative": "from ...infrastructure.caching_device_repository import C\n",
+    "relative_bare": "from ... import infrastructure\n",
+    "dynamic": 'import importlib\nimportlib.import_module("src.cli")\n',
+    "dynamic_from": "from importlib import import_module\n",
+    "dunder": 'm = __import__("PySide6.QtCore")\n',
+    "subprocess": "import subprocess\n",
+    "ctypes": "import ctypes\n",
+    "ctypes_from": "from ctypes import wintypes\n",
+}
+
+
+def _plant_in_domain(tmp_path: Path, source: str) -> Path:
+    """Write one module into a throwaway src/domain/entities package."""
+    domain = tmp_path / "src" / "domain"
+    package = domain / "entities"
+    package.mkdir(parents=True)
+    (package / "planted.py").write_text(source, encoding="utf-8")
+    return domain
+
+
+@pytest.mark.parametrize(
+    "source",
+    list(PLANTED_DOMAIN_VIOLATIONS.values()),
+    ids=list(PLANTED_DOMAIN_VIOLATIONS),
+)
+def test_the_domain_scan_catches_every_spelling(tmp_path, source):
+    domain = _plant_in_domain(tmp_path, source)
+    assert _violations(domain, DOMAIN_FORBIDDEN) != []
+
+
+def test_a_relative_import_inside_the_domain_is_allowed(tmp_path):
+    domain = _plant_in_domain(tmp_path, "from ..value_objects import device_type\n")
+    assert _violations(domain, DOMAIN_FORBIDDEN) == []
+
+
+# Every composition root builds the same per-user switch lock, so the window
+# and a Stream Deck key never interleave (audit A-9). A root that forgot it
+# would run unlocked with no test noticing, since the roots are not covered.
+SWITCH_LOCK_FACTORY = "create_switch_lock"
+
+
+def test_every_composition_root_wires_the_switch_lock():
+    roots = [SRC / "main.py", CLI / "cli_handler.py"]
+    unwired = [
+        root.name
+        for root in roots
+        if f"{SWITCH_LOCK_FACTORY}(" not in root.read_text(encoding="utf-8")
+    ]
+    assert unwired == []

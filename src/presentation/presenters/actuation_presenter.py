@@ -1,6 +1,6 @@
 """Presenter for actuation view."""
 
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 from uuid import UUID
 
 from PySide6.QtCore import QObject, Signal
@@ -13,6 +13,7 @@ from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.domain.exceptions.domain_exceptions import AudioDeckException
 from src.domain.value_objects.device_type import DeviceType
+from src.presentation.presenters.switch_messages import skip_message
 
 
 class ActuationPresenter(QObject):
@@ -43,10 +44,11 @@ class ActuationPresenter(QObject):
         self._get_devices_use_case = get_devices_use_case
         self._get_profiles_use_case = get_profiles_use_case
         self._switch_profile_use_case = switch_profile_use_case
-        # The last profile the user switched to, plus any of its devices that
-        # were unavailable, so they can be auto-applied when they reconnect.
+        # The last profile the user switched to; the device each slot was
+        # set to; the slots still waiting for their device to reconnect.
         self._active_profile_id: Optional[UUID] = None
-        self._pending_device_ids: Set[str] = set()
+        self._applied: Dict[DeviceType, str] = {}
+        self._pending: Dict[DeviceType, str] = {}
 
     def get_profiles(self) -> List[ProfileDTO]:
         """Get all profiles.
@@ -120,9 +122,12 @@ class ActuationPresenter(QObject):
             if outcome.anything_applied:
                 self.profile_switched.emit(profile.name)
             if outcome.skipped:
-                self.device_unavailable.emit(self._skip_message(profile, outcome))
+                self.device_unavailable.emit(skip_message(profile.name, outcome))
 
-            self._remember_pending(profile_id, outcome)
+            self._active_profile_id = profile_id
+            self._applied = {}
+            self._pending = {}
+            self._record(profile, outcome)
             self.refresh_status()
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
@@ -150,20 +155,64 @@ class ActuationPresenter(QObject):
         self.refresh_status()
         self._reapply_pending_if_ready()
 
-    def _remember_pending(self, profile_id: UUID, outcome: SwitchOutcome) -> None:
-        """Record the active profile and any devices awaiting reconnection."""
-        self._active_profile_id = profile_id
-        self._pending_device_ids = {
-            skipped.device_id
-            for skipped in outcome.skipped
-            if skipped.reason == SkipReason.UNAVAILABLE
+    def _record(self, profile: ProfileDTO, outcome: SwitchOutcome) -> None:
+        """Note what a switch applied and which slots now wait to reconnect."""
+        configured = {
+            device_type: device_id
+            for device_type, device_id in (
+                (DeviceType.OUTPUT, profile.output_device_id),
+                (DeviceType.INPUT, profile.input_device_id),
+            )
+            if device_id is not None
         }
+        self._applied.update(
+            {
+                device_type: configured[device_type]
+                for device_type in outcome.applied
+                if device_type in configured
+            }
+        )
+        for skipped in outcome.skipped:
+            if skipped.reason == SkipReason.UNAVAILABLE:
+                self._pending[skipped.device_type] = skipped.device_id
+
+    def _defaults_moved(self) -> bool:
+        """Say whether a default this presenter set has since been changed.
+
+        Another switch (a Stream Deck key, the system's own settings) has
+        then taken over; re-applying the old profile's device would undo
+        it. A default that cannot be read is not evidence of a move.
+        """
+        for device_type, device_id in self._applied.items():
+            try:
+                current = self._get_devices_use_case.get_default_device(
+                    device_type, refresh=False
+                )
+            except Exception:
+                continue
+            if current is not None and current.is_default and current.id != device_id:
+                return True
+        return False
 
     def _reapply_pending_if_ready(self) -> None:
-        """Re-apply the active profile if a pending device is now available."""
-        if not self._pending_device_ids or self._active_profile_id is None:
+        """Apply a waiting slot whose device is available again.
+
+        Only the waiting slot is applied, never the whole profile. It happens only
+        while the defaults are still the ones this presenter set: once
+        something else has switched, the wait is over.
+        """
+        if not self._pending or self._active_profile_id is None:
             return
-        if not (self._pending_device_ids & self.get_available_device_ids()):
+        available = self.get_available_device_ids()
+        if self._defaults_moved():
+            self._pending = {}
+            return
+        ready = tuple(
+            device_type
+            for device_type, device_id in self._pending.items()
+            if device_id in available
+        )
+        if not ready:
             return
 
         try:
@@ -171,62 +220,31 @@ class ActuationPresenter(QObject):
         except Exception:
             # Silent by design: this runs off a device-change event the user did
             # not trigger, so a dialog here would appear out of nowhere. The
-            # pending set is left intact, so the next event tries again.
+            # pending slots are left intact, so the next event tries again.
             return
         if profile is None:
-            self._pending_device_ids = set()
+            self._pending = {}
             return
 
         try:
-            outcome = self._switch_profile_use_case.execute(self._active_profile_id)
+            outcome = self._switch_profile_use_case.execute(
+                self._active_profile_id, slots=ready
+            )
         except Exception:
             # Same reasoning as above: unprompted work, so it fails quietly and
-            # leaves the pending set for the next device-change event. A switch
-            # the user asked for is handled by switch_profile, which does report.
+            # leaves the pending slots for the next device-change event. A
+            # switch the user asked for is handled by switch_profile, which
+            # does report.
             return
 
+        for device_type in ready:
+            self._pending.pop(device_type, None)
+        self._record(profile, outcome)
         if outcome.anything_applied:
+            names = " and ".join(
+                device_type.display_name for device_type in outcome.applied
+            )
             self.auto_applied.emit(
-                f"Applied '{profile.name}' now that a device has reconnected."
+                f"Applied the {names} device of '{profile.name}' now that it "
+                "has reconnected."
             )
-        self._pending_device_ids = {
-            skipped.device_id
-            for skipped in outcome.skipped
-            if skipped.reason == SkipReason.UNAVAILABLE
-        }
-
-    @staticmethod
-    def _skip_message(profile: ProfileDTO, outcome: SwitchOutcome) -> str:
-        """Build a friendly notice naming each skipped device's real reason."""
-        problems = []
-        unavailable = [
-            skipped.device_type.display_name
-            for skipped in outcome.skipped
-            if skipped.reason == SkipReason.UNAVAILABLE
-        ]
-        failed = [
-            skipped.device_type.display_name
-            for skipped in outcome.skipped
-            if skipped.reason == SkipReason.CONTROL_FAILED
-        ]
-        wrong_type = [
-            skipped.device_type.display_name
-            for skipped in outcome.skipped
-            if skipped.reason == SkipReason.WRONG_TYPE
-        ]
-        if unavailable:
-            problems.append(
-                f"the {', '.join(unavailable)} device is not available right "
-                "now and will apply when it reconnects"
-            )
-        if failed:
-            problems.append(f"the system refused to set the {', '.join(failed)} device")
-        if wrong_type:
-            problems.append(
-                f"the {', '.join(wrong_type)} device in this profile is not "
-                "that kind of device; edit the profile in the Configuration tab"
-            )
-        detail = "; ".join(problems)
-        if outcome.anything_applied:
-            return f"Switched '{profile.name}', but {detail}."
-        return f"Could not switch '{profile.name}': {detail}."

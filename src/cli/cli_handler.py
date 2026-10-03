@@ -3,14 +3,30 @@
 import sys
 from pathlib import Path
 
+from src.application.dtos.switch_outcome import SkipReason
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.switch_profile_use_case import SwitchProfileUseCase
 from src.cli.argument_parser import CLIArguments
 from src.cli.launch_command import launch_command_for
 from src.domain.exceptions.domain_exceptions import ProfileNotFoundException
-from src.infrastructure.backend_factory import create_device_backend
+from src.infrastructure.backend_factory import (
+    create_device_backend,
+    create_switch_lock,
+)
 from src.infrastructure.caching_device_repository import CachingDeviceRepository
 from src.infrastructure.persistence.json_profile_repository import JsonProfileRepository
+
+# One heading per reason, so a refusal is never filed under "not available".
+# CLI_USAGE.md quotes these lines; keep the two in step.
+_SKIP_HEADINGS = {
+    SkipReason.UNAVAILABLE: "Some devices were not available and were skipped:",
+    SkipReason.CONTROL_FAILED: "The system refused to set some devices:",
+    SkipReason.WRONG_TYPE: "Some devices in this profile are the wrong type:",
+    SkipReason.PARTIALLY_SET: "Some devices were set for only some roles:",
+    SkipReason.DID_NOT_TAKE: (
+        "The system accepted some devices but kept the old default:"
+    ),
+}
 
 
 class CLIHandler:
@@ -52,10 +68,16 @@ class CLIHandler:
         backend = create_device_backend(sys.platform)
         device_repository = CachingDeviceRepository(backend.enumerator)
         profile_repository = JsonProfileRepository(profiles_path)
+        # The same lock file the window holds, so a Stream Deck switch and a
+        # switch in the window never interleave.
+        switch_lock = create_switch_lock(sys.platform, profiles_path.parent)
         return cls(
             GetProfilesUseCase(profile_repository),
             SwitchProfileUseCase(
-                profile_repository, device_repository, backend.controller
+                profile_repository,
+                device_repository,
+                backend.controller,
+                switch_lock,
             ),
             launch_command_for(sys.platform),
         )
@@ -159,15 +181,17 @@ class CLIHandler:
             )
             print(f"  Changed: {changed} device(s)")
 
-        if outcome.skipped:
-            print(
-                "\nSome devices were not available and were skipped:",
-                file=sys.stderr,
-            )
-            for skipped in outcome.skipped:
+        for reason, heading in _SKIP_HEADINGS.items():
+            skipped_for_reason = [
+                skipped for skipped in outcome.skipped if skipped.reason is reason
+            ]
+            if not skipped_for_reason:
+                continue
+            print(f"\n{heading}", file=sys.stderr)
+            for skipped in skipped_for_reason:
                 print(
                     f"  - {skipped.device_type.display_name} "
-                    f"({skipped.reason.label})",
+                    f"({skipped.description})",
                     file=sys.stderr,
                 )
 

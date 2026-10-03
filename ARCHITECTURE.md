@@ -14,7 +14,7 @@ suite rather than left to convention.
 
 | Invariant | Why | Enforced by |
 | --- | --- | --- |
-| The domain layer imports no framework, no I/O and no platform code | Keeps business rules portable and unit-testable in isolation | Structural import-scan test (`tests/structural/test_architecture.py`) |
+| The domain layer imports no framework, no I/O and no platform code | Keeps business rules portable and unit-testable in isolation | Structural import-scan test (`tests/structural/test_architecture.py`), which resolves relative imports to their absolute names and also forbids `importlib`, `__import__`, `subprocess` and `ctypes` in the domain; each spelling is planted into a throwaway domain package to prove the scan catches it |
 | The application layer depends only on the domain and the standard library | Use cases stay decoupled from Qt, COM and storage details | Structural import-scan test |
 | Infrastructure implements domain interfaces and is never imported by the domain or application | Dependency direction stays inward; the platform backends and JSON stay swappable | Structural import-scan test |
 | The presentation layer never imports infrastructure | Views and presenters receive their use cases rather than building them | Structural import-scan test |
@@ -22,7 +22,10 @@ suite rather than left to convention.
 | No module-level service singletons | No hidden global state or service locators | Structural AST scan for module-level service construction |
 | The version string exists only in the root `VERSION` file | Single source of truth; no drift across code and packaging | `version.py` reads `VERSION`; `pyproject.toml` reads the same file |
 | Code is formatted with black, lint-clean under ruff and type-clean under mypy | Mechanical consistency without review effort | `black --check .`, `ruff check` and `mypy src`, all run manually; all three pass |
-| Only one GUI instance runs per user session | Two windows would race over the same profiles file | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py` |
+| Only one GUI instance runs per user session | Two windows would each hold their own copy of the profiles; the last to save would win | Named-mutex guard on Windows, flocked lock file on Linux and macOS, covered by `tests/infrastructure/test_single_instance.py` and `test_posix_single_instance.py`. The guard does not protect the file from the CLI; the next two rows do |
+| A profile write never leaves the file half written; a reader never sees half a file | The CLI reads the profiles while the window may be saving them; a save that failed part way used to destroy every profile | `atomic_file.py`: a temporary file in the same folder, fsync, `os.replace`, a `.bak` of the last good copy and a bounded retry where Windows refuses to replace an open file. `tests/infrastructure/test_profile_file_safety.py` fills the disk part way through a save and reads the file back |
+| Two switches never interleave | Two at once left a mix of both profiles, each reporting success | A per-user lock file beside the profiles, held by the GUI and the CLI with a bounded wait (`switch_lock.py`); `tests/infrastructure/test_switch_lock.py` runs two switches at once over the real platform lock; a structural test fails if either composition root stops wiring it |
+| A switch reports what the machine did | A call can succeed for some Windows roles only; another can succeed and change nothing | The Windows role loop returns the roles that landed (`endpoint_roles.py`, covered); the switch reads each default back after the settle time; `tests/application/test_switch_truthfulness.py` |
 | Every testable line and branch is covered | A gap is either a missing test or dead code; both should fail the build | `pytest -v --cov`, gated at 100% with branch coverage (see [TESTING.md](TESTING.md)) |
 | No module exceeds 400 lines; none sits in the band just beneath it | Size is a structural property: unmeasured, a view reaches 600 lines and nothing reports it | `tests/structural/test_architecture.py`, measuring `src`, `installer` and `tests`; the delivery scripts are exempt by nature |
 | An operation moves to a screen; nothing is disabled in place | The choices are not on screen to be greyed, so an install cannot show a row of dead boxes each wearing the danger ring; the footer belongs to the screen and the progress screen offers nothing | `tests/installer/test_screen_model.py`, driving the window and scanning the package for the old shape |
@@ -38,8 +41,10 @@ The test suite targets 100% coverage measured with `pytest -v --cov`, using real
 implementations where safe and small hand-written fakes at each platform
 boundary, with no mock libraries. Fragile PySide6 UI views and the raw-COM
 enumerator and controller are excluded from coverage via the
-`[tool.coverage.run]` omit list in `pyproject.toml`; the real pactl, CoreAudio,
-flock and Win32 call wrappers carry `# pragma: no cover` for the same reason,
+`[tool.coverage.run]` omit list in `pyproject.toml`; the controller's role loop
+lives in the covered `endpoint_roles.py`; on Windows both COM modules are
+also driven through a faked COM seam. The real pactl, CoreAudio, flock, msvcrt
+and Win32 call wrappers carry `# pragma: no cover` for the same reason,
 so the meaningful surface (domain, application, all backend logic over its
 seam, repository logic, CLI and presenters) stays at 100%.
 
@@ -61,7 +66,7 @@ src/
     entities/          AudioDevice, AudioProfile
     value_objects/     DeviceType, DeviceState, ReleaseInfo/ReleaseAsset
     interfaces/        IDeviceRepository, IDeviceController, IDeviceEnumerator,
-                       IProfileRepository, IReleaseSource,
+                       IProfileRepository, IReleaseSource, ISwitchLock,
                        IUpdateSettingsRepository (Protocols)
     exceptions/        AudioDeckException hierarchy
   application/          Use cases and data transfer objects
@@ -75,7 +80,13 @@ src/
     caching_device_repository.py
                        Platform-neutral repository answering queries from the
                        last enumeration, shared by all three backends
+    lock_file_api.py   The file-locking Protocol shared by the POSIX guard and
+                       the switch lock
+    switch_lock.py     FileSwitchLock: the per-user lock both front ends hold
+                       for the length of a switch, with a bounded wait
     windows/           Core Audio enumeration and control (pycaw, comtypes),
+                       the role loop (endpoint_roles.py, free of COM),
+                       msvcrt file locking for the switch lock,
                        SingleInstanceGuard (named mutex, Win32 behind Protocols)
     linux/             PulseAudio/PipeWire enumeration and control over the
                        pactl command; pw-dump reads the devices where pactl
@@ -87,7 +98,8 @@ src/
                        Protocol; devices identified by stable UID)
     posix/             Lock-file single instance (flock behind a Protocol),
                        shared by Linux and macOS
-    persistence/       JSON profile storage; JSON update-settings storage
+    persistence/       JSON profile storage; JSON update-settings storage;
+                       atomic_file.py, the whole-file writer both use
     updates/           GitHubReleaseSource (stdlib urllib against the GitHub
                        releases/latest endpoint, opener injected for tests)
   presentation/         GUI layer (PySide6)
@@ -184,10 +196,14 @@ the system default for each configured device: on Windows across the Console,
 Multimedia and Communications roles, on Linux the default sink and source, on
 macOS the default output and input device.
 
-Devices carry a `DeviceState` (available, disconnected, disabled or not present)
-so disconnected hardware can be listed and selected. A switch returns a
+Devices carry a `DeviceState` (available, disconnected, disabled or not present).
+On Windows that lets disconnected hardware be listed and selected; the Linux and
+macOS backends list only the devices present now. A switch returns a
 `SwitchOutcome` recording which devices were applied and which were skipped (and
-why), which drives partial application and the auto-apply-on-reconnect flow.
+why: unavailable, wrong type, refused, set for only some roles or accepted but
+not taken), which drives partial application and the auto-apply-on-reconnect
+flow. A reconnect applies only the slot that was waiting; it does so only while the
+defaults are still the ones the window set.
 
 The update check keeps its one setting (the skipped version) in
 `update_settings.json`, beside the profiles but in its own file so neither
@@ -226,9 +242,9 @@ on Linux):
 | macOS devices identified by UID, not AudioDeviceID | The AudioDeviceID is transient across reboots and unplugs; the UID is stable, so profiles survive |
 | Partial application with a SwitchOutcome | A profile with one offline device still applies the available one, rather than failing outright |
 | Event-driven device changes where the platform provides events, polling where it does not | WM_DEVICECHANGE (Windows) and pactl subscribe (Linux) are push; macOS polls on a slow timer because a CoreAudio listener's C callback lifetime rules are a crash risk from Python |
-| Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it |
+| Single-instance guard on the GUI only, never the CLI | Two windows editing one profiles file would race; the CLI must stay freely runnable because that is how a Stream Deck button drives it, so it shares only the short switch lock, never the guard |
 | Named mutex on Windows, flocked lock file on POSIX | Each is one atomic kernel operation that cannot be left stale by a crash |
-| The guard fails open | If the lock cannot be created at all the application still starts; a guard that cannot be established must never be the reason it will not run |
+| The guard fails open | If the lock cannot be created at all the application still starts; a guard that cannot be established must never be the reason it will not run. Only the error meaning another holder (`BlockingIOError` from flock) reads as "already running" |
 | The update check reads only GitHub's `releases/latest` endpoint | That endpoint returns only a published, non-draft, non-prerelease release, so a tag pushed mid-development can never prompt; nothing re-checks those flags client-side |
 | Unparseable versions compare as not-newer | A malformed tag can never raise a spurious prompt and a `0.0.0-dev` source run stays silent |
 | Button faces are generated artwork rather than emoji | Emoji theme themselves and need no packaging step, which is why they were chosen first; at a readable size their detail is coarse and a set assembled from whatever the platform font provides cannot be drawn in one visual language |

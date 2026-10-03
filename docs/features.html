@@ -93,7 +93,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11v11h-11z" opacity="0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
       </div>
       <h3>Offline devices</h3>
-      <p>Pin a device that is currently off, like a Bluetooth headset. The moment it reconnects, the pending switch is applied automatically.</p>
+      <p>On Windows, pin a device that is currently off, like a Bluetooth headset; on Linux and macOS, choose it while it is connected. If it is off when you switch, it is applied the moment it reconnects as the same device, unless the defaults have been changed since.</p>
     </div>
 
     <div class="feat">
@@ -109,7 +109,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
       </div>
       <h3>Partial switching</h3>
-      <p>If one device in a profile is missing, the rest are still applied and the missing one is reported, so a switch never silently half-fails.</p>
+      <p>If one device in a profile is missing, the rest are still applied and the missing one is reported. So is a device the system refused, one Windows set for only some of its roles (naming the roles it missed) and one the system accepted while keeping the old default, which is checked by reading the default back after every switch.</p>
     </div>
 
     <div class="feat">

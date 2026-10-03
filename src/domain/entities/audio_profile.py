@@ -24,28 +24,25 @@ class AudioProfile:
 
     def update(
         self,
-        name: Optional[str] = None,
-        output_device_id: Optional[str] = None,
-        input_device_id: Optional[str] = None,
+        name: str,
+        output_device_id: Optional[str],
+        input_device_id: Optional[str],
     ) -> None:
-        """Update profile fields.
+        """Replace the profile's settings with the full desired state.
+
+        Every field is stated: None for a device means "no device", never
+        "leave it as it was", so choosing (None) in the editor clears it.
 
         Args:
-            name: Optional new name
-            output_device_id: Optional new output device ID
-            input_device_id: Optional new input device ID
+            name: The profile name
+            output_device_id: The output device ID, None for no output
+            input_device_id: The input device ID, None for no input
         """
-        if name is not None:
-            if not name:
-                raise ValueError("Profile name cannot be empty")
-            self.name = name
-
-        if output_device_id is not None:
-            self.output_device_id = output_device_id
-
-        if input_device_id is not None:
-            self.input_device_id = input_device_id
-
+        if not name:
+            raise ValueError("Profile name cannot be empty")
+        self.name = name
+        self.output_device_id = output_device_id
+        self.input_device_id = input_device_id
         self.updated_at = datetime.now()
 
     def to_dict(self) -> dict:

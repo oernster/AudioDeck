@@ -12,7 +12,10 @@ from src.application.use_cases.delete_profile_use_case import DeleteProfileUseCa
 from src.application.use_cases.get_devices_use_case import GetDevicesUseCase
 from src.application.use_cases.get_profiles_use_case import GetProfilesUseCase
 from src.application.use_cases.update_profile_use_case import UpdateProfileUseCase
-from src.domain.exceptions.domain_exceptions import AudioDeckException
+from src.domain.exceptions.domain_exceptions import (
+    AudioDeckException,
+    DeviceEnumerationException,
+)
 from src.domain.value_objects.device_type import DeviceType
 
 
@@ -56,17 +59,7 @@ class ConfigurationPresenter(QObject):
         Returns:
             List of output device DTOs
         """
-        try:
-            return self._get_devices_use_case.execute(
-                device_type=DeviceType.OUTPUT, refresh=refresh
-            )
-        except AudioDeckException as e:
-            self.error_occurred.emit(str(e))
-            return []
-        except Exception:
-            # A transient COM error while enumerating; show an empty list
-            # rather than crash. The next refresh will recover.
-            return []
+        return self._devices_of(DeviceType.OUTPUT, refresh)
 
     def get_input_devices(self, refresh: bool = False) -> List[DeviceDTO]:
         """Get input devices.
@@ -77,10 +70,19 @@ class ConfigurationPresenter(QObject):
         Returns:
             List of input device DTOs
         """
+        return self._devices_of(DeviceType.INPUT, refresh)
+
+    def _devices_of(self, device_type: DeviceType, refresh: bool) -> List[DeviceDTO]:
+        """Return one flow's devices for the editor's lists."""
         try:
             return self._get_devices_use_case.execute(
-                device_type=DeviceType.INPUT, refresh=refresh
+                device_type=device_type, refresh=refresh
             )
+        except DeviceEnumerationException:
+            # The devices could not be read this moment (a device change in
+            # progress); the lists show empty and the next refresh recovers.
+            # The editor is not the place for that news: a switch reports it.
+            return []
         except AudioDeckException as e:
             self.error_occurred.emit(str(e))
             return []

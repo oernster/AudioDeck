@@ -1,17 +1,19 @@
 """Enumerator that asks each source in turn until one answers.
 
-A Linux desktop may have pactl, or pw-dump, or both: PulseAudio machines have
+A Linux desktop may have pactl, pw-dump or both: PulseAudio machines have
 only the former, PipeWire machines that never installed the PulseAudio client
-tools have only the latter. Both enumerators already degrade to an empty list
-when their command is missing, so an empty answer is the signal to try the
-next source rather than an error to report.
+tools have only the latter. A source that cannot be read or that finds no
+devices hands over to the next one. Only when every source failed to read
+is that reported as a failure: a machine whose devices cannot be read must
+never look like one whose devices are all disconnected.
 """
 
 from __future__ import annotations
 
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.interfaces.device_enumerator import IDeviceEnumerator
 
 
@@ -30,10 +32,23 @@ class FirstAnsweringEnumerator:
         """Get all audio devices (input and output).
 
         Returns:
-            List of all AudioDevice entities, empty when no source finds any
+            List of all AudioDevice entities, empty when the sources that
+            could be read found none
+
+        Raises:
+            DeviceEnumerationException: If no source could be read at all
         """
+        answered = False
+        last_failure: Optional[DeviceEnumerationException] = None
         for source in self._sources:
-            devices = source.get_all_devices()
+            try:
+                devices = source.get_all_devices()
+            except DeviceEnumerationException as failure:
+                last_failure = failure
+                continue
             if devices:
                 return devices
+            answered = True
+        if not answered and last_failure is not None:
+            raise last_failure
         return []

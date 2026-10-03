@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 from pycaw.pycaw import DEVICE_STATE, AudioUtilities, EDataFlow, ERole
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
 
@@ -86,6 +87,10 @@ class WindowsDeviceEnumerator:
 
         Returns:
             List of AudioDevice entities
+
+        Raises:
+            DeviceEnumerationException: If the flow cannot be read at all, so
+                an unreadable machine never looks like one with no devices
         """
         devices: List[AudioDevice] = []
 
@@ -96,12 +101,12 @@ class WindowsDeviceEnumerator:
             )
             device_enumerator = AudioUtilities.GetDeviceEnumerator()
             if device_enumerator is None:
-                return devices
+                raise OSError("no device enumerator")
 
             # Get collection of endpoints across usable and selectable states
             collection = device_enumerator.EnumAudioEndpoints(data_flow, _STATE_MASK)
             if collection is None:
-                return devices
+                raise OSError("no endpoint collection")
 
             count = collection.GetCount()
 
@@ -168,11 +173,15 @@ class WindowsDeviceEnumerator:
                     # dropping it keeps every other device in the list.
                     continue
 
-        except Exception:
+        except Exception as e:
             # Degrade to whatever was collected before the failure. The
             # enumerator itself can disappear mid-walk during a device change,
             # and a partial list still lets the user switch to a known device.
-            pass
+            # Nothing collected at all is a failure to read, not "no devices".
+            if not devices:
+                raise DeviceEnumerationException(
+                    f"Could not read the audio devices: {e}"
+                ) from e
 
         return devices
 
@@ -181,32 +190,28 @@ class WindowsDeviceEnumerator:
 
         Returns:
             List of all AudioDevice entities
+
+        Raises:
+            DeviceEnumerationException: If either flow cannot be read at all;
+                callers report "could not read devices" rather than showing
+                every device as unavailable
         """
+        # Get default device IDs for both render and capture
+        self._default_output_id = self._get_default_device_id(EDataFlow.eRender.value)
+        self._default_input_id = self._get_default_device_id(EDataFlow.eCapture.value)
+
+        # Fetch the friendly-name cache once; guard against COM races that
+        # can occur while audio sources are changing.
         try:
-            # Get default device IDs for both render and capture
-            self._default_output_id = self._get_default_device_id(
-                EDataFlow.eRender.value
-            )
-            self._default_input_id = self._get_default_device_id(
-                EDataFlow.eCapture.value
-            )
-
-            # Fetch the friendly-name cache once; guard against COM races that
-            # can occur while audio sources are changing.
-            try:
-                all_devices_cache = AudioUtilities.GetAllDevices()
-            except Exception:
-                all_devices_cache = []
-
-            # Explicitly enumerate render and capture devices
-            output_devices = self.enumerate_devices(
-                EDataFlow.eRender.value, all_devices_cache
-            )
-            input_devices = self.enumerate_devices(
-                EDataFlow.eCapture.value, all_devices_cache
-            )
-
-            return output_devices + input_devices
+            all_devices_cache = AudioUtilities.GetAllDevices()
         except Exception:
-            # Never let a device-change race crash the caller.
-            return []
+            all_devices_cache = []
+
+        # Explicitly enumerate render and capture devices
+        output_devices = self.enumerate_devices(
+            EDataFlow.eRender.value, all_devices_cache
+        )
+        input_devices = self.enumerate_devices(
+            EDataFlow.eCapture.value, all_devices_cache
+        )
+        return output_devices + input_devices

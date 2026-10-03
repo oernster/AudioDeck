@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from src.domain.exceptions.domain_exceptions import DeviceControlException
+from src.domain.exceptions.domain_exceptions import (
+    DeviceControlException,
+    DeviceNotFoundException,
+)
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.macos.coreaudio_api import CoreAudioApi
 
@@ -40,11 +43,14 @@ class MacosDeviceController:
             device_type: Type of device
 
         Raises:
+            DeviceNotFoundException: If the device is not present now
             DeviceControlException: If setting default fails
         """
         resolved_id = self._resolve_device_id(device_id)
         if resolved_id is None:
-            raise DeviceControlException(
+            # Gone since the enumeration (a Bluetooth headset dropping out):
+            # not a refusal, so the switch waits for it to come back.
+            raise DeviceNotFoundException(
                 f"Device is not currently present: {device_id}"
             )
 

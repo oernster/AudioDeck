@@ -62,8 +62,9 @@
         the command line with a proper exit code, which is exactly what a Stream Deck key or a
         batch file needs, so a whole setup change becomes one physical button press. Edge cases
         are handled honestly: a profile naming a device that is currently offline (a powered-off
-        Bluetooth headset) applies the moment it reconnects and a partial switch reports what is
-        missing rather than silently half-failing.</p>
+        Bluetooth headset) applies that device the moment it reconnects as the same device; a
+        switch reports each device that did not land with its reason: missing, refused, set for
+        only some of Windows' roles or accepted without the default changing.</p>
       <p>Under the surface it is a four-layer clean architecture in Python: a pure domain, an
         application layer of use cases, infrastructure speaking to each platform's audio stack
         (Windows Core Audio through pycaw, macOS CoreAudio, PulseAudio and PipeWire through pactl

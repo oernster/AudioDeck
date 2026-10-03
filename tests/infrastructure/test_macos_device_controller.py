@@ -4,7 +4,10 @@ from typing import List, Optional
 
 import pytest
 
-from src.domain.exceptions.domain_exceptions import DeviceControlException
+from src.domain.exceptions.domain_exceptions import (
+    DeviceControlException,
+    DeviceNotFoundException,
+)
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.macos.macos_device_controller import MacosDeviceController
 
@@ -55,9 +58,11 @@ def test_an_input_uid_resolves_and_becomes_the_default_input():
     assert api.set_calls == [(_MICROPHONE, True)]
 
 
-def test_an_absent_device_raises_a_device_control_exception():
+def test_an_absent_device_is_reported_as_not_found():
+    # Not a refusal: the device left between the enumeration and the set, so
+    # the switch can wait for it to come back (audit A-6).
     controller = MacosDeviceController(FakeCoreAudioApi())
-    with pytest.raises(DeviceControlException):
+    with pytest.raises(DeviceNotFoundException, match="not currently present"):
         controller.set_default_device("uid-gone", DeviceType.OUTPUT)
 
 

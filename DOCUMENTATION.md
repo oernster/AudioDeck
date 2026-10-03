@@ -65,9 +65,14 @@ device list, where it reloads that list on the spot.
 Open **Configuration**, press **New profile**, give it a name, then choose an
 output device, an input device or both. Press **Save**.
 
-A device that is currently disconnected still appears, marked offline, so a
-profile can be built around hardware that is switched off. That is deliberate:
-it is how you set up a Bluetooth headset before turning it on.
+On Windows a device that is currently disconnected still appears, marked
+offline, so a profile can be built around hardware that is switched off. That
+is deliberate: it is how you set up a Bluetooth headset before turning it on.
+On Linux and macOS the lists show only the devices present now, so connect a
+device before choosing it.
+
+Choosing **(None)** for the output or the input removes that device from the
+profile.
 
 ## Switching
 
@@ -76,8 +81,16 @@ does the same.
 
 If one of the profile's devices is offline, the ones that are available are
 applied anyway and the missing one is reported rather than failing the whole
-switch. It is then applied on its own the moment it reconnects, so turning the
-headset on finishes the job without you touching anything.
+switch. It is then applied on its own the moment it reconnects as the same
+device, so turning the headset on finishes the job without you touching
+anything. Only that device is applied; if the defaults have been changed in the
+meantime, the wait is dropped rather than undo the change. A device the system
+brings back under a new identity (another USB port, say) has to be chosen
+again.
+
+The report also says when the system refused a device, set it for only some of
+its roles or accepted it but kept the old default. If the devices cannot be
+read at all, it says so instead of calling them unavailable.
 
 The device list refreshes when the system reports a change and periodically in
 any case. **Rescan** forces it immediately.
@@ -119,7 +132,8 @@ macOS    ~/Library/Application Support/AudioDeck/profiles.json
 Linux    ~/.local/share/audiodeck/profiles.json  (or under $XDG_DATA_HOME)
 ```
 
-Back up that file to keep your profiles.
+Back up that file to keep your profiles. A failed save never damages it;
+the copy before the last save is kept beside it as `profiles.json.bak`.
 
 ## If something looks wrong
 
@@ -127,7 +141,10 @@ Back up that file to keep your profiles.
   the system default rather than naming a device, so that changing the default
   reaches it.
 - **Only some devices switched.** Expected when one of them is offline. It is
-  applied on its own when it reconnects.
+  applied on its own when it reconnects as the same device.
+- **Another switch is still running.** Switches from the window and the
+  command line take turns; one waits up to ten seconds for the other, then
+  asks you to try again.
 - **A second window will not open.** Deliberate: one window per user, because
   two would race over the same profiles file. The command line is exempt, so
   macro buttons keep working while the window is open.

@@ -3,6 +3,9 @@
 import json
 import subprocess
 
+import pytest
+
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.pipewire_device_enumerator import (
@@ -153,12 +156,15 @@ def test_a_malformed_object_costs_only_itself():
     assert [d.id for d in devices] == ["sink-name"]
 
 
-def test_a_pw_dump_failure_reads_as_no_devices():
-    assert PipewireDeviceEnumerator(FakePwDumpApi(fail=True)).get_all_devices() == []
+def test_a_pw_dump_failure_is_a_failure_to_read():
+    # Audit A-8: a failure to read must never look like "no devices".
+    with pytest.raises(DeviceEnumerationException, match="pw-dump failed"):
+        PipewireDeviceEnumerator(FakePwDumpApi(fail=True)).get_all_devices()
 
 
-def test_non_json_output_reads_as_no_devices():
-    assert PipewireDeviceEnumerator(FakePwDumpApi("not json")).get_all_devices() == []
+def test_non_json_output_is_a_failure_to_read():
+    with pytest.raises(DeviceEnumerationException, match="Could not read"):
+        PipewireDeviceEnumerator(FakePwDumpApi("not json")).get_all_devices()
 
 
 def test_json_that_is_not_a_list_reads_as_no_devices():

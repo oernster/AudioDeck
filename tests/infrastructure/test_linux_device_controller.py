@@ -4,9 +4,14 @@ import subprocess
 
 import pytest
 
-from src.domain.exceptions.domain_exceptions import DeviceControlException
+from src.domain.exceptions.domain_exceptions import (
+    DeviceControlException,
+    DeviceEnumerationException,
+    DeviceNotFoundException,
+)
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.linux_device_controller import LinuxDeviceController
+from tests.conftest import make_device
 
 
 class FakePactlApi:
@@ -36,11 +41,56 @@ class FakePwMetadataApi:
             raise OSError("pw-metadata is not installed")
 
 
-def make_controller(pactl_fails: bool = False, metadata_fails: bool = False):
-    """Build a controller over both fakes and return it with them."""
+class FakeDeviceList:
+    """Hand-written fake of the enumerator the controller checks against."""
+
+    def __init__(self, error: Exception | None = None) -> None:
+        self.error = error
+        self.devices = [
+            make_device("sink-name", "Speakers", DeviceType.OUTPUT),
+            make_device("source-name", "Microphone", DeviceType.INPUT),
+        ]
+
+    def get_all_devices(self):
+        if self.error is not None:
+            raise self.error
+        return list(self.devices)
+
+
+def make_controller(
+    pactl_fails: bool = False,
+    metadata_fails: bool = False,
+    device_list: FakeDeviceList | None = None,
+):
+    """Build a controller over the fakes and return it with them."""
     pactl = FakePactlApi(fail=pactl_fails)
     metadata = FakePwMetadataApi(fail=metadata_fails)
-    return LinuxDeviceController(pactl, metadata), pactl, metadata
+    devices = device_list or FakeDeviceList()
+    return LinuxDeviceController(pactl, metadata, devices), pactl, metadata
+
+
+def test_a_missing_sink_is_never_written_into_the_metadata():
+    # pw-metadata accepts any name, so writing one with no node behind it
+    # would report a switch that changed nothing (audit A-3).
+    controller, _, metadata = make_controller(pactl_fails=True)
+    with pytest.raises(DeviceNotFoundException, match="alsa_output.gone"):
+        controller.set_default_device("alsa_output.gone", DeviceType.OUTPUT)
+    assert metadata.calls == []
+
+
+def test_a_name_listed_for_the_other_flow_does_not_count():
+    controller, _, metadata = make_controller(pactl_fails=True)
+    with pytest.raises(DeviceNotFoundException):
+        controller.set_default_device("source-name", DeviceType.OUTPUT)
+    assert metadata.calls == []
+
+
+def test_devices_that_cannot_be_read_refuse_the_metadata_write():
+    unreadable = FakeDeviceList(error=DeviceEnumerationException("no pactl"))
+    controller, _, metadata = make_controller(pactl_fails=True, device_list=unreadable)
+    with pytest.raises(DeviceControlException, match="pactl failed"):
+        controller.set_default_device("sink-name", DeviceType.OUTPUT)
+    assert metadata.calls == []
 
 
 def test_an_output_device_becomes_the_default_sink():

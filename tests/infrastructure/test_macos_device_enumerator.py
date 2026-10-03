@@ -2,6 +2,9 @@
 
 from typing import Dict, List, Optional
 
+import pytest
+
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.macos.macos_device_enumerator import MacosDeviceEnumerator
 
@@ -121,3 +124,16 @@ def test_a_device_that_raises_is_skipped_without_losing_the_rest():
 def test_no_devices_yields_an_empty_list():
     api = FakeCoreAudioApi(device_ids=[], outputs=[], inputs=[])
     assert MacosDeviceEnumerator(api).get_all_devices() == []
+
+
+class _HalUnreachable(FakeCoreAudioApi):
+    """CoreAudio cannot list its devices at all."""
+
+    def all_device_ids(self) -> List[int]:
+        raise OSError("kAudioHardwareNotRunningError")
+
+
+def test_a_device_list_that_cannot_be_read_is_a_failure_to_read():
+    # Audit A-8: a failure to read must never look like "no devices".
+    with pytest.raises(DeviceEnumerationException, match="Could not read"):
+        MacosDeviceEnumerator(_HalUnreachable()).get_all_devices()

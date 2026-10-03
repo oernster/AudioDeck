@@ -161,3 +161,13 @@ def test_delete_profile_error(qtbot):
     errors = collect(presenter.error_occurred)
     presenter.delete_profile("pid")
     assert errors
+
+
+def test_unreadable_devices_show_an_empty_list_without_a_dialog(qtbot):
+    from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
+
+    failure = DeviceEnumerationException("Could not read the audio devices")
+    presenter = build(devices_uc=FakeGetDevicesUseCase(error=failure))
+    errors = collect(presenter.error_occurred)
+    assert presenter.get_input_devices(refresh=True) == []
+    assert errors == []

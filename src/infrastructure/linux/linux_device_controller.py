@@ -16,7 +16,12 @@ from __future__ import annotations
 import json
 from typing import Optional
 
-from src.domain.exceptions.domain_exceptions import DeviceControlException
+from src.domain.exceptions.domain_exceptions import (
+    DeviceControlException,
+    DeviceEnumerationException,
+    DeviceNotFoundException,
+)
+from src.domain.interfaces.device_enumerator import IDeviceEnumerator
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.pactl_api import PactlApi
 from src.infrastructure.linux.pw_metadata_api import PwMetadataApi
@@ -38,15 +43,23 @@ _METADATA_KEYS = {
 class LinuxDeviceController:
     """Controls default audio devices via the PulseAudio command client."""
 
-    def __init__(self, pactl: PactlApi, pw_metadata: PwMetadataApi) -> None:
+    def __init__(
+        self,
+        pactl: PactlApi,
+        pw_metadata: PwMetadataApi,
+        devices: IDeviceEnumerator,
+    ) -> None:
         """Initialize the controller.
 
         Args:
             pactl: The pactl command seam
             pw_metadata: The pw-metadata command seam used when pactl is refused
+            devices: The enumerator a device's existence is checked against
+                before its name is written into the metadata
         """
         self._pactl = pactl
         self._pw_metadata = pw_metadata
+        self._devices = devices
 
     def set_default_device(self, device_id: str, device_type: DeviceType) -> None:
         """Set a device as the default for its type.
@@ -56,6 +69,8 @@ class LinuxDeviceController:
             device_type: Type of device
 
         Raises:
+            DeviceNotFoundException: If no such sink or source exists, so the
+                metadata route is not tried
             DeviceControlException: If both routes fail
         """
         pactl_error: Optional[Exception] = None
@@ -65,6 +80,9 @@ class LinuxDeviceController:
         except Exception as e:
             pactl_error = e
 
+        # pw-metadata accepts any name at all, so a name with no node behind
+        # it would "succeed" and change nothing. Confirm the device first.
+        self._require_present(device_id, device_type, pactl_error)
         try:
             # A PulseAudio device name is the PipeWire node name, so the id
             # carries across unchanged.
@@ -77,6 +95,26 @@ class LinuxDeviceController:
             raise DeviceControlException(
                 f"Failed to set default device: {pactl_error}"
             ) from pactl_error
+
+    def _require_present(
+        self, device_id: str, device_type: DeviceType, pactl_error: Exception
+    ) -> None:
+        """Raise unless the sound server lists this device for this flow."""
+        try:
+            listed = self._devices.get_all_devices()
+        except DeviceEnumerationException:
+            # Unconfirmed is not confirmed: refuse the write and report the
+            # pactl failure that sent us here.
+            raise DeviceControlException(
+                f"Failed to set default device: {pactl_error}"
+            ) from pactl_error
+        if not any(
+            device.id == device_id and device.device_type == device_type
+            for device in listed
+        ):
+            raise DeviceNotFoundException(
+                f"Device is not currently present: {device_id}"
+            )
 
     def refresh_devices(self) -> None:
         """Refresh device list after changes."""

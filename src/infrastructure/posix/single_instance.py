@@ -16,11 +16,26 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Optional
 
-# Owner read/write only: the lock file lives in a shared directory when
-# XDG_RUNTIME_DIR is unset, so it must not be writable by other users.
-_LOCK_FILE_MODE = 0o600
+from src.infrastructure.lock_file_api import LOCK_FILE_MODE, LockFileApi
+
+
+def lock_is_held(error: OSError) -> bool:
+    """Say whether a failed non-blocking flock means another holder has it.
+
+    flock with LOCK_NB reports a held lock as EWOULDBLOCK, which Python
+    raises as BlockingIOError. Any other error (EIO, ENOLCK, a filesystem
+    without locks) says nothing about another holder, so it is not "held":
+    the caller fails open instead.
+
+    Args:
+        error: The error the flock call raised
+
+    Returns:
+        True only when another process holds the lock
+    """
+    return isinstance(error, BlockingIOError)
 
 
 def default_lock_path() -> Path:
@@ -40,25 +55,6 @@ def default_lock_path() -> Path:
     return Path(tempfile.gettempdir()) / f"audiodeck-{user_id}.gui.lock"
 
 
-class LockFileApi(Protocol):
-    """The slice of the file-locking API this module needs."""
-
-    def try_lock(self, path: Path) -> Optional[int]:
-        """Take an exclusive non-blocking lock on the file.
-
-        Returns:
-            A handle if the lock was taken, None if another process holds it
-
-        Raises:
-            OSError: If the lock file cannot be created at all
-        """
-        ...
-
-    def unlock(self, handle: int) -> None:
-        """Release a handle previously returned by try_lock."""
-        ...
-
-
 class FcntlLockFileApi:  # pragma: no cover
     """Real flock calls, kept behind LockFileApi so the logic is testable.
 
@@ -70,7 +66,7 @@ class FcntlLockFileApi:  # pragma: no cover
         """Open the lock file and take an exclusive non-blocking flock."""
         import fcntl
 
-        descriptor = os.open(path, os.O_RDWR | os.O_CREAT, _LOCK_FILE_MODE)
+        descriptor = os.open(path, os.O_RDWR | os.O_CREAT, LOCK_FILE_MODE)
         try:
             # mypy on Windows sees an empty fcntl stub; the module is real
             # wherever this class actually runs.
@@ -78,9 +74,13 @@ class FcntlLockFileApi:  # pragma: no cover
                 descriptor,
                 fcntl.LOCK_EX | fcntl.LOCK_NB,  # type: ignore[attr-defined]
             )
-        except OSError:
+        except OSError as error:
             os.close(descriptor)
-            return None
+            if lock_is_held(error):
+                return None
+            # Not another holder: raise, so the caller fails open as its
+            # documented rule says rather than reporting "already running".
+            raise
         return descriptor
 
     def unlock(self, handle: int) -> None:

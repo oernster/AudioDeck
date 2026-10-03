@@ -5,6 +5,7 @@ from .device_enumerator import IDeviceEnumerator
 from .device_repository import IDeviceRepository
 from .profile_repository import IProfileRepository
 from .release_source import IReleaseSource
+from .switch_lock import ISwitchLock
 from .update_settings_repository import IUpdateSettingsRepository
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "IDeviceEnumerator",
     "IProfileRepository",
     "IReleaseSource",
+    "ISwitchLock",
     "IUpdateSettingsRepository",
 ]

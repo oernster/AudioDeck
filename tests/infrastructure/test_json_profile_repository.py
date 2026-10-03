@@ -25,7 +25,7 @@ def test_save_new_and_get_all(profile_repo):
 
 def test_save_updates_existing(profile_repo):
     profile = save_profile(profile_repo, "A")
-    profile.update(name="A2")
+    profile.update("A2", profile.output_device_id, profile.input_device_id)
     profile_repo.save(profile)
     all_profiles = profile_repo.get_all()
     assert len(all_profiles) == 1

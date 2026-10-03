@@ -1,5 +1,6 @@
 """Tests for the POSIX lock-file single-instance guard."""
 
+import errno
 from pathlib import Path
 from typing import Optional
 
@@ -82,3 +83,25 @@ def test_default_lock_path_falls_back_to_a_per_user_temp_name(
     path = default_lock_path()
     assert path.name.startswith("audiodeck-")
     assert path.name.endswith(".gui.lock")
+
+
+# --- which flock errors mean "held" (audit A-11) -------------------------------
+
+
+def test_only_a_would_block_error_means_another_instance_holds_the_lock():
+    from src.infrastructure.posix.single_instance import lock_is_held
+
+    assert lock_is_held(BlockingIOError(errno.EWOULDBLOCK, "held")) is True
+
+
+@pytest.mark.parametrize(
+    "error",
+    [OSError(errno.EIO, "io"), PermissionError(errno.EACCES, "denied")],
+    ids=["io-error", "permission"],
+)
+def test_any_other_flock_error_fails_open(error):
+    # The documented rule is that a guard which cannot be established never
+    # stops the app; treating every flock error as "held" broke that.
+    from src.infrastructure.posix.single_instance import lock_is_held
+
+    assert lock_is_held(error) is False

@@ -124,16 +124,36 @@ damaged file reads as nothing skipped and a failed write is swallowed.
   own work is never lost quietly.
 - **Costs:** a lost skip costs one extra prompt after the next release.
 
+### Files are written whole, never in place
+
+Every save writes the whole document to a temporary file in the same folder,
+flushes it to disk, then moves it over the original in one atomic step. The
+profiles file keeps the copy before each save as `profiles.json.bak`. On
+Windows, where a file another process has open cannot be replaced, the move
+and the read each retry for a fraction of a second.
+
+- **Rather than:** opening the file for writing, which empties it before the
+  new content arrives.
+- **Gains:** a save that fails part way (a full disk) leaves every profile in
+  place; a Stream Deck read during a save sees the old profiles or the new
+  ones, never half a file.
+- **Costs:** a temporary file and a backup beside the profiles; a reader that
+  holds the file for longer than the retries allow still fails the save, which
+  then reports it and changes nothing.
+
 ## Devices and switching
 
-### A device that is off can still be chosen
+### A device that is off can still be chosen, on Windows
 
-Devices that are disconnected or disabled are listed with their state, so a
-profile can be built round a Bluetooth headset that is switched off.
+On Windows, devices that are disconnected or disabled are listed with their
+state, so a profile can be built round a Bluetooth headset that is switched
+off. PulseAudio, PipeWire and CoreAudio list only the devices present now, so
+on Linux and macOS a device must be connected while the profile is made.
 
-- **Rather than:** listing only the devices that are working now.
-- **Gains:** profiles can be set up before the hardware is to hand.
-- **Costs:** the lists are longer; an offline device has to be marked as such.
+- **Rather than:** listing only the devices that are working now everywhere.
+- **Gains:** on Windows, profiles can be set up before the hardware is to hand.
+- **Costs:** the lists are longer; an offline device has to be marked as such;
+  the platforms differ.
 
 ### A switch applies what it can
 
@@ -145,17 +165,57 @@ and why; the other is still applied.
 - **Gains:** a headset left off does not stop the speakers changing.
 - **Costs:** a switch can half succeed, so the report has to say so plainly.
 
+The report keeps each reason apart: not available, refused by the system, the
+wrong kind of device, set for only some of Windows' three roles (naming the
+roles it missed) and accepted but not taken. A device that leaves between the
+enumeration and the set counts as not available, so it is waited for. When the
+devices cannot be read at all, the switch says that rather than calling every
+device unavailable.
+
+### A switch is confirmed by reading the defaults back
+
+After the settle time the devices are read again and each slot's default is
+compared with what was asked for. A slot whose default is still another device
+is reported as accepted but not taken. On Linux the PipeWire metadata route is
+only tried for a sink or source the sound server lists, because that route
+accepts any name.
+
+- **Rather than:** trusting the call's own success.
+- **Gains:** "switched" means the default changed.
+- **Costs:** one more enumeration per switch. A default that cannot be read
+  back is not counted as a failure, so the check can only demote a slot it
+  has seen go wrong. Whether a slow system can still be settling after the
+  wait has not been measured.
+
+### Switches take turns
+
+The window and the command line hold the same per-user lock file, beside the
+profiles, for the length of a switch. A switch that finds it taken waits up to
+ten seconds, then reports that another switch is still running. A lock file
+that cannot be made does not stop a switch.
+
+- **Rather than:** letting two switches interleave, which left a mix of both
+  profiles while each reported full success.
+- **Gains:** two Stream Deck keys pressed together apply one profile, then
+  the other.
+- **Costs:** a stuck switch makes the next one wait the full ten seconds.
+
 ### A device is applied when it comes back
 
-When a switch skips a device because it is unavailable, that device is
-watched. The moment it reconnects the profile is applied again and the user
-is told.
+When a switch skips a device because it is unavailable, that slot is watched.
+The moment its device reconnects, that slot alone is applied and the user is
+told. If the defaults this window set have been changed meanwhile, the wait is
+dropped instead.
 
-- **Rather than:** making the user switch again once the device is on.
-- **Gains:** turning on a headset is enough.
+- **Rather than:** making the user switch again once the device is on;
+  re-running the whole profile, which undid any later switch.
+- **Gains:** turning on a headset is enough; a later Stream Deck switch
+  stands.
 - **Costs:** only the last profile switched to in the running window is
   watched; the wait is not remembered across a restart and the command line
-  does not wait at all.
+  does not wait at all. A device is matched by its id, so one the system
+  brings back under a new id is not recognised; the notice says so
+  rather than promise it.
 
 ### A device is matched by identity and direction
 
@@ -286,15 +346,19 @@ existing window forward; on Linux and macOS it simply exits. The command line
 is not guarded at all.
 
 - **Rather than:** several windows; a guard over every launch.
-- **Gains:** two windows never race over one profiles file; a Stream Deck
-  button switches profiles while the window is open.
+- **Gains:** two windows never hold diverging copies of the profiles; a
+  Stream Deck button switches profiles while the window is open. Whole-file
+  writes keep the file safe from a concurrent reader; the switch lock keeps
+  concurrent switches apart.
 - **Costs:** on Linux and macOS a second launch appears to do nothing, because
   neither lets one program reliably raise another's window.
 
 ### The guard is one kernel operation and fails open
 
 The guard is a named mutex on Windows and a locked file on Linux and macOS. If
-the lock cannot be created at all, the application starts anyway.
+the lock cannot be created at all, the application starts anyway. On Linux and
+macOS only the error that means another process holds the lock counts as
+"already running"; any other locking error fails open too.
 
 - **Rather than:** a lock file checked by hand, which a crash can leave stale;
   refusing to start.

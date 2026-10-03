@@ -8,6 +8,10 @@ from comtypes import CLSCTX_ALL, COMMETHOD, GUID, HRESULT
 
 from src.domain.exceptions.domain_exceptions import DeviceControlException
 from src.domain.value_objects.device_type import DeviceType
+from src.infrastructure.windows.endpoint_roles import (
+    require_every_role,
+    set_every_role,
+)
 
 
 # IPolicyConfig interface definition for Windows 10/11
@@ -50,6 +54,7 @@ class WindowsDeviceController:
 
         Raises:
             DeviceControlException: If setting default fails
+            PartialDeviceControlException: If some roles kept the old device
         """
         try:
             # Get IPolicyConfig interface
@@ -67,23 +72,9 @@ class WindowsDeviceController:
                     f"Could not access audio policy interface: {e}"
                 ) from e
 
-            # Set for all roles (Console, Multimedia, Communications)
-            # ERole values: eConsole=0, eMultimedia=1, eCommunications=2
-            roles = [0, 1, 2]  # All roles
-
-            success_count = 0
-            for role in roles:
-                try:
-                    policy_config.SetDefaultEndpoint(device_id, role)
-                    success_count += 1
-                except Exception:
-                    # Continue with other roles
-                    pass
-
-            if success_count == 0:
-                raise DeviceControlException(
-                    "Failed to set device as default for any role"
-                )
+            # Every role (Console, Multimedia, Communications) in turn; a
+            # partial result names the roles left on the old device.
+            require_every_role(set_every_role(policy_config, device_id))
 
         except DeviceControlException:
             raise

@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from src.infrastructure.persistence.atomic_file import write_atomically
+
 _SKIPPED_VERSION_KEY = "skipped_update_version"
 
 
@@ -28,7 +30,7 @@ class JsonUpdateSettingsRepository:
         self._file_path = file_path
 
     def _read(self) -> Dict[str, Any]:
-        """Return the settings document, or an empty one on any failure."""
+        """Return the settings document; an empty one on any failure."""
         try:
             data = json.loads(self._file_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -39,7 +41,7 @@ class JsonUpdateSettingsRepository:
         """Get the release tag the user chose to skip.
 
         Returns:
-            The exact tag string, or None when nothing valid is stored
+            The exact tag string; None when nothing valid is stored
         """
         value = self._read().get(_SKIPPED_VERSION_KEY)
         return value if isinstance(value, str) and value else None
@@ -54,7 +56,9 @@ class JsonUpdateSettingsRepository:
         data[_SKIPPED_VERSION_KEY] = version
         try:
             self._file_path.parent.mkdir(parents=True, exist_ok=True)
-            self._file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            write_atomically(
+                self._file_path, lambda handle: json.dump(data, handle, indent=2)
+            )
         except OSError:
             # Best-effort: the worst case is one extra prompt next release.
             pass

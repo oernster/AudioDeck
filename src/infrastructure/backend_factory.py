@@ -10,11 +10,14 @@ platforms.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Protocol
 
 from src.domain.exceptions.domain_exceptions import UnsupportedPlatformException
 from src.domain.interfaces.device_controller import IDeviceController
 from src.domain.interfaces.device_enumerator import IDeviceEnumerator
+from src.infrastructure.lock_file_api import LockFileApi
+from src.infrastructure.switch_lock import SWITCH_LOCK_FILE_NAME, FileSwitchLock
 
 # The Windows mutex name. The "Local\" namespace scopes it to the current
 # logon session, matching the per-user profiles store: two different Windows
@@ -94,14 +97,17 @@ def create_device_backend(platform: str) -> DeviceBackend:
         from src.infrastructure.linux.pw_metadata_api import SubprocessPwMetadataApi
 
         pactl = SubprocessPactlApi()
+        enumerator = FirstAnsweringEnumerator(
+            (
+                LinuxDeviceEnumerator(pactl),
+                PipewireDeviceEnumerator(SubprocessPwDumpApi()),
+            )
+        )
+        # The controller checks a device exists against the same enumerator
+        # before it writes a name into PipeWire's metadata.
         return DeviceBackend(
-            FirstAnsweringEnumerator(
-                (
-                    LinuxDeviceEnumerator(pactl),
-                    PipewireDeviceEnumerator(SubprocessPwDumpApi()),
-                )
-            ),
-            LinuxDeviceController(pactl, SubprocessPwMetadataApi()),
+            enumerator,
+            LinuxDeviceController(pactl, SubprocessPwMetadataApi(), enumerator),
         )
 
     if platform == "darwin":
@@ -119,6 +125,40 @@ def create_device_backend(platform: str) -> DeviceBackend:
         )
 
     raise UnsupportedPlatformException(f"No audio backend for platform: {platform}")
+
+
+def create_lock_file_api(platform: str) -> LockFileApi:
+    """Build the file-locking calls for a platform.
+
+    Args:
+        platform: The sys.platform string
+
+    Returns:
+        msvcrt byte locking on Windows, flock elsewhere
+    """
+    if platform == "win32":
+        from src.infrastructure.windows.lock_file_api import MsvcrtLockFileApi
+
+        return MsvcrtLockFileApi()
+
+    from src.infrastructure.posix.single_instance import FcntlLockFileApi
+
+    return FcntlLockFileApi()
+
+
+def create_switch_lock(platform: str, data_dir: Path) -> FileSwitchLock:
+    """Build the per-user lock both composition roots hold around a switch.
+
+    Args:
+        platform: The sys.platform string
+        data_dir: The per-user folder the profiles live in
+
+    Returns:
+        The switch lock over the platform's file locking
+    """
+    return FileSwitchLock(
+        data_dir / SWITCH_LOCK_FILE_NAME, create_lock_file_api(platform)
+    )
 
 
 def create_single_instance(platform: str) -> SingleInstance:
@@ -145,7 +185,6 @@ def create_single_instance(platform: str) -> SingleInstance:
         )
 
     from src.infrastructure.posix.single_instance import (
-        FcntlLockFileApi,
         PosixSingleInstanceGuard,
         default_lock_path,
     )
@@ -153,6 +192,8 @@ def create_single_instance(platform: str) -> SingleInstance:
     # Neither Wayland nor macOS lets one process reliably raise another
     # application's window, so activation is a no-op there.
     return SingleInstance(
-        guard=PosixSingleInstanceGuard(default_lock_path(), FcntlLockFileApi()),
+        guard=PosixSingleInstanceGuard(
+            default_lock_path(), create_lock_file_api(platform)
+        ),
         activate=lambda title: False,
     )

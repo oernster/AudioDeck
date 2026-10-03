@@ -65,6 +65,44 @@ class FakeDeviceController:
         self.refreshed = True
 
 
+class FakeMachine:
+    """One shared picture of a machine: its devices and the default per flow.
+
+    It is its own enumerator and its own controller, so a switch made through
+    it is visible to the next enumeration exactly as on a real system. Setting
+    ignore_sets makes the controller report success while changing nothing.
+    """
+
+    def __init__(self) -> None:
+        self.devices: dict = {}
+        self.defaults: dict = {DeviceType.OUTPUT: None, DeviceType.INPUT: None}
+        self.ignore_sets = False
+        self.set_calls: list = []
+
+    def add(self, device_id, device_type, state=DeviceState.AVAILABLE) -> None:
+        self.devices[device_id] = (device_type, state)
+
+    def get_all_devices(self) -> List[AudioDevice]:
+        return [
+            AudioDevice(
+                device_id,
+                device_id,
+                device_type,
+                self.defaults[device_type] == device_id,
+                state,
+            )
+            for device_id, (device_type, state) in self.devices.items()
+        ]
+
+    def set_default_device(self, device_id: str, device_type: DeviceType) -> None:
+        self.set_calls.append((device_id, device_type))
+        if not self.ignore_sets:
+            self.defaults[device_type] = device_id
+
+    def refresh_devices(self) -> None:
+        pass
+
+
 class FakeGetDevicesUseCase:
     """Stub for GetDevicesUseCase used by presenter tests."""
 
@@ -114,11 +152,13 @@ class FakeSwitchUseCase:
         self.error = error
         self.outcome = outcome
         self.executed = []
+        self.slots = []
 
-    def execute(self, profile_id):
+    def execute(self, profile_id, slots=None):
         if self.error is not None:
             raise self.error
         self.executed.append(profile_id)
+        self.slots.append(slots)
         if self.outcome is not None:
             return self.outcome
         return SwitchOutcome(applied=(DeviceType.OUTPUT, DeviceType.INPUT), skipped=())

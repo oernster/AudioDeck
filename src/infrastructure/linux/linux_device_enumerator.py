@@ -13,6 +13,7 @@ import json
 from typing import Any, List, Optional
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_state import DeviceState
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.pactl_api import PactlApi
@@ -55,10 +56,13 @@ class LinuxDeviceEnumerator:
         """
         try:
             items = json.loads(self._pactl.run("-f", "json", "list", kind))
-        except Exception:
-            # Degrade to an empty list: pactl missing, the server down or
-            # non-JSON output all mean no devices can be read right now.
-            return []
+        except Exception as e:
+            # pactl missing, the server down or non-JSON output all mean the
+            # devices cannot be read, which is not the same as there being
+            # none; the composite enumerator then asks the next source.
+            raise DeviceEnumerationException(
+                f"Could not read the audio devices with pactl: {e}"
+            ) from e
         return items if isinstance(items, list) else []
 
     def _is_monitor_source(self, item: Any) -> bool:

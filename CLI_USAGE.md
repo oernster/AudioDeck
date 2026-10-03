@@ -109,8 +109,29 @@ Some devices were not available and were skipped:
   - Input (not available)
 ```
 
+Each kind of problem is listed under its own heading:
+
+```
+Some devices were not available and were skipped:
+The system refused to set some devices:
+Some devices in this profile are the wrong type:
+Some devices were set for only some roles:
+The system accepted some devices but kept the old default:
+```
+
+A device set for only some roles is Windows keeping the old device for one of
+its three roles; the line names the roles it missed, for example
+`- Output (not set for every role: missing Communications)`.
+
 The exit code is 0 when at least one device is applied; it is non-zero when none
-are. In the GUI, an offline device is applied automatically when it reconnects.
+are. If the devices cannot be read at all, the command prints
+`Error: Could not read the audio devices: ...` and exits non-zero rather than
+reporting every device as unavailable. If another switch (from the window or a
+second key) is still running, the command waits up to ten seconds for it, then
+prints `Error: Another switch is still running ...` and exits non-zero.
+
+In the GUI, an offline device is applied automatically when it reconnects as the
+same device.
 
 ## Stream Deck integration
 
@@ -170,9 +191,15 @@ Message: `Some devices were not available and were skipped`
 
 - The profile references a device that is currently disconnected.
 - The available devices are still applied; the skipped one applies automatically
-  when it reconnects (in the GUI). Running the command again once it is
-  connected has the same effect.
+  when it reconnects as the same device (in the GUI). Running the command again
+  once it is connected has the same effect.
 - To change the profile, open the GUI and edit it.
+
+Other headings name other causes: `The system refused to set some devices`
+means the operating system turned the change down; `Some devices were set for
+only some roles` means Windows kept the old device for the roles named; `The
+system accepted some devices but kept the old default` means the call reported
+success yet the default did not change.
 
 ## Advanced usage
 

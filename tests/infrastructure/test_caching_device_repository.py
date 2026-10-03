@@ -1,5 +1,8 @@
 """Tests for the device repository logic (over a fake enumerator)."""
 
+import pytest
+
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.caching_device_repository import (
     CachingDeviceRepository,
@@ -63,3 +66,17 @@ def test_refresh_reloads():
     repo = CachingDeviceRepository(enumerator, auto_refresh=False)
     repo.refresh()
     assert len(repo.get_all_devices()) == 1
+
+
+def test_an_unreadable_first_enumeration_still_builds_the_repository():
+    # The window must open even while the audio service is unreachable.
+    failure = DeviceEnumerationException("Could not read the audio devices")
+    repository = CachingDeviceRepository(FakeEnumerator(error=failure))
+    assert repository.get_all_devices() == []
+
+
+def test_a_later_unreadable_refresh_is_reported():
+    failure = DeviceEnumerationException("Could not read the audio devices")
+    repository = CachingDeviceRepository(FakeEnumerator(error=failure))
+    with pytest.raises(DeviceEnumerationException):
+        repository.refresh()

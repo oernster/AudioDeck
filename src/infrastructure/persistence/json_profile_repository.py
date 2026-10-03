@@ -7,6 +7,12 @@ from uuid import UUID
 
 from src.domain.entities.audio_profile import AudioProfile
 from src.domain.exceptions.domain_exceptions import ProfileStorageException
+from src.infrastructure.persistence.atomic_file import (
+    backup_path,
+    keep_backup,
+    read_tolerantly,
+    write_atomically,
+)
 
 
 class JsonProfileRepository:
@@ -30,6 +36,10 @@ class JsonProfileRepository:
     def _read_profiles(self) -> List[AudioProfile]:
         """Read profiles from file.
 
+        Every write replaces the file atomically, so a read made while
+        another process saves (the CLI during a save in the window) sees the
+        old profiles or the new ones, never half a document.
+
         Returns:
             List of profiles
 
@@ -37,16 +47,28 @@ class JsonProfileRepository:
             ProfileStorageException: If read fails
         """
         try:
-            with open(self._file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return [AudioProfile.from_dict(p) for p in data]
+            data = json.loads(read_tolerantly(self._file_path))
+            return [AudioProfile.from_dict(p) for p in data]
         except json.JSONDecodeError as e:
-            raise ProfileStorageException(f"Failed to parse profiles file: {e}") from e
+            raise ProfileStorageException(
+                f"Failed to parse profiles file: {e}{self._backup_hint()}"
+            ) from e
         except Exception as e:
             raise ProfileStorageException(f"Failed to read profiles: {e}") from e
 
+    def _backup_hint(self) -> str:
+        """Name the last good copy, when there is one, for an unreadable file."""
+        backup = backup_path(self._file_path)
+        if not backup.exists():
+            return ""
+        return f". The last good copy is kept at {backup}"
+
     def _write_profiles(self, profiles: List[AudioProfile]) -> None:
-        """Write profiles to file.
+        """Write profiles to file without ever leaving it half written.
+
+        The current file is copied to its backup first; save and delete call
+        this only after reading that file successfully, so the backup is the
+        last good copy. A failure anywhere leaves the original untouched.
 
         Args:
             profiles: List of profiles to write
@@ -56,8 +78,10 @@ class JsonProfileRepository:
         """
         try:
             data = [p.to_dict() for p in profiles]
-            with open(self._file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+            keep_backup(self._file_path)
+            write_atomically(
+                self._file_path, lambda handle: json.dump(data, handle, indent=2)
+            )
         except Exception as e:
             raise ProfileStorageException(f"Failed to write profiles: {e}") from e
 

@@ -8,6 +8,7 @@ piece; this repository is shared by the Windows, Linux and macOS backends.
 from typing import List, Optional
 
 from src.domain.entities.audio_device import AudioDevice
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.interfaces.device_enumerator import IDeviceEnumerator
 from src.domain.value_objects.device_type import DeviceType
 
@@ -27,7 +28,13 @@ class CachingDeviceRepository:
         self._enumerator = enumerator
         self._devices: List[AudioDevice] = []
         if auto_refresh:
-            self.refresh()
+            try:
+                self.refresh()
+            except DeviceEnumerationException:
+                # The window must still open on a machine whose audio service
+                # is momentarily unreachable; every later refresh (each switch
+                # starts with one) reports the failure to whoever asked.
+                pass
 
     def get_all_devices(self) -> List[AudioDevice]:
         """Get all audio devices.
@@ -86,5 +93,10 @@ class CachingDeviceRepository:
         return None
 
     def refresh(self) -> None:
-        """Refresh the device list from the system."""
+        """Refresh the device list from the system.
+
+        Raises:
+            DeviceEnumerationException: If the devices cannot be read; the
+                previous list is kept
+        """
         self._devices = self._enumerator.get_all_devices()

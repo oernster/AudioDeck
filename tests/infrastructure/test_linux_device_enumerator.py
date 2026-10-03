@@ -3,6 +3,9 @@
 import json
 import subprocess
 
+import pytest
+
+from src.domain.exceptions.domain_exceptions import DeviceEnumerationException
 from src.domain.value_objects.device_type import DeviceType
 from src.infrastructure.linux.linux_device_enumerator import LinuxDeviceEnumerator
 
@@ -109,17 +112,18 @@ def test_non_list_json_degrades_to_no_devices():
     assert [d for d in devices if d.device_type == DeviceType.OUTPUT] == []
 
 
-def test_non_json_output_degrades_to_no_devices():
+def test_non_json_output_is_a_failure_to_read():
+    # Audit A-8: a failure to read must never look like "no devices".
     api = _api()
     api.responses[("-f", "json", "list", "sinks")] = "not json"
-    devices = LinuxDeviceEnumerator(api).get_all_devices()
-    assert [d for d in devices if d.device_type == DeviceType.OUTPUT] == []
+    with pytest.raises(DeviceEnumerationException, match="Could not read"):
+        LinuxDeviceEnumerator(api).get_all_devices()
 
 
-def test_a_failing_list_command_degrades_to_no_devices():
+def test_a_failing_list_command_is_a_failure_to_read():
     api = _api(failing_commands=("sinks",))
-    devices = LinuxDeviceEnumerator(api).get_all_devices()
-    assert [d for d in devices if d.device_type == DeviceType.OUTPUT] == []
+    with pytest.raises(DeviceEnumerationException, match="pactl failed"):
+        LinuxDeviceEnumerator(api).get_all_devices()
 
 
 def test_a_failing_default_lookup_marks_no_default():
