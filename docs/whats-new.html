@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's new in Audio Deck: release history</title>
+  <meta name="description" content="Audio Deck's release history: profiles that survive a failed save, switches that report what really happened, a Guide behind the Help menu, a window drawn in pictures and the move to macOS and Linux.">
+  <link rel="canonical" href="https://ernster.dev/AudioDeck/whats-new.html">
+  <meta name="theme-color" content="#1e1e2e">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Audio Deck">
+  <meta property="og:url" content="https://ernster.dev/AudioDeck/whats-new.html">
+  <meta property="og:title" content="What's new in Audio Deck: release history">
+  <meta property="og:description" content="Profiles that survive a failed save, switches that report what really happened, a Guide behind the Help menu and the move to macOS and Linux.">
+  <meta property="og:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Audio Deck app icon">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="What's new in Audio Deck: release history">
+  <meta name="twitter:description" content="Profiles that survive a failed save, switches that report what really happened, a Guide behind the Help menu and the move to macOS and Linux.">
+  <meta name="twitter:image" content="https://ernster.dev/AudioDeck/audiodeck-512.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1a698a8280">
+<script>window.goatcounter = {path: function (p) { return location.host + p }}</script>
+<script data-goatcounter="https://oernster.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="./">
+    <img src="audiodeck-512.png" alt="Audio Deck icon">
+    <span>Audio Deck</span>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="features.html">Features</a>
+    <a class="nav-link" href="why.html">Why</a>
+    <a class="nav-link" href="whats-new.html" aria-current="page">What's New</a>
+    <a class="nav-link" href="download.html">Download</a>
+    <a class="btn-primary" href="download.html">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<main>
+  <section class="section" id="whats-new">
+    <div class="section-label">Changelog</div>
+    <h2 class="section-title">What's new</h2>
+    <p class="section-sub">Recent releases have focused on making every switch honest and every profile safe: a failed save no longer loses your profiles, a switch reports what really happened and two switches at once take turns. Before that came a Guide behind the Help menu, a window drawn entirely in pictures, a setup program that shows one screen at a time and the move from Windows alone to Windows, macOS and Linux.</p>
+
+    <div class="changelog-grid">
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.4.0</div>
+        <h3>A failed save no longer loses your profiles</h3>
+        <ul>
+          <li>Profiles are written somewhere safe first and only then put in place, so a save that fails part way (on a full disk, say) leaves them exactly as they were. The copy before each save is kept beside the file as profiles.json.bak</li>
+          <li>Setting a profile's output or input to (None) now removes the device instead of saying "Saved" and keeping it</li>
+          <li>A switch reports what really happened. On Windows it names the uses that kept the old device; after every switch Audio Deck reads the defaults back, so a change the system accepted but did not make is reported rather than shown as done</li>
+          <li>Turning on a device a profile was waiting for applies only that device, so it no longer undoes a switch you made since</li>
+          <li>Two switches at once, such as two Stream Deck keys pressed together, now take turns instead of leaving the output of one profile with the input of the other</li>
+          <li>On macOS a device that drops out at the moment of a switch is waited for and applied when it comes back</li>
+          <li>Plainer messages: an offline device will apply when it reconnects as the same device, "Could not read devices" replaces a misleading "not available" and the command line gives each reason its own heading</li>
+          <li>On Linux and macOS an unexpected file-locking error no longer stops the window opening</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.3.0</div>
+        <h3>Setup messages and the Linux licence listing put right</h3>
+        <ul>
+          <li>The setup program no longer asks you to close Audio Deck "including its tray icon", since Audio Deck has no tray icon</li>
+          <li>The Flatpak's software-centre listing states the real licence split: GPL-3.0 for the backend and LGPL-3.0 for the interface, each at that version only</li>
+          <li>Every footer on this site links every page; the stylesheet link changes whenever the stylesheet does, so a browser never pairs a new page with old styles</li>
+          <li>The documents name the PipeWire tools the Linux backend falls back on</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.2.2</div>
+        <h3>A new donation page</h3>
+        <ul>
+          <li>The Donate button now opens a new PayPal page that suggests £5 and lets you give any amount you choose. Nothing else has changed</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.2.1</div>
+        <h3>Tooltips show while another program has focus</h3>
+        <ul>
+          <li>Every button's tooltip now appears whichever program has focus, in the main window, its dialogs and the setup program</li>
+          <li>The Why page no longer links to a retired blog post</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.2.0</div>
+        <h3>A Guide on the Help menu</h3>
+        <ul>
+          <li>The first entry on the Help menu is now Guide. Every picture button is listed with its own artwork beside its name and what it does</li>
+          <li>Command lines and file locations sit in shaded blocks; each troubleshooting point leads with its problem in bold</li>
+          <li>On Linux and macOS the command line names the command your platform actually uses rather than AudioDeck.exe; its help no longer calls Audio Deck a Windows program</li>
+          <li>The macOS download button on this site now points at AudioDeck.dmg, the disk image each release publishes</li>
+          <li>A commercial licence is available for anyone whose project the open-source licences do not suit</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.1.0</div>
+        <h3>Every button is artwork now</h3>
+        <ul>
+          <li>Every emoji control is now a picture drawn in one visual language, considerably larger, each naming itself through a tooltip. Deleting and cancelling read as a red bar struck through the thing being acted on</li>
+          <li>A redrawn application icon appears everywhere the old one did</li>
+          <li>The header carries a donate button that opens a payment page in your own browser. Audio Deck sends nothing itself; nothing is held back behind it</li>
+          <li>About now carries a copyright line under the author</li>
+          <li>A picture button no longer stays outlined after a click; the outline comes from Tab alone</li>
+          <li>The setup program shows one screen at a time: a sentence saying what it is about to do, a progress screen while it works, a screen of its own for removing Audio Deck and a closing screen saying how it went</li>
+          <li>Only the generated artwork is packaged, which takes about fourteen megabytes out of every build</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.0.2</div>
+        <h3>A quieter profile list; setup says when the app is in the way</h3>
+        <ul>
+          <li>Pointing at the profile list no longer draws a rectangle round the whole list; the highlighted profile already shows where you are</li>
+          <li>Installing while Audio Deck is open no longer stops with a permission error naming a file path. The setup program checks first, offers to close Audio Deck for you and waits until it has gone</li>
+          <li>Carries the fixes from 2.0.1</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.0.1</div>
+        <h3>Deleted profiles disappear immediately</h3>
+        <ul>
+          <li>Entering either view reloads the profile list, so a save, edit or delete in one view shows in the other the moment you switch back</li>
+          <li>This site and the documentation describe the 2.0 application as it is, with current screenshots</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v2.0.0</div>
+        <h3>Linux and macOS as well as Windows</h3>
+        <ul>
+          <li>Audio Deck runs on Linux and macOS with the same profiles, the same window, the same command line and the same Stream Deck workflow on all three; the interface was overhauled too</li>
+          <li>On Linux it works with PulseAudio or PipeWire, leaves out monitor sources and picks up device changes live. It ships as a Flatpak</li>
+          <li>On macOS it speaks to CoreAudio directly with no new dependency and identifies devices by a stable ID, so profiles survive reboots and unplugs. It ships as a signed, notarised DMG</li>
+          <li>Profiles live in each platform's proper per-user data folder; only one window runs per user on every platform</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.5.0</div>
+        <h3>An update check that respects you</h3>
+        <ul>
+          <li>A few seconds after launch and once a day while the window is open, Audio Deck asks GitHub whether a newer version has been published, then offers Download, Skip This Version or Later</li>
+          <li>Help &gt; Check for Updates runs a real check and reports every outcome, including an honest failure when GitHub cannot be reached</li>
+          <li>The request carries no identifier and nothing about your profiles; a failed check on the automatic path says nothing</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.4.0</div>
+        <h3>A Why page and a tidier codebase</h3>
+        <ul>
+          <li>Nothing in how Audio Deck behaves has changed</li>
+          <li>The site gains a Why page, link previews for chat and social media and an address of its own</li>
+          <li>The two developer guides are now one; the in-app Documentation dialog lists the guides that actually exist</li>
+          <li>The main window and the entry point were split into smaller files under a measured size rule</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.3.0</div>
+        <h3>One window at a time</h3>
+        <ul>
+          <li>Only one Audio Deck window can be open; launching it again brings the existing window to the front. Switching from the command line or a Stream Deck key is unaffected</li>
+          <li>Every action button carries an icon; the profile actions gained tooltips</li>
+          <li>Audio Deck gets a website of its own, with a download panel that reads the current release from GitHub</li>
+          <li>Branch coverage, more structural tests and a clean ruff and mypy run across the whole repository</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.2.0</div>
+        <h3>Bluetooth, offline devices and a window that never freezes</h3>
+        <ul>
+          <li>A crash when changing audio sources with no default device is fixed; a Bluetooth headset turning on or off can no longer crash the app</li>
+          <li>Disconnected devices can be chosen when building a profile. Switching applies what is available, reports what is offline and applies an offline device the moment it reconnects</li>
+          <li>Scans and switches run in the background, so the window stays responsive</li>
+          <li>A themed splash screen, a Check for Updates item in the Help menu and a themed Windows installer with Install, Update, Reinstall, Repair and Uninstall</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.1.2</div>
+        <h3>Every icon size on Windows</h3>
+        <ul>
+          <li>Supports all icon sizes Windows asks for</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.1.1</div>
+        <h3>A new taskbar icon and splash screen</h3>
+        <ul>
+          <li>Updated taskbar icon and splash screen</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.1.0</div>
+        <h3>Revised icons and About</h3>
+        <ul>
+          <li>Revised iconography</li>
+          <li>Updates to Help &gt; About</li>
+          <li>Minor changes to audio handling</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.0.3</div>
+        <h3>Taskbar icon shown correctly</h3>
+        <ul>
+          <li>The app's taskbar icon now shows correctly where before it did not</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.0.2</div>
+        <h3>Taskbar icon support</h3>
+        <ul>
+          <li>Adds support for the app's own taskbar icon</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.0.1</div>
+        <h3>No console window</h3>
+        <ul>
+          <li>Audio Deck no longer opens a console window alongside its own</li>
+          <li>Versioning consolidated into fewer files; the README updated</li>
+        </ul>
+      </div>
+
+      <div class="cl-entry">
+        <div class="ver-tag">v1.0.0</div>
+        <h3>The first release</h3>
+        <ul>
+          <li>Create profiles for your Windows audio setup and save them</li>
+          <li>Apply a profile from the app itself, from the command line or from a Stream Deck key: --list lists your profiles and --profile applies one by name</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="changelog-more">
+      <a class="btn-secondary" href="https://github.com/oernster/AudioDeck/releases">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View all releases on GitHub
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a class="footer-brand" href="./">
+        <img src="audiodeck-512.png" alt="Audio Deck">
+        <span>Audio Deck</span>
+      </a>
+      <nav class="footer-links">
+        <a href="./">Home</a>
+        <a href="features.html">Features</a>
+        <a href="why.html">Why</a>
+        <a href="whats-new.html">What's New</a>
+        <a href="download.html">Download</a>
+        <a href="https://github.com/oernster/AudioDeck">GitHub</a>
+        <a href="https://github.com/oernster/AudioDeck/releases">Releases</a>
+        <a href="https://www.crankthecode.com/">crankthecode.com</a>
+        <a href="https://ernster.dev">More of my work</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
